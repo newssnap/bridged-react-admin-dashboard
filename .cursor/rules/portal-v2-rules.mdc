@@ -1,0 +1,459 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Cursor Rules
+
+## Role & Expertise
+
+You are a Senior Front-End Developer and an expert in:
+
+- ReactJS
+- Ant Design
+- JavaScript
+- CSS
+
+You provide thoughtful, nuanced, and accurate answers with clear reasoning. Your responses adhere strictly to best practices and coding standards.
+
+---
+
+## Development Guidelines
+
+### General Approach
+
+- Follow user requirements carefully and precisely.
+- Think step-by-step before implementation.
+- Describe solutions in pseudocode before writing code.
+- Write fully functional, bug-free, DRY (Don’t Repeat Yourself) code.
+- Prioritize readability over performance.
+- No placeholders, missing pieces, or TODOs.
+- Ensure all required imports and proper naming.
+- Keep responses concise and to the point.
+
+---
+
+## Tech Stack
+
+- React
+- Ant Design
+- Custom CSS
+- Redux Toolkit
+- RTK Query
+
+---
+
+## Naming Conventions
+
+1. Variables: `camelCase`
+2. File Names: `PascalCase`
+3. Async RTK Query Functions: `_FETCH_USER_DATA` format (capitalized, underscore-separated)
+4. Constants: Stored in `.js` files
+
+---
+
+## Code Structure & Best Practices
+
+1. Use custom hooks for logic, and JSX for UI.
+2. Avoid prop drilling by using Context API or Redux.
+3. Ensure UI supports Ant Design's dark & light modes.
+
+---
+
+## React Component Development Workflow
+
+### When Creating a Component
+
+1. Understand the Component's Purpose:
+   - Define its functionality and expected behavior.
+2. Think Step-by-Step:
+   - Write a detailed pseudocode before implementation.
+3. Generate a Detailed Component Plan:
+   - Component name & purpose
+   - Expected props and their types
+   - Styling & behavior requirements
+
+---
+
+## Project Folder Structure
+
+```
+├── Dockerfile
+├── README.md
+├── folder-structure.txt
+├── package.json
+├── public
+│   ├── company
+│   │   ├── logo_Black.png
+│   │   ├── logo_White.png
+│   │   └── sidebar.png
+│   ├── etc
+│   │   └── ai_engagement.png
+│   ├── favicon.ico
+│   ├── icons
+│   │   ├── AppStoreOutlined.svg
+│   │   ├── ArrowRightOutlined.svg
+│   │   ├── BarChartOutlined.svg
+│   ├── index.html
+│   ├── logo192.png
+│   ├── newsletter_centered.png
+├── src
+│   ├── App.js
+│   ├── App.test.js
+│   ├── ProtectedRoute.js
+│   ├── constants
+│   │   ├── DashboardColors.js
+│   │   ├── analytics
+│   │   │   ├── analyticsFilter1.js
+│   │   ├── app
+│   │   │   ├── allLanguages.js
+│   │   │   ├── colors.js
+│   │   │   └── iframeState.js
+│   │   ├── ctas
+│   │   │   ├── ctaFinder.js
+│   │   │   ├── initialStates
+│   │   │   │   ├── ctaState.js
+│   │   │   └── totalCtaTypes.js
+│   │   ├── domains
+│   │   │   └── domainState.js
+│   │   ├── endScreen
+│   │   │   └── endScreenState.js
+│   │   ├── engagement
+│   │   │   ├── engagementFinder.js
+│   │   │   ├── initialStates
+│   │   │   │   ├── engState.js
+│   │   │   │   ├── pollState.js
+│   │   │   │   ├── quizState.js
+│   │   │   │   └── sliderPollState.js
+│   │   │   └── totalEngagementTypes.js
+│   │   ├── journey
+│   │   │   ├── journeyFinder.js
+│   │   │   └── totalJourneyTypes.js
+│   │   ├── pages
+│   │   │   └── pagesState.js
+│   │   ├── screens
+│   │   │   ├── ctaBackgroundTypes.js
+│   │   │   ├── screenFinder.js
+│   │   │   ├── screensSteps.js
+│   │   │   └── totalscreenType.js
+│   │   └── team
+│   │   ├── accessSections.js
+│   │   └── teamState.js
+│   ├── index.js
+│   ├── layouts
+│   │   ├── AuthPageLayout.jsx
+│   │   ├── AuthenticationLayout.jsx
+│   │   ├── GlobalSidebar.jsx
+│   │   ├── NonAuthPageLayout.jsx
+│   │   └── sidebar
+│   │   ├── SidebarMenu.jsx
+│   │   └── UserInfo.jsx
+│   ├── pages
+│   │   ├── Dashboard.jsx
+│   │   ├── NotFound.jsx
+│   │   ├── analytics
+│   │   │   ├── Performance.jsx
+│   │   │   └── Users.jsx
+│   │   ├── authentication
+│   │   │   ├── ConfirmEmail.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   ├── Login.jsx
+│   │   │   └── Register.jsx
+│   │   ├── domains
+│   │   │   ├── Domains.jsx
+│   │   │   └── Pages.jsx
+│   │   ├── screens
+│   │   │   ├── create
+│   │   │   │   ├── CreateCTA.jsx
+│   │   │   │   ├── CreateEndScreen.jsx
+│   │   │   │   └── CreateEng.jsx
+│   │   │   ├── dashboards
+│   │   │   │   ├── AIEngagementDashboards.jsx
+│   │   │   │   ├── CTAsDashboards.jsx
+│   │   │   │   ├── EndScreenDashboards.jsx
+│   │   │   │   └── EngagementDashboards.jsx
+│   │   │   └── edit
+│   │   │   ├── EditCTA.jsx
+│   │   │   ├── EditEndScreen.jsx
+│   │   │   └── EditEng.jsx
+│   │   └── setting
+│   │   ├── Profile.jsx
+│   │   ├── Security.jsx
+│   │   └── Team.jsx
+│   ├── presentation
+│   │   ├── analytics
+│   │   │   ├── performance
+│   │   │   │   ├── components
+│   │   │   │   │   ├── ConversionsChart.jsx
+│   │   │   │   │   ├── EngagementsChart.jsx
+│   │   │   │   │   ├── TimeChart.jsx
+│   │   │   │   ├── controllers
+│   │   │   │   │   ├── useConversionHandler.js
+│   │   │   │   │   ├── useEngagementsHandler.js
+│   │   │   │   │   ├── useTimeHandler.js
+│   │   │   │   └── workflow
+│   │   │   │   └── PerformanceWorkflow.jsx
+│   │   │   ├── reusable
+│   │   │   │   └── components
+│   │   │   │   ├── AnalyticsCard.jsx
+│   │   │   │   ├── AnalyticsChartAction.jsx
+│   │   │   │   └── WorldMap.jsx
+│   │   │   └── users
+│   │   │   ├── components
+│   │   │   │   ├── UsersBrowers.jsx
+│   │   │   │   ├── UsersChart.jsx
+│   │   │   ├── controllers
+│   │   │   │   ├── useBrowersHandler.js
+│   │   │   │   ├── useCitiesHandler.js
+│   │   │   └── workflow
+│   │   │   └── UserWorkflow.jsx
+│   │   ├── authentication
+│   │   │   ├── confirmEmail
+│   │   │   │   ├── controller
+│   │   │   │   │   ├── useCustomResendVerificationCode.js
+│   │   │   │   │   └── useVerifyEmail.js
+│   │   │   │   └── workflow
+│   │   │   │   └── ConfirmEmailWorkflow.jsx
+│   │   │   ├── forgotPassword
+│   │   │   │   ├── components
+│   │   │   │   │   ├── FirstStep.jsx
+│   │   │   │   │   └── SecondStep.jsx
+│   │   │   │   ├── controller
+│   │   │   │   │   └── useForgotPasswordHandler.js
+│   │   │   │   └── workflow
+│   │   │   │   └── ForgotPasswordWorkflow.jsx
+│   │   │   ├── login
+│   │   │   │   ├── controller
+│   │   │   │   │   └── useLoginHandler.js
+│   │   │   │   └── workflow
+│   │   │   │   └── LoginWorkflow.jsx
+│   │   │   ├── register
+│   │   │   │   ├── controller
+│   │   │   │   │   └── useRegisterHandler.js
+│   │   │   │   └── workflow
+│   │   │   │   └── RegisterWorkflow.jsx
+│   │   │   └── reusable
+│   │   │   ├── components
+│   │   │   │   ├── FacebookLoginComponent.jsx
+│   │   │   │   ├── GoogleLogin.jsx
+│   │   │   │   └── Sidebar.jsx
+│   │   │   └── controllers
+│   │   │   ├── useFacebookLoginHandler.js
+│   │   │   └── useGoogleLoginHandler.js
+│   │   ├── dashboard
+│   │   │   ├── components
+│   │   │   │   ├── AccountInfo
+│   │   │   │   │   ├── AccountInfo.jsx
+│   │   │   │   │   └── AccountInfoCard.jsx
+│   │   │   │   ├── PerformanceChart.jsx
+│   │   │   │   ├── TopBar.jsx
+│   │   │   │   └── logs
+│   │   │   │   ├── Logs.jsx
+│   │   │   │   └── LogsCard.jsx
+│   │   │   ├── controllers
+│   │   │   │   ├── useDashboardHandlers.js
+│   │   │   │   └── usePerformanceChartHandler.js
+│   │   │   ├── skeletons
+│   │   │   │   └── DashboardSkeletons.jsx
+│   │   │   └── workflows
+│   │   │   └── DashboardWorkflow.jsx
+│   │   ├── profile
+│   │   │   └── components
+│   │   │   └── ThemeSelector.jsx
+│   │   ├── screens
+│   │   │   ├── create
+│   │   │   │   ├── cta
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── CtaInfo.jsx
+│   │   │   │   │   │   ├── CtaLivePrev.jsx
+│   │   │   │   │   │   ├── Publish.jsx
+│   │   │   │   │   │   ├── SelectCta.jsx
+│   │   │   │   │   │   ├── Template.jsx
+│   │   │   │   │   │   ├── background
+│   │   │   │   │   │   │   ├── Background.jsx
+│   │   │   │   │   │   │   ├── components
+│   │   │   │   │   │   │   │   ├── BackgroundDrawer.jsx
+│   │   │   │   │   │   │   └── controllers
+│   │   │   │   │   │   │   └── useCrawlImageHandler.js
+│   │   │   │   │   │   └── ctas
+│   │   │   │   │   │   ├── components
+│   │   │   │   │   │   │   ├── NewsLetterSignup.jsx
+│   │   │   │   │   │   │   ├── Registrations.jsx
+│   │   │   │   │   │   │   └── link.jsx
+│   │   │   │   │   │   └── controllers
+│   │   │   │   │   │   └── isBackground.js
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   └── useCtaHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   ├── CreateCTAWorkflow.jsx
+│   │   │   │   │   ├── CtaDesign.jsx
+│   │   │   │   │   └── CurrentCtaWorkflow.jsx
+│   │   │   │   ├── endScreen
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── EndScreenInfo.jsx
+│   │   │   │   │   │   ├── EndScreenLivePrev.jsx
+│   │   │   │   │   │   └── Publish.jsx
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   └── useEndScreenHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   ├── CreateEndScreenWorkflow.jsx
+│   │   │   │   │   └── EndScreenDesign.jsx
+│   │   │   │   ├── eng
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── EngInfo.jsx
+│   │   │   │   │   │   └── engs
+│   │   │   │   │   │   ├── EngInputFields.jsx
+│   │   │   │   │   │   ├── Poll.jsx
+│   │   │   │   │   │   ├── Quiz.jsx
+│   │   │   │   │   │   └── SliderPoll.jsx
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   └── useEngHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   ├── CreateEngWorkflow.jsx
+│   │   │   │   │   ├── CurrentEngWorkflow.jsx
+│   │   │   │   │   └── EngDesign.jsx
+│   │   │   │   └── reusable
+│   │   │   │   └── components
+│   │   │   │   ├── CreateCtaTopBar.jsx
+│   │   │   │   ├── CreateEngTopBar.jsx
+│   │   │   ├── dashboards
+│   │   │   │   ├── aiEngagement
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── EngGrid.jsx
+│   │   │   │   │   │   ├── EngList.jsx
+│   │   │   │   │   │   └── TopBar.jsx
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   ├── useAIEngagementActionsHandler.js
+│   │   │   │   │   │   └── useAIEngagementHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   └── AIEngagementDashboardWorkflow.jsx
+│   │   │   │   ├── cta
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   └── useCtaDashboardHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   └── CtaDashboardWorkflow.jsx
+│   │   │   │   ├── endScreen
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   └── useEndScreenDashboardHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   └── EndscreenDashboardWorkflow.jsx
+│   │   │   │   ├── engagement
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   └── useEngDashboardHandler.js
+│   │   │   │   │   └── workflow
+│   │   │   │   │   └── EngagementDashboardWorkflow.jsx
+│   │   │   │   └── reusable
+│   │   │   │   ├── components
+│   │   │   │   │   ├── TopBar.jsx
+│   │   │   │   │   └── card
+│   │   │   │   │   ├── CardData.jsx
+│   │   │   │   │   └── ScreenCard.jsx
+│   │   │   │   ├── controllers
+│   │   │   │   │   └── useScreenHandlers.js
+│   │   │   │   └── workflow
+│   │   │   │   └── ScreensWorkflow.jsx
+│   │   │   └── skeletons
+│   │   │   └── ScreensSkeletons.jsx
+│   │   ├── setting
+│   │   │   ├── profile
+│   │   │   │   ├── components
+│   │   │   │   │   ├── ProfileForm.jsx
+│   │   │   │   │   └── TopBar.jsx
+│   │   │   │   ├── controllers
+│   │   │   │   │   └── useProfileHandler.js
+│   │   │   │   └── workflow
+│   │   │   │   └── ProfileWorkflow.jsx
+│   │   │   ├── reusable
+│   │   │   │   └── skeletons
+│   │   │   │   └── SettingSkeletons.jsx
+│   │   │   ├── security
+│   │   │   │   ├── components
+│   │   │   │   │   ├── AccountInfo.jsx
+│   │   │   │   │   └── ResetPassword.jsx
+│   │   │   │   └── workflow
+│   │   │   │   └── SecurityWorkflow.jsx
+│   │   │   └── team
+│   │   │   ├── components
+│   │   │   │   ├── CreateTeam.jsx
+│   │   │   │   ├── InviteTeamMember.jsx
+│   │   │   ├── controllers
+│   │   │   │   ├── useTeamActionHandler.js
+│   │   │   │   └── useTeamHandler.js
+│   │   │   ├── skeletons
+│   │   │   │   └── TeamSkeleton.jsx
+│   │   │   └── workflow
+│   │   │   └── TeamWorkflow.jsx
+│   │   └── website
+│   │   ├── domains
+│   │   │   ├── components
+│   │   │   │   ├── AddDomain.jsx
+│   │   │   │   ├── TopBar.jsx
+│   │   │   │   └── verify
+│   │   │   │   ├── DnsRecord.jsx
+│   │   │   │   ├── Email.jsx
+│   │   │   │   └── VerifyDomain.jsx
+│   │   │   ├── controllers
+│   │   │   │   └── useDomainsHandler.js
+│   │   │   └── workflows
+│   │   │   ├── DomainDrawer.jsx
+│   │   │   └── DomainsWorkflow.jsx
+│   │   └── pages
+│   │   ├── components
+│   │   │   ├── AllPages.jsx
+│   │   │   └── TopBar.jsx
+│   │   ├── controllers
+│   │   │   ├── usePageDetailsHandler.js
+│   │   │   └── usePagesHandler.js
+│   │   └── workflows
+│   │   └── PagesWorkflow.jsx
+│   ├── redux
+│   │   ├── slices
+│   │   │   ├── analytics
+│   │   │   │   └── analyticsSlice.js
+│   │   │   ├── iframe
+│   │   │   │   └── iframeSlice.js
+│   │   │   ├── pages
+│   │   │   │   └── pagesSlice.js
+│   │   │   ├── team
+│   │   │   │   └── teamSlice.js
+│   │   │   └── user
+│   │   │   └── profileSlice.js
+│   │   └── store.js
+│   ├── reportWebVitals.js
+│   ├── routes
+│   │   └── AppRouter.jsx
+│   ├── services
+│   │   └── api.js
+│   ├── setupTests.js
+│   ├── styles
+│   │   └── global.css
+│   ├── theme
+│   │   └── themeData.js
+│   └── utils
+│   ├── components
+│   │   ├── ColorSelection.jsx
+│   │   ├── TitleLeftBorder.jsx
+│   │   ├── TopBar.jsx
+│   │   └── livePreview
+│   │   ├── component
+│   │   │   ├── LivePreviewButton.jsx
+│   │   │   ├── LivePreviewDrawer.jsx
+│   │   │   └── LivePreviewIframe.jsx
+│   │   ├── controllers
+│   │   │   └── useIframeCommunication.js
+│   │   ├── skeleton
+│   │   │   └── LoadingSkeleton.jsx
+│   │   └── workflow
+│   │   └── LivePreview.jsx
+│   ├── controllers
+│   │   ├── imageConversions.js
+│   │   ├── isValidHttpUrl.js
+│   │   ├── logoutHandler.js
+│   │   ├── useAuthHandler.js
+│   │   ├── useGetTitleHeight.js
+│   │   └── useSupportHandler.js
+│   └── formatting
+│   ├── formateDate.js
+│   └── formateTime.js
+└── yarn.lock
+```
