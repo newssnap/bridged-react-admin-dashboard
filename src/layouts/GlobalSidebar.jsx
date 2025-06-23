@@ -19,7 +19,7 @@ const SkeletonLoader = () => (
 );
 
 function GlobalSidebar() {
-  const { data, isLoading } = useUserInfoQuery();
+  // const { data, isLoading } = useUserInfoQuery();
   return (
     <>
       <Row
@@ -77,7 +77,8 @@ function GlobalSidebar() {
           </Col>
 
           {/* User info or Skeleton loader during loading */}
-          {isLoading ? <SkeletonLoader /> : <UserInfo data={data} />}
+          {/* {isLoading ? <SkeletonLoader /> : <UserInfo data={{}} />} */}
+          <UserInfo data={{}} />
         </Col>
       </Row>
     </>

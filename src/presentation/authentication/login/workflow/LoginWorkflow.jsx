@@ -3,14 +3,9 @@ import AuthenticationLayout from '../../../../layouts/AuthenticationLayout';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import useLoginHandler from '../controller/useLoginHandler';
-import GoogleLogin from '../../reusable/components/GoogleLogin';
-import useGoogleLoginHandler from '../../reusable/controllers/useGoogleLoginHandler';
-import useFacebookLoginHandler from '../../reusable/controllers/useFacebookLoginHandler';
 
 function LoginWorkflow() {
   const { isLoading, loginHandler } = useLoginHandler();
-  const { isLoading: isGoogleLoading, googleLoginHandler } = useGoogleLoginHandler();
-  const { isLoading: isFacebookLoading } = useFacebookLoginHandler();
   const [form] = Form.useForm();
 
   return (
@@ -87,9 +82,7 @@ function LoginWorkflow() {
             </Divider>
             <Row gutter={[30, 30]}>
               {/* Google Sign-In */}
-              <Col span={24}>
-                <GoogleLogin googleLoginHandler={googleLoginHandler} />
-              </Col>
+              <Col span={24}>{/* <GoogleLogin googleLoginHandler={googleLoginHandler} /> */}</Col>
 
               {/* Facebook Sign-In */}
               {/* <Col {...{ xs: 24, sm: 24, md: 12, lg: 12 }}>
@@ -101,12 +94,7 @@ function LoginWorkflow() {
           </Col>
           <Col style={{ alignSelf: 'end' }} span={24}>
             <Form.Item>
-              <Button
-                loading={isLoading || isGoogleLoading || isFacebookLoading}
-                block
-                type="primary"
-                htmlType="submit"
-              >
+              <Button loading={isLoading} block type="primary" htmlType="submit">
                 Sign In
               </Button>
             </Form.Item>

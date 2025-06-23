@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Col, Dropdown, Button, Row, Typography } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import Icon from '../../utils/components/Icon';
-import SupportAndFeedback from '../../utils/components/SupportAndFeedback';
 import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
@@ -170,11 +169,6 @@ const UserInfo = ({ data }) => {
 
       {/* User info  */}
       <Col {...{ xs: 0, sm: 0, md: 24, lg: 24, xl: 24 }}>{userInfo}</Col>
-      <SupportAndFeedback
-        isDrawerOpen={isDrawerOpen}
-        setIsDrawerOpen={setIsDrawerOpen}
-        supportType={supportType}
-      />
     </>
   );
 };
