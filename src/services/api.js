@@ -57,8 +57,12 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+    userInfo: builder.query({
+      query: () => '/User/Profile',
+      providesTags: ['userInfo'],
+    }),
   }),
 });
 
 // Export hooks for each endpoint
-export const { useLoginMutation } = bridgedApi;
+export const { useLoginMutation, useUserInfoQuery } = bridgedApi;
