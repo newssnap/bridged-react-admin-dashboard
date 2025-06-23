@@ -1,8 +1,8 @@
-import { useLoginMutation } from "../../../../services/api";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { notification } from "antd";
-import { setAuthData } from "../../../../redux/slices/auth/authSlice";
+import { useLoginMutation } from '../../../../services/api';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { notification } from 'antd';
+import { setAuthData } from '../../../../redux/slices/auth/authSlice';
 
 // Custom hook for handling login functionality
 const useLoginHandler = () => {
@@ -11,59 +11,48 @@ const useLoginHandler = () => {
   const [_LOGIN, { isLoading }] = useLoginMutation();
 
   // Function to handle the login process
-  const loginHandler = async (values) => {
+  const loginHandler = async values => {
     try {
       const response = await _LOGIN(values);
 
       if (response?.data?.success) {
-        const { accessToken, refreshToken, role, isEmailVerified } =
-          response?.data?.data;
+        const { accessToken, refreshToken, role } = response?.data?.data;
 
-        if (!isEmailVerified) {
-          // User's email is not verified, navigate to the email confirmation page
-          notification.success({
-            message: "Please check your email to confirm your account",
-            placement: "bottomRight",
-            showProgress: true,
-          });
-          navigate(`/confirmemail/${values.email}`);
-        } else {
-          // Email is verified, set tokens and user data in local storage
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-          localStorage.setItem("isUser", true);
+        // Email is verified, set tokens and user data in local storage
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('isUser', true);
 
-          // Dispatch user authentication data to Redux
-          dispatch(
-            setAuthData({
-              isAuth: true,
-              accessToken,
-              role,
-              email: values.email,
-            })
-          );
+        // Dispatch user authentication data to Redux
+        dispatch(
+          setAuthData({
+            isAuth: true,
+            accessToken,
+            role,
+            email: values.email,
+          })
+        );
 
-          // Navigate to the main page and show a success message
-          navigate("/");
-          notification.success({
-            message: "Login Successful",
-            placement: "bottomRight",
-            showProgress: true,
-          });
-        }
+        // Navigate to the main page and show a success message
+        navigate('/');
+        notification.success({
+          message: 'Login Successful',
+          placement: 'bottomRight',
+          showProgress: true,
+        });
       }
 
       if (response?.error) {
         // Handle and display the error message if login is unsuccessful
         notification.error({
           message: response?.error?.data?.errorObject?.userErrorText,
-          placement: "bottomRight",
+          placement: 'bottomRight',
           showProgress: true,
         });
       }
     } catch (error) {
       // Handle unexpected errors and log them
-      console.error("Login error:", error);
+      console.error('Login error:', error);
     }
   };
 

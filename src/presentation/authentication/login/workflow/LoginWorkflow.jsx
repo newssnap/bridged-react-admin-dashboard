@@ -32,16 +32,16 @@ function LoginWorkflow() {
             <Row gutter={[30, 15]}>
               <Col {...{ xs: 24, sm: 24, md: 24, lg: 24 }}>
                 <Form.Item
-                  label="Email"
-                  name="email"
+                  label="Username"
+                  name="username"
                   rules={[
                     {
-                      type: 'email',
+                      type: 'username',
                       required: true,
                     },
                   ]}
                 >
-                  <Input placeholder="Enter your email" />
+                  <Input placeholder="Enter your username" />
                 </Form.Item>
               </Col>
               <Col {...{ xs: 24, sm: 24, md: 24, lg: 24 }}>
