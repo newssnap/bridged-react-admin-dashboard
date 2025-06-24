@@ -3,7 +3,7 @@ import { Col, Dropdown, Button, Row, Typography } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import Icon from '../../utils/components/Icon';
 import { useNavigate } from 'react-router-dom';
-
+import logoutHandler from '../../utils/controllers/logoutHandler';
 const { Title } = Typography;
 
 const UserInfo = ({ data }) => {
@@ -47,22 +47,30 @@ const UserInfo = ({ data }) => {
     //     </Row>
     //   ),
     // },
+    // {
+    //   key: '2',
+    //   label: 'Support',
+    //   icon: <Icon style={{ marginRight: 'var(--mpr-3)' }} name="QuestionOutlined" />,
+    //   onClick: () => {
+    //     setSupportType('Support');
+    //     setIsDrawerOpen(true);
+    //   },
+    // },
+    // {
+    //   key: '3',
+    //   label: 'Feedback',
+    //   icon: <Icon style={{ marginRight: 'var(--mpr-3)' }} name="MessageOutlined" />,
+    //   onClick: () => {
+    //     setSupportType('Feedback');
+    //     setIsDrawerOpen(true);
+    //   },
+    // },
     {
-      key: '2',
-      label: 'Support',
-      icon: <Icon style={{ marginRight: 'var(--mpr-3)' }} name="QuestionOutlined" />,
-      onClick: () => {
-        setSupportType('Support');
-        setIsDrawerOpen(true);
-      },
-    },
-    {
-      key: '3',
-      label: 'Feedback',
+      key: '4',
+      label: 'Logout',
       icon: <Icon style={{ marginRight: 'var(--mpr-3)' }} name="MessageOutlined" />,
       onClick: () => {
-        setSupportType('Feedback');
-        setIsDrawerOpen(true);
+        logoutHandler();
       },
     },
   ];
