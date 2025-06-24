@@ -1,15 +1,41 @@
-import { theme, Typography, Table, Avatar, Tag, Space, Dropdown, Button } from 'antd';
-import { MoreOutlined, UserOutlined, SettingOutlined, KeyOutlined } from '@ant-design/icons';
+import {
+  theme,
+  Typography,
+  Table,
+  Avatar,
+  Tag,
+  Space,
+  Dropdown,
+  Button,
+  Tooltip,
+  Input,
+  Drawer,
+  Form,
+  Checkbox,
+  notification,
+} from 'antd';
+import {
+  MoreOutlined,
+  UserOutlined,
+  SettingOutlined,
+  KeyOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
-
+import { useState, useMemo } from 'react';
+import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 const { Title } = Typography;
+const { Search } = Input;
 
 function DashboardWorkflow() {
   const {
     token: { colorBgLayout },
   } = theme.useToken();
 
-  const { users, isLoading, error } = useDashboardHandler();
+  const { users, isLoading, error, handleAddUser, isAddingUser } = useDashboardHandler();
+  const [searchText, setSearchText] = useState('');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [form] = Form.useForm();
 
   const handleMenuClick = (key, record) => {
     console.log('Menu clicked:', key, record);
@@ -27,20 +53,21 @@ function DashboardWorkflow() {
     }
   };
 
-  const getMenuItems = record => [
-    {
-      key: 'portal',
-      icon: <KeyOutlined />,
-      label: `Login To Portal`,
-      onClick: () => handleMenuClick('portal', record),
-    },
-    {
-      key: 'dashboard',
-      icon: <UserOutlined />,
-      label: `Login To Old Dashboard`,
-      onClick: () => handleMenuClick('dashboard', record),
-    },
-  ];
+  const handleAddUserSubmit = async () => {
+    const values = await form.validateFields();
+    const result = await handleAddUser(values, handleCloseDrawer);
+  };
+
+  const handleCloseDrawer = () => {
+    form.resetFields();
+    setIsDrawerOpen(false);
+  };
+
+  // Filter users based on search text
+  const filteredUsers = useMemo(() => {
+    if (!searchText) return users;
+    return users.filter(user => user.email.toLowerCase().includes(searchText.toLowerCase()));
+  }, [users, searchText]);
 
   const columns = [
     {
@@ -88,15 +115,30 @@ function DashboardWorkflow() {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: getMenuItems(record),
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<MoreOutlined />} size="small" style={{ border: 'none' }} />
-        </Dropdown>
+        <Space>
+          <Tooltip title={'Login to old dashboard'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => {
+                handleMenuClick('dashboard', record);
+              }}
+            >
+              <KeyOutlined />
+            </Button>
+          </Tooltip>
+          <Tooltip title={'Login to portal'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => {
+                handleMenuClick('portal', record);
+              }}
+            >
+              <UserOutlined />
+            </Button>
+          </Tooltip>
+        </Space>
       ),
     },
   ];
@@ -106,15 +148,69 @@ function DashboardWorkflow() {
       <Title level={2} style={{ marginBottom: '24px' }}>
         Users
       </Title>
+      <Space size={'large'} style={{ maxWidth: '400px' }}>
+        <Search
+          placeholder="Search by email"
+          allowClear
+          size="large"
+          onChange={e => setSearchText(e.target.value)}
+          style={{ maxWidth: '400px' }}
+        />
+        <Button
+          size="large"
+          type="primary"
+          style={{ width: '100px' }}
+          onClick={() => setIsDrawerOpen(true)}
+        >
+          Add User
+        </Button>
+      </Space>
+
+      <Drawer
+        title="Add User"
+        width={720}
+        onClose={handleCloseDrawer}
+        open={isDrawerOpen}
+        bodyStyle={{ paddingBottom: 80 }}
+        footer={
+          <div style={{ textAlign: 'right' }}>
+            <Space>
+              <Button type="primary" onClick={handleAddUserSubmit} loading={isAddingUser}>
+                Add User
+              </Button>
+              <Button onClick={handleCloseDrawer}>Close</Button>
+            </Space>
+          </div>
+        }
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: 'Please input the username!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: 'Please input the password!' }]}
+          >
+            <Input.Password />
+          </Form.Item>
+        </Form>
+      </Drawer>
 
       <Table
         columns={columns}
-        dataSource={users}
+        dataSource={filteredUsers}
         rowKey="_id"
         loading={isLoading}
+        bordered
         pagination={{
-          pageSize: 10,
-          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} users`,
+          position: ['bottomLeft'],
+          showSizeChanger: false,
+          showQuickJumper: false,
         }}
         scroll={{ x: 800 }}
       />

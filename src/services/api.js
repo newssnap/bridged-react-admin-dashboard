@@ -18,7 +18,7 @@ const baseQuery = fetchBaseQuery({
 export const bridgedApi = createApi({
   reducerPath: 'bridgedApi',
   baseQuery,
-  tagTypes: ['userInfo'],
+  tagTypes: ['userInfo', 'users'],
   endpoints: builder => ({
     // User login mutation
     login: builder.mutation({
@@ -34,10 +34,19 @@ export const bridgedApi = createApi({
     }),
     findAllUsers: builder.query({
       query: () => '/User/Admin/FindAllUsers',
-      providesTags: ['userInfo'],
+      providesTags: ['users'],
+    }),
+    addUser: builder.mutation({
+      query: data => ({
+        url: '/User/Admin/CreateByAdmin',
+        method: 'POST',
+        body: data,
+      }),
+      providesTags: ['users'],
     }),
   }),
 });
 
 // Export hooks for each endpoint
-export const { useLoginMutation, useUserInfoQuery, useFindAllUsersQuery } = bridgedApi;
+export const { useLoginMutation, useUserInfoQuery, useFindAllUsersQuery, useAddUserMutation } =
+  bridgedApi;
