@@ -42,7 +42,7 @@ export const bridgedApi = createApi({
         method: 'POST',
         body: data,
       }),
-      providesTags: ['users'],
+      invalidatesTags: ['users'],
     }),
   }),
 });

@@ -13,6 +13,7 @@ import {
   Form,
   Checkbox,
   notification,
+  Flex,
 } from 'antd';
 import {
   MoreOutlined,
@@ -20,10 +21,12 @@ import {
   SettingOutlined,
   KeyOutlined,
   SearchOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
 import { useState, useMemo } from 'react';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
+import formatDate from '../../../utils/formatting/formateDate';
 const { Title } = Typography;
 const { Search } = Input;
 
@@ -71,42 +74,58 @@ function DashboardWorkflow() {
 
   const columns = [
     {
-      title: 'User',
+      title: '#',
       key: 'user',
+      width: 15,
+      align: 'center',
       render: (_, record) => (
-        <Space>
-          <Avatar src={record.picture} alt={record.fullname} size={40}>
+        <Space align="center">
+          <Avatar src={record.picture} alt={record.fullname} size={50}>
             {record.fullname.charAt(0).toUpperCase()}
           </Avatar>
-          <div>
-            <div style={{ fontWeight: 500 }}>{record.fullname}</div>
-          </div>
         </Space>
       ),
+    },
+    {
+      title: 'Fullname',
+      dataIndex: 'fullname',
+      key: 'fullname',
+      width: 30,
+      render: fullname => <span style={{ fontSize: '14px' }}>{fullname}</span>,
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      width: 60,
       render: email => <span style={{ fontSize: '14px' }}>{email}</span>,
     },
     {
       title: 'Last Login',
       dataIndex: 'lastLoggedInDate',
       key: 'lastLoggedInDate',
-      render: date => <span style={{ fontSize: '14px' }}>{date}</span>,
+      align: 'center',
+      width: 40,
+      render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
-      title: 'Verification Code',
+      title: () => <span style={{ fontSize: '12px' }}>Verification Code</span>,
       dataIndex: 'verificationCode',
       key: 'verificationCode',
+      align: 'center',
+      width: 20,
       render: code => <span style={{ fontSize: '14px' }}>{code}</span>,
     },
     {
       title: 'Role',
       key: 'role',
+      width: 30,
+      align: 'center',
       render: (_, record) => (
-        <Tag color={record.isTeamOwner ? 'blue' : 'default'}>
+        <Tag
+          color={record.isTeamOwner ? 'blue' : 'default'}
+          style={{ width: '100%', textAlign: 'center' }}
+        >
           {record.isTeamOwner ? 'Team Owner' : 'Member'}
         </Tag>
       ),
@@ -114,6 +133,9 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
+      width: 30,
+      fixed: 'right',
+      align: 'center',
       render: (_, record) => (
         <Space>
           <Tooltip title={'Login to old dashboard'}>
@@ -148,7 +170,16 @@ function DashboardWorkflow() {
       <Title level={2} style={{ marginBottom: '24px' }}>
         Users
       </Title>
-      <Space size={'large'} style={{ maxWidth: '400px' }}>
+      <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+        <Button
+          size="large"
+          type="primary"
+          style={{ width: '100px' }}
+          onClick={() => setIsDrawerOpen(true)}
+        >
+          <PlusOutlined />
+          Add User
+        </Button>
         <Search
           placeholder="Search by email"
           allowClear
@@ -156,15 +187,7 @@ function DashboardWorkflow() {
           onChange={e => setSearchText(e.target.value)}
           style={{ maxWidth: '400px' }}
         />
-        <Button
-          size="large"
-          type="primary"
-          style={{ width: '100px' }}
-          onClick={() => setIsDrawerOpen(true)}
-        >
-          Add User
-        </Button>
-      </Space>
+      </Flex>
 
       <Drawer
         title="Add User"
@@ -212,7 +235,7 @@ function DashboardWorkflow() {
           showSizeChanger: false,
           showQuickJumper: false,
         }}
-        scroll={{ x: 800 }}
+        scroll={{ x: 990 }}
       />
     </Space>
   );

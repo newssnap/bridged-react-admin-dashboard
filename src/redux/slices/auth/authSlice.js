@@ -1,14 +1,13 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 
 // Create a Redux slice for the 'auth' portion of the state
 export const authSlice = createSlice({
-  name: "auth", // The name of the slice
+  name: 'auth', // The name of the slice
   initialState: {
     data: {
       isAuth: true, // Set the initial 'isAuth' state to false
-      accessToken: "",
-      role: "",
-      email: "",
+      accessToken: '',
+      fullname: '',
     },
   },
   reducers: {

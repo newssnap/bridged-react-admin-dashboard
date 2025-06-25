@@ -16,20 +16,18 @@ const useLoginHandler = () => {
       const response = await _LOGIN(values);
 
       if (response?.data?.success) {
-        const { accessToken, refreshToken, role } = response?.data?.data;
+        const { accessToken, fullname } = response?.data?.data;
 
         // Email is verified, set tokens and user data in local storage
         localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('isUser', true);
+        localStorage.setItem('fullname', fullname);
 
         // Dispatch user authentication data to Redux
         dispatch(
           setAuthData({
             isAuth: true,
             accessToken,
-            role,
-            email: values.email,
+            fullname,
           })
         );
 
