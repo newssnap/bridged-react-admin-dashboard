@@ -17,6 +17,13 @@ const SidebarMenu = ({ secondary }) => {
       onClick: () => navigate('/'),
       path: '/',
     },
+    {
+      key: 'defaultChecklist',
+      label: 'Default Checklist',
+      icon: getIcon('BarChartOutlined'),
+      onClick: () => navigate('/defaultChecklist'),
+      path: '/defaultChecklist',
+    },
   ];
 
   const bottomNavItems = [

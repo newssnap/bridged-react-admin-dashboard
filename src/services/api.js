@@ -26,7 +26,7 @@ const baseQuery = fetchBaseQuery({
 export const bridgedApi = createApi({
   reducerPath: 'bridgedApi',
   baseQuery,
-  tagTypes: ['userInfo', 'users'],
+  tagTypes: ['userInfo', 'users', 'defaultChecklists'],
   endpoints: builder => ({
     // User login mutation
     login: builder.mutation({
@@ -124,6 +124,50 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+    getDefaultChecklist: builder.query({
+      query: () => ({
+        url: '/checklists/Admin/DefaultChecklists',
+        method: 'GET',
+      }),
+      providesTags: ['defaultChecklists'],
+    }),
+    addDefaultChecklist: builder.mutation({
+      query: data => ({
+        url: '/checklists/Admin',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['defaultChecklists'],
+    }),
+    deleteDefaultChecklist: builder.mutation({
+      query: id => ({
+        url: `/checklists/Admin/?_id=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['defaultChecklists'],
+    }),
+    updateDefaultChecklist: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/checklists/Admin/?_id=${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['defaultChecklists'],
+    }),
+    uploadImage: builder.mutation({
+      query: data => ({
+        url: '/Media/Admin/Upload?type=image',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    updateTask: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/tasks/Admin`,
+        method: 'PUT',
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -142,4 +186,10 @@ export const {
   useGetSEOV3DataMutation,
   useGetSEOV4DataMutation,
   useGetBacklinkUsageDataMutation,
+  useGetDefaultChecklistQuery,
+  useAddDefaultChecklistMutation,
+  useDeleteDefaultChecklistMutation,
+  useUpdateDefaultChecklistMutation,
+  useUploadImageMutation,
+  useUpdateTaskMutation,
 } = bridgedApi;

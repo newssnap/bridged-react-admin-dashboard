@@ -7,7 +7,7 @@ import { Row, Spin } from 'antd';
 const LazyNotFound = lazy(() => import('../pages/NotFound'));
 const LazyLogin = lazy(() => import('../pages/authentication/Login'));
 const LazyDashboard = lazy(() => import('../pages/Dashboard'));
-
+const LazyDefaultChecklist = lazy(() => import('../pages/DefaultChecklist'));
 function AppRouter() {
   // Function to handle page type and layout
   const handlePageTypeAndLayout = (Children, isProtected) => {
@@ -33,17 +33,18 @@ function AppRouter() {
       component: LazyDashboard,
       isProtected: true,
     },
+    {
+      path: '/defaultChecklist',
+      component: LazyDefaultChecklist,
+      isProtected: true,
+    },
   ];
 
   return (
     <Router>
       <Routes>
         {routes.map(({ path, component, isProtected }) => (
-          <Route
-            key={path}
-            path={path}
-            element={handlePageTypeAndLayout(component, isProtected)}
-          />
+          <Route key={path} path={path} element={handlePageTypeAndLayout(component, isProtected)} />
         ))}
         <Route key="*" path="*" element={handlePageTypeAndLayout(LazyNotFound, true)} />
       </Routes>

@@ -280,7 +280,7 @@ function DashboardWorkflow() {
 
       <Drawer
         title="Add User"
-        width={720}
+        width={400}
         onClose={handleCloseDrawer}
         open={isDrawerOpen}
         bodyStyle={{ paddingBottom: 80 }}
@@ -316,7 +316,7 @@ function DashboardWorkflow() {
       {/* Report Generation Drawer */}
       <Drawer
         title="Generate Report"
-        width={720}
+        width={400}
         onClose={handleCloseReportDrawer}
         open={isExportReportOpen}
         bodyStyle={{ paddingBottom: 80 }}
