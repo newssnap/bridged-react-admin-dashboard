@@ -14,21 +14,26 @@ import {
   Checkbox,
   notification,
   Flex,
+  Select,
+  DatePicker,
 } from 'antd';
 import {
   MoreOutlined,
   UserOutlined,
-  SettingOutlined,
+  LoadingOutlined,
   KeyOutlined,
   SearchOutlined,
   PlusOutlined,
+  FileExcelOutlined,
 } from '@ant-design/icons';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
-import { useState, useMemo } from 'react';
+import { useReportHandler } from '../controllers/useReportHandler';
+import { useState, useMemo, useEffect } from 'react';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 const { Title } = Typography;
 const { Search } = Input;
+const { RangePicker } = DatePicker;
 
 function DashboardWorkflow() {
   const {
@@ -38,7 +43,19 @@ function DashboardWorkflow() {
   const { users, isLoading, error, handleAddUser, isAddingUser } = useDashboardHandler();
   const [searchText, setSearchText] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isExportReportOpen, setIsExportReportOpen] = useState(false);
   const [form] = Form.useForm();
+  const [reportForm] = Form.useForm();
+  const {
+    userDomains,
+    handleGenerateUserToken,
+    handleCustomerReport,
+    isGeneratingToken,
+    handleUsageReport,
+    reportGenerateLoading,
+  } = useReportHandler();
+  const [selectedReportTypes, setSelectedReportTypes] = useState([]);
+  const [currentUserToken, setCurrentUserToken] = useState(null);
 
   const handleMenuClick = (key, record) => {
     console.log('Menu clicked:', key, record);
@@ -64,6 +81,69 @@ function DashboardWorkflow() {
   const handleCloseDrawer = () => {
     form.resetFields();
     setIsDrawerOpen(false);
+  };
+
+  const handleCloseReportDrawer = () => {
+    reportForm.resetFields();
+    setSelectedReportTypes([]);
+    setIsExportReportOpen(false);
+    setCurrentUserToken(null);
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      const values = await reportForm.validateFields();
+      console.log('Report values:', values);
+
+      if (selectedReportTypes.includes('customer')) {
+        const reportData = await handleCustomerReport({
+          startDate: values.dateRange[0].format('YYYY-MM-DD'),
+          endDate: values.dateRange[1].format('YYYY-MM-DD'),
+        });
+        console.log('Report data:', reportData);
+      }
+      if (selectedReportTypes.includes('productivity')) {
+        const reportData = await handleUsageReport({
+          startDate: values.dateRange[0].format('YYYY-MM-DD'),
+          endDate: values.dateRange[1].format('YYYY-MM-DD'),
+          hostnames: values.domain,
+        });
+        console.log('Report data:', reportData);
+      }
+
+      // Add your report generation logic here
+      notification.success({
+        message: 'Report Generated',
+        description: 'Your report has been generated successfully.',
+      });
+      handleCloseReportDrawer();
+    } catch (error) {
+      console.error('Report generation error:', error);
+      notification.error({
+        message: 'Report Generation Failed',
+        description: 'Failed to generate report. Please try again.',
+      });
+    }
+  };
+
+  const handleReportTypeChange = checkedValues => {
+    setSelectedReportTypes(checkedValues);
+  };
+
+  const handleExportReportClick = async record => {
+    try {
+      const token = await handleGenerateUserToken({
+        _id: record._id,
+      });
+      setCurrentUserToken(token);
+      setIsExportReportOpen(true);
+    } catch (error) {
+      console.error('Error generating user token:', error);
+      notification.error({
+        message: 'Error',
+        description: 'Failed to generate user token. Please try again.',
+      });
+    }
   };
 
   // Filter users based on search text
@@ -105,7 +185,7 @@ function DashboardWorkflow() {
       dataIndex: 'lastLoggedInDate',
       key: 'lastLoggedInDate',
       align: 'center',
-      width: 40,
+      width: 15,
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
@@ -119,13 +199,10 @@ function DashboardWorkflow() {
     {
       title: 'Role',
       key: 'role',
-      width: 30,
+      width: 15,
       align: 'center',
       render: (_, record) => (
-        <Tag
-          color={record.isTeamOwner ? 'blue' : 'default'}
-          style={{ width: '100%', textAlign: 'center' }}
-        >
+        <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
           {record.isTeamOwner ? 'Team Owner' : 'Member'}
         </Tag>
       ),
@@ -133,7 +210,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: 30,
+      width: 20,
       fixed: 'right',
       align: 'center',
       render: (_, record) => (
@@ -158,6 +235,18 @@ function DashboardWorkflow() {
               }}
             >
               <UserOutlined />
+            </Button>
+          </Tooltip>
+          <Tooltip title={'Export Report'}>
+            <Button
+              type="text"
+              shape="circle"
+              disabled={isGeneratingToken}
+              onClick={() => {
+                handleExportReportClick(record);
+              }}
+            >
+              {isGeneratingToken ? <LoadingOutlined /> : <FileExcelOutlined />}
             </Button>
           </Tooltip>
         </Space>
@@ -220,6 +309,74 @@ function DashboardWorkflow() {
             rules={[{ required: true, message: 'Please input the password!' }]}
           >
             <Input.Password />
+          </Form.Item>
+        </Form>
+      </Drawer>
+
+      {/* Report Generation Drawer */}
+      <Drawer
+        title="Generate Report"
+        width={720}
+        onClose={handleCloseReportDrawer}
+        open={isExportReportOpen}
+        bodyStyle={{ paddingBottom: 80 }}
+        footer={
+          <div style={{ textAlign: 'right' }}>
+            <Space>
+              <Button type="primary" onClick={handleGenerateReport} loading={reportGenerateLoading}>
+                Generate Report
+              </Button>
+              <Button onClick={handleCloseReportDrawer}>Close</Button>
+            </Space>
+          </div>
+        }
+      >
+        <Form form={reportForm} layout="vertical">
+          <Form.Item
+            name="reportTypes"
+            label="Report Types"
+            rules={[{ required: true, message: 'Please select at least one report type!' }]}
+          >
+            <Checkbox.Group
+              options={[
+                { label: 'Customer Facing Report', value: 'customer' },
+                { label: 'Productivity Usage Report', value: 'productivity' },
+              ]}
+              onChange={handleReportTypeChange}
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="domain"
+            label="User Domain"
+            rules={[
+              {
+                required: selectedReportTypes.includes('productivity'),
+                message: 'Please select a domain for Productivity Usage Report!',
+              },
+            ]}
+          >
+            <Select
+              placeholder="Select a domain"
+              loading={reportGenerateLoading}
+              disabled={!selectedReportTypes.includes('productivity')}
+              mode="multiple"
+              options={
+                userDomains?.map(domain => ({
+                  label: domain.host,
+                  value: domain.host,
+                })) || []
+              }
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="dateRange"
+            label="Date Range"
+            rules={[{ required: true, message: 'Please select date range!' }]}
+          >
+            <RangePicker style={{ width: '100%' }} placeholder={['Start Date', 'End Date']} />
           </Form.Item>
         </Form>
       </Drawer>
