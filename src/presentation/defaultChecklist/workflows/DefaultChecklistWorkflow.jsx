@@ -9,29 +9,22 @@ import {
   Form,
   Input,
   Flex,
-  Drawer,
   message,
   Popconfirm,
-  Upload,
-  List,
-  Image,
   Tooltip,
 } from 'antd';
 import { useDefaultChecklistHandler } from '../controllers/useDefaultChecklistHandler';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import {
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  UploadOutlined,
-  CloseOutlined,
-  OrderedListOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, OrderedListOutlined } from '@ant-design/icons';
 import { render } from '@testing-library/react';
+
+// Import new drawer components
+import ChecklistDrawer from '../components/ChecklistDrawer';
+import TaskManagementDrawer from '../components/TaskManagementDrawer';
+import TaskFormDrawer from '../components/TaskFormDrawer';
 
 const { Title } = Typography;
 const { Search } = Input;
-const { TextArea } = Input;
 
 const DefaultChecklistWorkflow = () => {
   const {
@@ -380,169 +373,39 @@ const DefaultChecklistWorkflow = () => {
       </Flex>
       <Table dataSource={filteredChecklists} loading={isLoading} columns={columns} bordered />
 
-      {/* Checklist Drawer */}
-      <Drawer
-        title={isEditing ? 'Edit Checklist' : 'Add New Checklist'}
-        placement="right"
+      {/* Checklist Drawer Component */}
+      <ChecklistDrawer
+        isOpen={isDrawerOpen}
         onClose={handleDrawerClose}
-        open={isDrawerOpen}
-        width={400}
-        footer={
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleDrawerClose}>Cancel</Button>
-            <Button
-              type="primary"
-              onClick={() => form.submit()}
-              loading={isAddingDefaultChecklist || isUpdatingDefaultChecklist}
-            >
-              {isEditing ? 'Update' : 'Add'}
-            </Button>
-          </Space>
-        }
-      >
-        <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-          <Form.Item
-            name="title"
-            label="Title"
-            rules={[
-              {
-                required: true,
-                message: 'Please enter a title for the checklist',
-              },
-            ]}
-          >
-            <Input placeholder="Enter checklist title" size="large" />
-          </Form.Item>
-        </Form>
-      </Drawer>
+        isEditing={isEditing}
+        form={form}
+        onSubmit={handleFormSubmit}
+        isLoading={isAddingDefaultChecklist || isUpdatingDefaultChecklist}
+      />
 
-      {/* Task Management Drawer */}
-      <Drawer
-        title={`Tasks - ${selectedChecklist?.title}`}
-        placement="right"
+      {/* Task Management Drawer Component */}
+      <TaskManagementDrawer
+        isOpen={isTaskDrawerOpen}
         onClose={handleCloseTaskDrawer}
-        open={isTaskDrawerOpen}
-        width="100%"
-        footer={
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCloseTaskDrawer}>Close</Button>
-          </Space>
-        }
-      >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-            <Title level={3}>Tasks</Title>
-            <Button size="large" type="primary" icon={<PlusOutlined />} onClick={handleAddTask}>
-              Add Task
-            </Button>
-          </Flex>
+        selectedChecklist={selectedChecklist}
+        taskColumns={taskColumns}
+        isLoading={isLoading}
+        onAddTask={handleAddTask}
+      />
 
-          {/* Tasks Table */}
-          <Table
-            dataSource={selectedChecklist?.tasks || []}
-            loading={isLoading}
-            columns={taskColumns}
-            bordered
-            rowKey="_id"
-            pagination={false}
-          />
-        </Space>
-      </Drawer>
-
-      {/* Task Form Drawer */}
-      <Drawer
-        title={isEditingTask ? 'Edit Task' : 'Add New Task'}
-        placement="right"
+      {/* Task Form Drawer Component */}
+      <TaskFormDrawer
+        isOpen={isTaskFormDrawerOpen}
         onClose={handleCloseTaskFormDrawer}
-        open={isTaskFormDrawerOpen}
-        width={600}
-        footer={
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCloseTaskFormDrawer}>Cancel</Button>
-            <Button
-              type="primary"
-              onClick={() => taskForm.submit()}
-              loading={isCreatingTask || isUpdatingTask}
-            >
-              {isEditingTask ? 'Update Task' : 'Add Task'}
-            </Button>
-          </Space>
-        }
-      >
-        <Form form={taskForm} layout="vertical" onFinish={handleTaskFormSubmit}>
-          <Form.Item
-            name="title"
-            label="Task Title"
-            rules={[
-              {
-                required: true,
-                message: 'Please enter a title for the task',
-              },
-            ]}
-          >
-            <Input placeholder="Enter task title" size="large" />
-          </Form.Item>
-
-          <Form.Item name="description" label="Description">
-            <TextArea placeholder="Enter task description" rows={4} />
-          </Form.Item>
-
-          <Form.Item label="Upload Images">
-            <Upload
-              beforeUpload={file => {
-                handleFileUpload(file);
-                return false; // Prevent default upload behavior
-              }}
-              showUploadList={false}
-              accept="image/*"
-            >
-              <Button
-                icon={<UploadOutlined />}
-                loading={isUploadingImage}
-                disabled={isUploadingImage}
-              >
-                Select Image
-              </Button>
-            </Upload>
-          </Form.Item>
-
-          {/* Uploaded Files List */}
-          {uploadedFiles.length > 0 && (
-            <Form.Item label="Uploaded Files">
-              <List
-                size="small"
-                dataSource={uploadedFiles}
-                renderItem={file => (
-                  <List.Item
-                    actions={[
-                      <Button
-                        type="text"
-                        icon={<CloseOutlined />}
-                        onClick={() => handleRemoveFile(file)}
-                        danger
-                      />,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Image
-                          src={file.url}
-                          alt={file.fileName}
-                          width={40}
-                          height={40}
-                          style={{ objectFit: 'cover' }}
-                        />
-                      }
-                      title={file.fileName}
-                      description={`Type: ${file.type}`}
-                    />
-                  </List.Item>
-                )}
-              />
-            </Form.Item>
-          )}
-        </Form>
-      </Drawer>
+        isEditing={isEditingTask}
+        form={taskForm}
+        onSubmit={handleTaskFormSubmit}
+        isLoading={isCreatingTask || isUpdatingTask}
+        isUploadingImage={isUploadingImage}
+        onFileUpload={handleFileUpload}
+        uploadedFiles={uploadedFiles}
+        onRemoveFile={handleRemoveFile}
+      />
     </Space>
   );
 };
