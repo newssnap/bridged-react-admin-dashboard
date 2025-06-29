@@ -4,6 +4,8 @@ import {
   useDeleteDefaultChecklistMutation,
   useUpdateDefaultChecklistMutation,
   useUploadImageMutation,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
   useUpdateTaskMutation,
 } from '../../../services/api';
 import { notification } from 'antd';
@@ -22,6 +24,8 @@ export const useDefaultChecklistHandler = () => {
   const [updateDefaultChecklist, { isLoading: isUpdatingDefaultChecklist }] =
     useUpdateDefaultChecklistMutation();
   const [uploadImage, { isLoading: isUploadingImage }] = useUploadImageMutation();
+  const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
+  const [deleteTask, { isLoading: isDeletingTask }] = useDeleteTaskMutation();
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
   const handleAddDefaultChecklist = async (data, closeDrawer) => {
     try {
@@ -104,15 +108,96 @@ export const useDefaultChecklistHandler = () => {
     }
   };
 
-  const handleUpdateTask = async (id, data) => {
+  const handleCreateTask = async (data, updatedTasks, onSuccess) => {
     try {
-      const response = await updateTask({ checklistId: id, data }).unwrap();
+      const response = await createTask(data).unwrap();
+      if (response.success) {
+        notification.success({
+          message: 'Task updated successfully',
+          description: response.message,
+        });
+        const newTask = {
+          _id: response?.data?._id, // Temporary ID
+          title: response?.data?.title,
+          description: response?.data?.description,
+          attachments: response?.data?.attachments,
+          isCompleted: response?.data?.isCompleted,
+          commentsCount: response?.data?.commentsCount,
+          createdDate: response?.data?.createdDate,
+        };
+        updatedTasks.push(newTask);
+        if (onSuccess) onSuccess(); // <- This was missing
+        refetch();
+        return response;
+      } else {
+        notification.error({
+          message: 'Error updating task',
+          description: response.message,
+        });
+        return null;
+      }
     } catch (error) {
       console.error('Error updating task:', error);
       notification.error({
         message: 'Error updating task',
         description: 'Something went wrong while updating the task',
       });
+      return null;
+    }
+  };
+
+  const handleDeleteTask = async (id, onSuccess) => {
+    try {
+      const response = await deleteTask(id).unwrap();
+      if (response.success) {
+        notification.success({
+          message: 'Task deleted successfully',
+          description: response.message,
+        });
+        if (onSuccess) onSuccess();
+        refetch();
+        return response;
+      } else {
+        notification.error({
+          message: 'Error deleting task',
+          description: response.message,
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      notification.error({
+        message: 'Error deleting task',
+        description: 'Something went wrong while deleting the task',
+      });
+      return null;
+    }
+  };
+
+  const handleUpdateTask = async (id, data, onSuccess) => {
+    try {
+      const response = await updateTask({ id, data }).unwrap();
+      if (response.success) {
+        notification.success({
+          message: 'Task updated successfully',
+          description: response.message,
+        });
+        if (onSuccess) onSuccess();
+        refetch();
+        return response;
+      } else {
+        notification.error({
+          message: 'Error updating task',
+          description: response.message,
+        });
+        return null;
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      notification.error({
+        message: 'Error updating task',
+        description: 'Something went wrong while updating the task',
+      });
+      return null;
     }
   };
 
@@ -130,6 +215,10 @@ export const useDefaultChecklistHandler = () => {
     isUpdatingDefaultChecklist,
     handleUploadImage,
     isUploadingImage,
+    handleCreateTask,
+    isCreatingTask,
+    handleDeleteTask,
+    isDeletingTask,
     handleUpdateTask,
     isUpdatingTask,
   };

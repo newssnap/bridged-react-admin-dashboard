@@ -22,10 +22,27 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+// Enhanced base query with 401 handling
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions);
+
+  // If we get a 401 response, redirect to login
+  if (result.error && result.error.status === 401) {
+    // Clear any stored tokens
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+
+    // Redirect to login page
+    window.location.href = '/login';
+  }
+
+  return result;
+};
+
 // Create the API using Redux Toolkit's createApi
 export const bridgedApi = createApi({
   reducerPath: 'bridgedApi',
-  baseQuery,
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['userInfo', 'users', 'defaultChecklists'],
   endpoints: builder => ({
     // User login mutation
@@ -161,12 +178,27 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+    createTask: builder.mutation({
+      query: data => ({
+        url: `/tasks/Admin`,
+        method: 'POST',
+        body: data,
+        invalidatesTags: ['defaultChecklists'],
+      }),
+    }),
     updateTask: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/tasks/Admin`,
+        url: `/tasks/Admin/?_id=${id}`,
         method: 'PUT',
         body: data,
       }),
+    }),
+    deleteTask: builder.mutation({
+      query: id => ({
+        url: `/tasks/Admin/?_id=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['defaultChecklists'],
     }),
   }),
 });
@@ -191,5 +223,7 @@ export const {
   useDeleteDefaultChecklistMutation,
   useUpdateDefaultChecklistMutation,
   useUploadImageMutation,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
   useUpdateTaskMutation,
 } = bridgedApi;

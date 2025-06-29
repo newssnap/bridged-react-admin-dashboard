@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState, useMemo } from 'react';
+import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import {
   Space,
   Typography,
@@ -14,6 +15,7 @@ import {
   Upload,
   List,
   Image,
+  Tooltip,
 } from 'antd';
 import { useDefaultChecklistHandler } from '../controllers/useDefaultChecklistHandler';
 import { CheckCircleOutlined } from '@ant-design/icons';
@@ -23,6 +25,7 @@ import {
   PlusOutlined,
   UploadOutlined,
   CloseOutlined,
+  OrderedListOutlined,
 } from '@ant-design/icons';
 import { render } from '@testing-library/react';
 
@@ -45,6 +48,12 @@ const DefaultChecklistWorkflow = () => {
     isUpdatingDefaultChecklist,
     handleUploadImage,
     isUploadingImage,
+    handleCreateTask,
+    isCreatingTask,
+    handleDeleteTask,
+    isDeletingTask,
+    handleUpdateTask,
+    isUpdatingTask,
   } = useDefaultChecklistHandler();
   const [form] = Form.useForm();
   const [taskForm] = Form.useForm();
@@ -172,28 +181,21 @@ const DefaultChecklistWorkflow = () => {
     message.success('File removed');
   };
 
-  const handleDeleteTask = taskId => {
+  const handleDeleteTaskButton = taskId => {
     const updatedTasks = selectedChecklist.tasks.filter(task => task._id !== taskId);
-    handleUpdateDefaultChecklist(
-      selectedChecklist._id,
-      {
-        title: selectedChecklist.title,
+    handleDeleteTask(taskId, () => {
+      // Update local state
+      setSelectedChecklist({
+        ...selectedChecklist,
         tasks: updatedTasks,
-        isDefault: true,
-      },
-      () => {
-        // Update local state
-        setSelectedChecklist({
-          ...selectedChecklist,
-          tasks: updatedTasks,
-        });
-      }
-    );
+      });
+    });
   };
 
   const handleTaskFormSubmit = async values => {
     try {
       let updatedTasks = [...selectedChecklist.tasks];
+      console.log('updatedTasks', updatedTasks);
 
       if (isEditingTask) {
         // Update existing task
@@ -207,38 +209,43 @@ const DefaultChecklistWorkflow = () => {
               }
             : task
         );
+        await handleUpdateTask(
+          editingTask._id,
+          {
+            checklistId: selectedChecklist._id,
+            title: values.title,
+            description: values.description,
+            attachments: uploadedFiles,
+          },
+          () => {
+            setSelectedChecklist({
+              ...selectedChecklist,
+              tasks: updatedTasks,
+            });
+            handleCloseTaskFormDrawer();
+          }
+        );
       } else {
-        // Add new task
-        const newTask = {
-          _id: Date.now().toString(), // Temporary ID
-          title: values.title,
-          description: values.description,
-          attachments: uploadedFiles,
-          isCompleted: false,
-          commentsCount: 0,
-          createdDate: new Date().toISOString(),
-        };
-        updatedTasks.push(newTask);
+        await handleCreateTask(
+          {
+            title: values.title,
+            description: values.description,
+            attachments: uploadedFiles,
+            isDefault: selectedChecklist.isDefault,
+            checklistId: selectedChecklist._id,
+          },
+          updatedTasks,
+          () => {
+            setSelectedChecklist({
+              ...selectedChecklist,
+              tasks: updatedTasks,
+            });
+            handleCloseTaskFormDrawer();
+          }
+        );
       }
-
-      await handleUpdateDefaultChecklist(
-        selectedChecklist._id,
-        {
-          title: selectedChecklist.title,
-          tasks: updatedTasks,
-          isDefault: true,
-        },
-        () => {
-          // Update local state
-          setSelectedChecklist({
-            ...selectedChecklist,
-            tasks: updatedTasks,
-          });
-          // Close drawer and reset
-          handleCloseTaskFormDrawer();
-        }
-      );
     } catch (error) {
+      console.log('error', error);
       message.error('Something went wrong');
     }
   };
@@ -266,17 +273,26 @@ const DefaultChecklistWorkflow = () => {
       align: 'center',
       render: (_, record) => (
         <Space>
-          <Button
-            type="text"
-            shape="circle"
-            icon={<EditOutlined />}
-            onClick={() => handleEditTask(record)}
-          />
+          <Tooltip title="Edit Task">
+            <Button
+              type="text"
+              shape="circle"
+              icon={<EditOutlined style={{ fontSize: '15px' }} />}
+              onClick={() => handleEditTask(record)}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure you want to delete this task?"
-            onConfirm={() => handleDeleteTask(record._id)}
+            onConfirm={() => handleDeleteTaskButton(record._id)}
           >
-            <Button type="text" shape="circle" icon={<DeleteOutlined />} />
+            <Tooltip title="Delete Task">
+              <Button
+                type="text"
+                shape="circle"
+                icon={<DeleteOutlined style={{ fontSize: '15px', color: 'red' }} />}
+                loading={isDeletingTask}
+              />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
@@ -307,29 +323,35 @@ const DefaultChecklistWorkflow = () => {
       align: 'center',
       render: (_, record) => (
         <Space>
-          <Button
-            type="text"
-            shape="circle"
-            icon={<EditOutlined />}
-            onClick={() => handleEditChecklist(record)}
-          />
+          <Tooltip title="Edit Checklist Name">
+            <Button
+              type="text"
+              shape="circle"
+              icon={<EditOutlined style={{ fontSize: '15px' }} />}
+              onClick={() => handleEditChecklist(record)}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure you want to delete this checklist?"
             onConfirm={() => handleDeleteChecklist(record._id)}
           >
+            <Tooltip title="Delete Checklist">
+              <Button
+                type="text"
+                shape="circle"
+                icon={<DeleteOutlined style={{ color: 'red', fontSize: '15px' }} />}
+                loading={isDeletingDefaultChecklist}
+              />
+            </Tooltip>
+          </Popconfirm>
+          <Tooltip title="Manage Tasks">
             <Button
               type="text"
               shape="circle"
-              icon={<DeleteOutlined />}
-              loading={isDeletingDefaultChecklist}
+              icon={<OrderedListOutlined style={{ color: PRIMARY_COLOR, fontSize: '15px' }} />}
+              onClick={() => handleOpenTaskDrawer(record)}
             />
-          </Popconfirm>
-          <Button
-            type="text"
-            shape="circle"
-            icon={<CheckCircleOutlined />}
-            onClick={() => handleOpenTaskDrawer(record)}
-          />
+          </Tooltip>
         </Space>
       ),
     },
@@ -440,7 +462,7 @@ const DefaultChecklistWorkflow = () => {
             <Button
               type="primary"
               onClick={() => taskForm.submit()}
-              loading={isUpdatingDefaultChecklist}
+              loading={isCreatingTask || isUpdatingTask}
             >
               {isEditingTask ? 'Update Task' : 'Add Task'}
             </Button>

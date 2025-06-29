@@ -1,5 +1,5 @@
 import { Col, Divider, Row, Skeleton } from 'antd';
-import { useUserInfoQuery } from '../services/api';
+// import { useUserInfoQuery } from '../services/api';
 import UserInfo from './sidebar/UserInfo';
 import SidebarMenu from './sidebar/SidebarMenu';
 import { Link } from 'react-router-dom';
@@ -19,7 +19,7 @@ const SkeletonLoader = () => (
 );
 
 function GlobalSidebar() {
-  const { data, isLoading } = useUserInfoQuery();
+  // const { data, isLoading } = useUserInfoQuery();
   return (
     <>
       <Row
@@ -77,7 +77,7 @@ function GlobalSidebar() {
           </Col>
 
           {/* User info or Skeleton loader during loading */}
-          {isLoading ? <SkeletonLoader /> : <UserInfo data={data} />}
+          <UserInfo />
         </Col>
       </Row>
     </>
