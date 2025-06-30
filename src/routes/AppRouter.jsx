@@ -8,6 +8,7 @@ const LazyNotFound = lazy(() => import('../pages/NotFound'));
 const LazyLogin = lazy(() => import('../pages/authentication/Login'));
 const LazyDashboard = lazy(() => import('../pages/Dashboard'));
 const LazyDefaultChecklist = lazy(() => import('../pages/DefaultChecklist'));
+const LazyUserChecklist = lazy(() => import('../pages/UserChecklist'));
 function AppRouter() {
   // Function to handle page type and layout
   const handlePageTypeAndLayout = (Children, isProtected) => {
@@ -36,6 +37,11 @@ function AppRouter() {
     {
       path: '/defaultChecklist',
       component: LazyDefaultChecklist,
+      isProtected: true,
+    },
+    {
+      path: '/userChecklist/:id',
+      component: LazyUserChecklist,
       isProtected: true,
     },
   ];
