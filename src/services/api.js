@@ -200,6 +200,18 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['defaultChecklists'],
     }),
+    getUserChecklist: builder.query({
+      query: id => ({
+        url: `/checklists/Admin/UsersChecklists/?userId=${id}`,
+        method: 'GET',
+      }),
+    }),
+    getTeamMembers: builder.query({
+      query: id => ({
+        url: `/Team/Admin/GetTeamMembers?userId=${id}`,
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
@@ -226,4 +238,6 @@ export const {
   useCreateTaskMutation,
   useDeleteTaskMutation,
   useUpdateTaskMutation,
+  useGetUserChecklistQuery,
+  useGetTeamMembersQuery,
 } = bridgedApi;
