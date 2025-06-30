@@ -371,7 +371,17 @@ const DefaultChecklistWorkflow = () => {
           style={{ maxWidth: '400px' }}
         />
       </Flex>
-      <Table dataSource={filteredChecklists} loading={isLoading} columns={columns} bordered />
+      <Table
+        dataSource={filteredChecklists}
+        loading={isLoading}
+        columns={columns}
+        bordered
+        pagination={{
+          position: ['bottomLeft'],
+          showSizeChanger: false,
+          showQuickJumper: false,
+        }}
+      />
 
       {/* Checklist Drawer Component */}
       <ChecklistDrawer

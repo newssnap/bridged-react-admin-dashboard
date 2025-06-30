@@ -26,14 +26,18 @@ import {
   PlusOutlined,
   FileExcelOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import Icon from '../../../utils/components/Icon';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
 import { useReportHandler } from '../controllers/useReportHandler';
 import { useState, useMemo, useEffect } from 'react';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
+import { useNavigate } from 'react-router-dom';
 const { Title } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
+const getIcon = name => <Icon name={name} />;
 
 function DashboardWorkflow() {
   const {
@@ -56,10 +60,8 @@ function DashboardWorkflow() {
   } = useReportHandler();
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
   const [currentUserToken, setCurrentUserToken] = useState(null);
-
+  const navigate = useNavigate();
   const handleMenuClick = (key, record) => {
-    console.log('Menu clicked:', key, record);
-    // Add your login logic here
     if (key === 'dashboard') {
       window.open(
         `https://dashboard.bridged.media/?accessToken=${localStorage.getItem('accessToken')}`,
@@ -215,28 +217,6 @@ function DashboardWorkflow() {
       align: 'center',
       render: (_, record) => (
         <Space>
-          <Tooltip title={'Login to old dashboard'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => {
-                handleMenuClick('dashboard', record);
-              }}
-            >
-              <KeyOutlined />
-            </Button>
-          </Tooltip>
-          <Tooltip title={'Login to portal'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => {
-                handleMenuClick('portal', record);
-              }}
-            >
-              <UserOutlined />
-            </Button>
-          </Tooltip>
           <Tooltip title={'Export Report'}>
             <Button
               type="text"
@@ -246,9 +226,43 @@ function DashboardWorkflow() {
                 handleExportReportClick(record);
               }}
             >
-              {isGeneratingToken ? <LoadingOutlined /> : <FileExcelOutlined />}
+              {isGeneratingToken ? <LoadingOutlined /> : getIcon('Export')}
             </Button>
           </Tooltip>
+          <Tooltip title={'View User Checklist'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => {
+                navigate(`/userChecklist/${record._id}`);
+              }}
+            >
+              {getIcon('UserCheck')}
+            </Button>
+          </Tooltip>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'dashboard',
+                  label: 'Login to Old Dashboard',
+                  icon: <KeyOutlined />,
+                },
+                {
+                  key: 'portal',
+                  label: 'Login to Portal',
+                  icon: <UserOutlined />,
+                },
+              ],
+              onClick: ({ key }) => handleMenuClick(key, record),
+            }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button type="text" shape="circle">
+              <MoreOutlined />
+            </Button>
+          </Dropdown>
         </Space>
       ),
     },
@@ -316,17 +330,17 @@ function DashboardWorkflow() {
       {/* Report Generation Drawer */}
       <Drawer
         title="Generate Report"
-        width={400}
+        width={500}
         onClose={handleCloseReportDrawer}
         open={isExportReportOpen}
         bodyStyle={{ paddingBottom: 80 }}
         footer={
           <div style={{ textAlign: 'right' }}>
             <Space>
+              <Button onClick={handleCloseReportDrawer}>Close</Button>
               <Button type="primary" onClick={handleGenerateReport} loading={reportGenerateLoading}>
                 Generate Report
               </Button>
-              <Button onClick={handleCloseReportDrawer}>Close</Button>
             </Space>
           </div>
         }
@@ -376,7 +390,16 @@ function DashboardWorkflow() {
             label="Date Range"
             rules={[{ required: true, message: 'Please select date range!' }]}
           >
-            <RangePicker style={{ width: '100%' }} placeholder={['Start Date', 'End Date']} />
+            <RangePicker
+              style={{ width: '100%' }}
+              placeholder={['Start Date', 'End Date']}
+              presets={[
+                { label: 'Today', value: [dayjs(), dayjs()] },
+                { label: 'Last 7 Days', value: [dayjs().subtract(7, 'days'), dayjs()] },
+                { label: 'Last 30 Days', value: [dayjs().subtract(30, 'days'), dayjs()] },
+                { label: 'This Month', value: [dayjs().startOf('month'), dayjs().endOf('month')] },
+              ]}
+            />
           </Form.Item>
         </Form>
       </Drawer>

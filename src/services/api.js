@@ -43,7 +43,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const bridgedApi = createApi({
   reducerPath: 'bridgedApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['userInfo', 'users', 'defaultChecklists'],
+  tagTypes: ['userInfo', 'users', 'defaultChecklists', 'userChecklists'],
   endpoints: builder => ({
     // User login mutation
     login: builder.mutation({
@@ -154,7 +154,7 @@ export const bridgedApi = createApi({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['defaultChecklists'],
+      invalidatesTags: ['defaultChecklists', 'userChecklists'],
     }),
     deleteDefaultChecklist: builder.mutation({
       query: id => ({
@@ -163,6 +163,13 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['defaultChecklists'],
     }),
+    deleteUserChecklist: builder.mutation({
+      query: id => ({
+        url: `/checklists/Admin?_id=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['userChecklists'],
+    }),
     updateDefaultChecklist: builder.mutation({
       query: ({ id, data }) => ({
         url: `/checklists/Admin/?_id=${id}`,
@@ -170,6 +177,14 @@ export const bridgedApi = createApi({
         body: data,
       }),
       invalidatesTags: ['defaultChecklists'],
+    }),
+    updateUserChecklist: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/checklists/Admin?_id=${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['userChecklists'],
     }),
     uploadImage: builder.mutation({
       query: data => ({
@@ -205,12 +220,14 @@ export const bridgedApi = createApi({
         url: `/checklists/Admin/UsersChecklists/?userId=${id}`,
         method: 'GET',
       }),
+      providesTags: ['userChecklists'],
     }),
     getTeamMembers: builder.query({
       query: id => ({
         url: `/Team/Admin/GetTeamMembers?userId=${id}`,
         method: 'GET',
       }),
+      providesTags: ['teamMembers'],
     }),
   }),
 });
@@ -240,4 +257,6 @@ export const {
   useUpdateTaskMutation,
   useGetUserChecklistQuery,
   useGetTeamMembersQuery,
+  useDeleteUserChecklistMutation,
+  useUpdateUserChecklistMutation,
 } = bridgedApi;
