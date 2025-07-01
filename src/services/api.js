@@ -43,7 +43,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const bridgedApi = createApi({
   reducerPath: 'bridgedApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['userInfo', 'users', 'defaultChecklists', 'userChecklists'],
+  tagTypes: ['userInfo', 'users', 'defaultChecklists', 'userChecklists', 'taskComments'],
   endpoints: builder => ({
     // User login mutation
     login: builder.mutation({
@@ -230,10 +230,19 @@ export const bridgedApi = createApi({
       providesTags: ['teamMembers'],
     }),
     getUserChecklistTaskComments: builder.query({
-      query: id => ({
-        url: `/TaskComments/Admin/FindAllByTaskId/?_id=${id}`,
+      query: taskId => ({
+        url: `/TaskComments/Admin/FindAllByTaskId/?_id=${taskId}`,
         method: 'GET',
       }),
+      providesTags: (result, error, taskId) => [{ type: 'taskComments', id: taskId }],
+    }),
+    addTaskComment: builder.mutation({
+      query: data => ({
+        url: `/TaskComments/Admin/Create`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { taskId }) => [{ type: 'taskComments', id: taskId }],
     }),
   }),
 });
@@ -266,4 +275,5 @@ export const {
   useDeleteUserChecklistMutation,
   useUpdateUserChecklistMutation,
   useGetUserChecklistTaskCommentsQuery,
+  useAddTaskCommentMutation,
 } = bridgedApi;

@@ -19,6 +19,7 @@ import {
   Checkbox,
   Upload,
   List,
+  Divider,
 } from 'antd';
 import { Space as SpaceComponent, Typography as TypographyComponent, Image } from 'antd';
 import Icon from '../../../utils/components/Icon';
@@ -41,20 +42,26 @@ const UserChecklistWorkflow = UserDetails => {
   const {
     userChecklist,
     teamMembers,
+    taskComments,
     isLoadingUserChecklist,
     isLoadingTeamMembers,
+    isLoadingTaskComments,
     isUpdatingUserChecklist,
     isDeletingUserChecklist,
     isAddingDefaultChecklist,
     isCreatingTask,
     isUpdatingTask,
     isUploadingImage,
+    isAddingTaskComment,
     handleAddDefaultChecklist,
     handleUpdateUserChecklist,
     handleDeleteUserChecklist,
     handleUploadImage,
     handleCreateTask,
     handleUpdateTask,
+    handleGetTaskComments,
+    clearTaskComments,
+    handleAddTaskComment,
   } = useUserChecklistHandler(id);
   const [searchText, setSearchText] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -68,6 +75,9 @@ const UserChecklistWorkflow = UserDetails => {
   const [taskAttachments, setTaskAttachments] = useState([]);
   const [form] = Form.useForm();
   const [taskForm] = Form.useForm();
+  const [isTaskInfoDrawerOpen, setIsTaskInfoDrawerOpen] = useState(false);
+  const [selectedTaskInfo, setSelectedTaskInfo] = useState(null);
+  const [newComment, setNewComment] = useState('');
 
   const handleDrawerOpen = () => {
     setIsDrawerOpen(true);
@@ -114,6 +124,34 @@ const UserChecklistWorkflow = UserDetails => {
     setEditingTask(null);
     setTaskAttachments([]);
     taskForm.resetFields();
+  };
+
+  const handleTaskInfoDrawerOpen = task => {
+    setSelectedTaskInfo(task);
+    setIsTaskInfoDrawerOpen(true);
+    // Call API to get task comments
+    handleGetTaskComments(task._id);
+  };
+
+  const handleTaskInfoDrawerClose = () => {
+    setIsTaskInfoDrawerOpen(false);
+    setSelectedTaskInfo(null);
+    setNewComment('');
+    clearTaskComments();
+  };
+
+  const handleAddComment = async () => {
+    if (newComment.trim() && selectedTaskInfo) {
+      try {
+        await handleAddTaskComment(selectedTaskInfo._id, newComment.trim(), () => {
+          setNewComment('');
+          // Refresh comments by calling the API again
+          handleGetTaskComments(selectedTaskInfo._id);
+        });
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
+    }
   };
 
   const handleTaskFormSubmit = async values => {
@@ -304,6 +342,14 @@ const UserChecklistWorkflow = UserDetails => {
       key: 'actions',
       render: (_, record) => (
         <Space>
+          <Tooltip title="Task Information">
+            <Button
+              type="text"
+              icon={getIcon('InfoCircleOutlined')}
+              shape="circle"
+              onClick={() => handleTaskInfoDrawerOpen(record)}
+            />
+          </Tooltip>
           <Tooltip title="Edit Task">
             <Button
               type="text"
@@ -439,7 +485,7 @@ const UserChecklistWorkflow = UserDetails => {
       {/* Tasks Drawer */}
       <Drawer
         title={`Tasks - ${selectedChecklist?.title || ''}`}
-        width={800}
+        width={'70%'}
         onClose={handleTasksDrawerClose}
         open={isTasksDrawerOpen}
         bodyStyle={{ paddingBottom: 80 }}
@@ -582,6 +628,172 @@ const UserChecklistWorkflow = UserDetails => {
               </Form.Item>
             )}
           </Form>
+        </Drawer>
+        {/* Task Information Drawer */}
+        <Drawer
+          title="Task Information"
+          width={600}
+          onClose={handleTaskInfoDrawerClose}
+          open={isTaskInfoDrawerOpen}
+          bodyStyle={{ paddingBottom: 80 }}
+          footer={
+            <div style={{ textAlign: 'right' }}>
+              <Button onClick={handleTaskInfoDrawerClose} style={{ width: '100px' }}>
+                Close
+              </Button>
+            </div>
+          }
+        >
+          {selectedTaskInfo && (
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              {/* Task Details */}
+              <div>
+                <Space
+                  direction="vertical"
+                  size="middle"
+                  style={{ width: '100%', marginTop: '10px' }}
+                >
+                  <div>
+                    <strong>Title:</strong>
+                    <div style={{ marginTop: '4px' }}>{selectedTaskInfo.title}</div>
+                  </div>
+                  <div>
+                    <strong>Description:</strong>
+                    <div style={{ marginTop: '4px' }}>{selectedTaskInfo.description}</div>
+                  </div>
+                  <div>
+                    <strong>Due Date:</strong>
+                    <div style={{ marginTop: '4px' }}>
+                      {selectedTaskInfo.dueDate
+                        ? formatDate(selectedTaskInfo.dueDate)
+                        : 'No due date'}
+                    </div>
+                  </div>
+                  <div>
+                    <strong>Assigned To:</strong>
+                    <div style={{ marginTop: '4px' }}>
+                      <Space>
+                        <Avatar src={selectedTaskInfo.userAvatar} size={32}>
+                          {selectedTaskInfo.userFullname
+                            ? selectedTaskInfo.userFullname.charAt(0).toUpperCase()
+                            : 'U'}
+                        </Avatar>
+                        <span>{selectedTaskInfo.userEmail}</span>
+                      </Space>
+                    </div>
+                  </div>
+                  <div>
+                    <strong>Status:</strong>
+                    <div style={{ marginTop: '4px' }}>
+                      <Tag color={selectedTaskInfo.isCompleted ? 'green' : 'orange'}>
+                        {selectedTaskInfo.isCompleted ? 'Completed' : 'Pending'}
+                      </Tag>
+                    </div>
+                  </div>
+                </Space>
+              </div>
+
+              <Divider />
+
+              {/* Comments Section */}
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <Title level={4}>Comments</Title>
+                {isLoadingTaskComments ? (
+                  <div>Loading comments...</div>
+                ) : (
+                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    {taskComments?.data && taskComments.data.length > 0 ? (
+                      taskComments.data.map(comment => (
+                        <div
+                          key={comment._id}
+                          style={{
+                            border: '1px solid #f0f0f0',
+                            borderRadius: '8px',
+                            padding: '16px',
+                            marginBottom: '12px',
+                            backgroundColor: '#fafafa',
+                          }}
+                        >
+                          <Space align="center" style={{ width: '100%' }}>
+                            <Avatar
+                              src={comment.userAvatar}
+                              size={40}
+                              style={{ marginRight: '10px' }}
+                            >
+                              {comment.userFullName
+                                ? comment.userFullName.charAt(0).toUpperCase()
+                                : 'U'}
+                            </Avatar>
+                            <div style={{ flex: 1 }}>
+                              <Space
+                                align="center"
+                                justify="space-between"
+                                style={{ marginBottom: '8px', width: '100%' }}
+                              >
+                                <span style={{ fontWeight: '500', fontSize: '14px' }}>
+                                  {comment.userFullName}
+                                </span>
+                                {comment.isAdmin && (
+                                  <Tag color="blue" size="small">
+                                    Admin
+                                  </Tag>
+                                )}
+                              </Space>
+                              <div
+                                style={{
+                                  fontSize: '14px',
+                                  lineHeight: '1.5',
+                                  color: '#333',
+                                }}
+                              >
+                                {comment.comment}
+                              </div>
+                            </div>
+                          </Space>
+                        </div>
+                      ))
+                    ) : (
+                      <div
+                        style={{
+                          textAlign: 'center',
+                          color: '#999',
+                          padding: '20px',
+                          border: '1px dashed #d9d9d9',
+                          borderRadius: '8px',
+                          backgroundColor: '#fafafa',
+                        }}
+                      >
+                        No comments yet
+                      </div>
+                    )}
+
+                    {/* Add Comment Section */}
+                    <Divider />
+                    <div>
+                      <Title level={5}>Add Comment</Title>
+                      <Space.Compact style={{ width: '100%', marginTop: '10px' }}>
+                        <Input
+                          placeholder="Write a comment..."
+                          value={newComment}
+                          onChange={e => setNewComment(e.target.value)}
+                          onPressEnter={handleAddComment}
+                          disabled={isAddingTaskComment}
+                        />
+                        <Button
+                          type="primary"
+                          onClick={handleAddComment}
+                          loading={isAddingTaskComment}
+                          disabled={!newComment.trim() || isAddingTaskComment}
+                        >
+                          Add
+                        </Button>
+                      </Space.Compact>
+                    </div>
+                  </Space>
+                )}
+              </div>
+            </Space>
+          )}
         </Drawer>
       </Drawer>
 

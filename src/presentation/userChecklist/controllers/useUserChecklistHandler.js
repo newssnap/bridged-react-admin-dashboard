@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   useGetUserChecklistQuery,
   useGetTeamMembersQuery,
@@ -9,6 +10,7 @@ import {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useGetUserChecklistTaskCommentsQuery,
+  useAddTaskCommentMutation,
 } from '../../../services/api';
 import { notification } from 'antd';
 
@@ -28,8 +30,24 @@ export const useUserChecklistHandler = userId => {
   const [uploadImage, { isLoading: isUploadingImage }] = useUploadImageMutation();
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
-  const { data: taskComments, isLoading: isLoadingTaskComments } =
-    useGetUserChecklistTaskCommentsQuery(userId);
+  const [addTaskComment, { isLoading: isAddingTaskComment }] = useAddTaskCommentMutation();
+  const [taskIdForComments, setTaskIdForComments] = useState(null);
+  const {
+    data: taskComments,
+    isLoading: isLoadingTaskComments,
+    refetch: refetchTaskComments,
+  } = useGetUserChecklistTaskCommentsQuery(taskIdForComments, {
+    skip: !taskIdForComments,
+  });
+
+  const handleGetTaskComments = taskId => {
+    setTaskIdForComments(taskId);
+  };
+
+  const clearTaskComments = () => {
+    setTaskIdForComments(null);
+  };
+
   const handleAddDefaultChecklist = async (data, closeDrawer) => {
     try {
       const response = await addDefaultChecklist(data).unwrap();
@@ -177,11 +195,41 @@ export const useUserChecklistHandler = userId => {
       return null;
     }
   };
+
+  const handleAddTaskComment = async (taskId, comment, onSuccess) => {
+    try {
+      const response = await addTaskComment({ taskId, comment }).unwrap();
+      if (response.success) {
+        notification.success({
+          message: 'Comment added successfully',
+          description: response.message || 'Comment has been added',
+        });
+        refetchTaskComments();
+        if (onSuccess) onSuccess();
+        return response;
+      } else {
+        notification.error({
+          message: 'Error adding comment',
+          description: response.message,
+        });
+        return null;
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      notification.error({
+        message: 'Error adding comment',
+        description: 'Something went wrong while adding the comment',
+      });
+      return null;
+    }
+  };
   return {
     userChecklist,
     teamMembers,
+    taskComments,
     isLoadingUserChecklist,
     isLoadingTeamMembers,
+    isLoadingTaskComments,
     isUpdatingUserChecklist,
     isDeletingUserChecklist,
     isAddingDefaultChecklist,
@@ -194,5 +242,9 @@ export const useUserChecklistHandler = userId => {
     handleUploadImage,
     handleCreateTask,
     handleUpdateTask,
+    handleGetTaskComments,
+    clearTaskComments,
+    handleAddTaskComment,
+    isAddingTaskComment,
   };
 };
