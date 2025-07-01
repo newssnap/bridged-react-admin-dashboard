@@ -8,6 +8,7 @@ import {
   useUploadImageMutation,
   useCreateTaskMutation,
   useUpdateTaskMutation,
+  useGetUserChecklistTaskCommentsQuery,
 } from '../../../services/api';
 import { notification } from 'antd';
 
@@ -20,8 +21,6 @@ export const useUserChecklistHandler = userId => {
   const { data: teamMembers, isLoading: isLoadingTeamMembers } = useGetTeamMembersQuery(userId);
   const [addDefaultChecklist, { isLoading: isAddingDefaultChecklist }] =
     useAddDefaultChecklistMutation();
-  const [deleteDefaultChecklist, { isLoading: isDeletingDefaultChecklist }] =
-    useDeleteDefaultChecklistMutation();
   const [updateUserChecklist, { isLoading: isUpdatingUserChecklist }] =
     useUpdateUserChecklistMutation();
   const [deleteUserChecklist, { isLoading: isDeletingUserChecklist }] =
@@ -29,6 +28,8 @@ export const useUserChecklistHandler = userId => {
   const [uploadImage, { isLoading: isUploadingImage }] = useUploadImageMutation();
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
+  const { data: taskComments, isLoading: isLoadingTaskComments } =
+    useGetUserChecklistTaskCommentsQuery(userId);
   const handleAddDefaultChecklist = async (data, closeDrawer) => {
     try {
       const response = await addDefaultChecklist(data).unwrap();
@@ -181,6 +182,12 @@ export const useUserChecklistHandler = userId => {
     teamMembers,
     isLoadingUserChecklist,
     isLoadingTeamMembers,
+    isUpdatingUserChecklist,
+    isDeletingUserChecklist,
+    isAddingDefaultChecklist,
+    isCreatingTask,
+    isUpdatingTask,
+    isUploadingImage,
     handleAddDefaultChecklist,
     handleUpdateUserChecklist,
     handleDeleteUserChecklist,

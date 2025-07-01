@@ -43,6 +43,12 @@ const UserChecklistWorkflow = UserDetails => {
     teamMembers,
     isLoadingUserChecklist,
     isLoadingTeamMembers,
+    isUpdatingUserChecklist,
+    isDeletingUserChecklist,
+    isAddingDefaultChecklist,
+    isCreatingTask,
+    isUpdatingTask,
+    isUploadingImage,
     handleAddDefaultChecklist,
     handleUpdateUserChecklist,
     handleDeleteUserChecklist,
@@ -372,7 +378,13 @@ const UserChecklistWorkflow = UserDetails => {
                 title="Are you sure you want to delete this checklist?"
                 onConfirm={() => handleDeleteChecklist(record._id)}
               >
-                <Button type="text" icon={getIcon('DeleteOutlined')} shape="circle" danger />
+                <Button
+                  type="text"
+                  icon={getIcon('DeleteOutlined')}
+                  shape="circle"
+                  danger
+                  loading={isDeletingUserChecklist}
+                />
               </Popconfirm>
             </Tooltip>
             <Tooltip title="Edit Checklist">
@@ -421,7 +433,7 @@ const UserChecklistWorkflow = UserDetails => {
         isEditing={isEditing}
         form={form}
         onSubmit={handleFormSubmit}
-        isLoading={isLoadingUserChecklist}
+        isLoading={isUpdatingUserChecklist || isAddingDefaultChecklist}
       />
 
       {/* Tasks Drawer */}
@@ -535,36 +547,8 @@ const UserChecklistWorkflow = UserDetails => {
               </Upload>
             </Form.Item>
 
-            {/* Display uploaded attachments */}
             {taskAttachments.length > 0 && (
               <Form.Item label="Uploaded Files">
-                {/* <Space direction="vertical" style={{ width: '100%' }}>
-                  {taskAttachments.map((attachment, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px',
-                        border: '1px solid #d9d9d9',
-                        borderRadius: '6px',
-                        backgroundColor: '#fafafa'
-                      }}
-                    >
-                      <Space>
-                        <FileOutlined />
-                        <span>{attachment.fileName}</span>
-                      </Space>
-                      <Button
-                        type="text"
-                        icon={<DeleteOutlined />}
-                        danger
-                        onClick={() => handleRemoveAttachment(index)}
-                      />
-                    </div>
-                  ))}
-                </Space> */}
                 <List
                   size="small"
                   dataSource={taskAttachments}

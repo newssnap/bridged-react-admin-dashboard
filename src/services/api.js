@@ -229,6 +229,12 @@ export const bridgedApi = createApi({
       }),
       providesTags: ['teamMembers'],
     }),
+    getUserChecklistTaskComments: builder.query({
+      query: id => ({
+        url: `/TaskComments/Admin/FindAllByTaskId/?_id=${id}`,
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
@@ -259,4 +265,5 @@ export const {
   useGetTeamMembersQuery,
   useDeleteUserChecklistMutation,
   useUpdateUserChecklistMutation,
+  useGetUserChecklistTaskCommentsQuery,
 } = bridgedApi;
