@@ -61,35 +61,8 @@ function LoginWorkflow() {
                   style={{
                     marginTop: 'var(--mpr-3)',
                   }}
-                >
-                  <Row justify="end" align="middle">
-                    <Link to="/forgotpassword" className="login-form-forgot" href="">
-                      <p className="primaryTextColor">Forgot password?</p>
-                    </Link>
-                  </Row>
-                </Col>
+                ></Col>
               </Col>
-            </Row>
-            <Divider style={{ margin: 'var(--mpr-1) 0px' }}>
-              <p
-                className="opacity05"
-                style={{
-                  fontSize: '0.7rem',
-                }}
-              >
-                Or
-              </p>
-            </Divider>
-            <Row gutter={[30, 30]}>
-              {/* Google Sign-In */}
-              <Col span={24}>{/* <GoogleLogin googleLoginHandler={googleLoginHandler} /> */}</Col>
-
-              {/* Facebook Sign-In */}
-              {/* <Col {...{ xs: 24, sm: 24, md: 12, lg: 12 }}>
-                <FacebookLoginComponent
-                  facebookLoginHandler={facebookLoginHandler}
-                />
-              </Col> */}
             </Row>
           </Col>
           <Col style={{ alignSelf: 'end' }} span={24}>
@@ -98,19 +71,6 @@ function LoginWorkflow() {
                 Sign In
               </Button>
             </Form.Item>
-            <p style={{ marginTop: 'var(--mpr-2)', textAlign: 'center' }}>
-              Don’t have an account?{' '}
-              <Link to="/register">
-                <span
-                  style={{
-                    fontWeight: 600,
-                  }}
-                  className="primaryTextColor"
-                >
-                  Register
-                </span>
-              </Link>
-            </p>
           </Col>
         </Row>
       </Form>
