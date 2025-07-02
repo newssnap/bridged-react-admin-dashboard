@@ -3,8 +3,8 @@ import {
   useGetUserChecklistQuery,
   useGetTeamMembersQuery,
   useAddDefaultChecklistMutation,
-  useDeleteDefaultChecklistMutation,
   useUpdateUserChecklistMutation,
+  useDeleteTaskMutation,
   useDeleteUserChecklistMutation,
   useUploadImageMutation,
   useCreateTaskMutation,
@@ -31,6 +31,7 @@ export const useUserChecklistHandler = userId => {
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
   const [addTaskComment, { isLoading: isAddingTaskComment }] = useAddTaskCommentMutation();
+  const [deleteTask, { isLoading: isDeletingTask }] = useDeleteTaskMutation();
   const [taskIdForComments, setTaskIdForComments] = useState(null);
   const {
     data: taskComments,
@@ -146,6 +147,7 @@ export const useUserChecklistHandler = userId => {
           isCompleted: response?.data?.isCompleted,
           commentsCount: response?.data?.commentsCount,
           createdDate: response?.data?.createdDate,
+          dueDate: response?.data?.dueDate,
         };
         updatedTasks.push(newTask);
         if (onSuccess) onSuccess();
@@ -223,6 +225,34 @@ export const useUserChecklistHandler = userId => {
       return null;
     }
   };
+
+  const handleDeleteTask = async (taskId, onSuccess) => {
+    try {
+      const response = await deleteTask(taskId).unwrap();
+      if (response.success) {
+        notification.success({
+          message: 'Task deleted successfully',
+          description: response.message,
+        });
+        if (onSuccess) onSuccess();
+        refetch();
+        return response;
+      } else {
+        notification.error({
+          message: 'Error deleting task',
+          description: response.message,
+        });
+        return null;
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      notification.error({
+        message: 'Error deleting task',
+        description: 'Something went wrong while deleting the task',
+      });
+      return null;
+    }
+  };
   return {
     userChecklist,
     teamMembers,
@@ -246,5 +276,7 @@ export const useUserChecklistHandler = userId => {
     clearTaskComments,
     handleAddTaskComment,
     isAddingTaskComment,
+    isDeletingTask,
+    handleDeleteTask,
   };
 };

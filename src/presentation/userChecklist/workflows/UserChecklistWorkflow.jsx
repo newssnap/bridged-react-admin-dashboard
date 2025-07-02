@@ -62,6 +62,8 @@ const UserChecklistWorkflow = UserDetails => {
     handleGetTaskComments,
     clearTaskComments,
     handleAddTaskComment,
+    handleDeleteTask,
+    isDeletingTask,
   } = useUserChecklistHandler(id);
   const [searchText, setSearchText] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -234,6 +236,17 @@ const UserChecklistWorkflow = UserDetails => {
     setTaskAttachments(newAttachments);
   };
 
+  const handleDeleteTaskButton = taskId => {
+    const updatedTasks = selectedChecklist.tasks.filter(task => task._id !== taskId);
+    handleDeleteTask(taskId, () => {
+      // Update local state after successful deletion
+      setSelectedChecklist({
+        ...selectedChecklist,
+        tasks: updatedTasks,
+      });
+    });
+  };
+
   const handleFormSubmit = async values => {
     try {
       if (isEditing) {
@@ -361,9 +374,15 @@ const UserChecklistWorkflow = UserDetails => {
           <Tooltip title="Delete Task">
             <Popconfirm
               title="Are you sure you want to delete this task?"
-              onConfirm={() => console.log('Delete task:', record._id)}
+              onConfirm={() => handleDeleteTaskButton(record._id)}
             >
-              <Button type="text" icon={getIcon('DeleteOutlined')} shape="circle" danger />
+              <Button
+                type="text"
+                icon={getIcon('DeleteOutlined')}
+                shape="circle"
+                danger
+                loading={isDeletingTask}
+              />
             </Popconfirm>
           </Tooltip>
         </Space>
@@ -589,7 +608,9 @@ const UserChecklistWorkflow = UserDetails => {
                 // onChange={handleFileUpload}
                 showUploadList={false}
               >
-                <Button icon={<UploadOutlined />}>Upload File</Button>
+                <Button loading={isUploadingImage} icon={<UploadOutlined />}>
+                  Upload Image
+                </Button>
               </Upload>
             </Form.Item>
 
