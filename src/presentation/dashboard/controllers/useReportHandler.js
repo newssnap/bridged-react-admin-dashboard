@@ -12,6 +12,7 @@ import {
 } from '../../../services/api';
 import { useState } from 'react';
 export const useReportHandler = () => {
+  const [generateTokenID, setGenerateTokenID] = useState(null);
   const [generateUserToken, { isLoading: isGeneratingToken }] = useGenerateUserTokenMutation();
   const [getAllUserDomains, { isLoading: isGettingUserDomains }] = useGetAllUserDomainsMutation();
   const [getCustomerReport, { isLoading: isGettingCustomerReport }] =
@@ -37,6 +38,7 @@ export const useReportHandler = () => {
   const [userToken, setUserToken] = useState(null);
   const [userDomains, setUserDomains] = useState([]);
   const handleGenerateUserToken = async data => {
+    setGenerateTokenID(data._id);
     try {
       const response = await generateUserToken(data).unwrap();
       if (response.success) {
@@ -48,6 +50,8 @@ export const useReportHandler = () => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setGenerateTokenID(null);
     }
   };
 
@@ -284,5 +288,7 @@ export const useReportHandler = () => {
     reportGenerateLoading,
     handleGetAllUserDomains,
     userDomains,
+    generateTokenID,
+    isGeneratingToken,
   };
 };

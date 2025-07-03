@@ -22,6 +22,7 @@ import { render } from '@testing-library/react';
 import ChecklistDrawer from '../components/ChecklistDrawer';
 import TaskManagementDrawer from '../components/TaskManagementDrawer';
 import TaskFormDrawer from '../components/TaskFormDrawer';
+import Icon from '../../../utils/components/Icon';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -37,6 +38,7 @@ const DefaultChecklistWorkflow = () => {
     isAddingDefaultChecklist,
     handleDeleteDefaultChecklist,
     isDeletingDefaultChecklist,
+    deletingChecklistId,
     handleUpdateDefaultChecklist,
     isUpdatingDefaultChecklist,
     handleUploadImage,
@@ -45,6 +47,7 @@ const DefaultChecklistWorkflow = () => {
     isCreatingTask,
     handleDeleteTask,
     isDeletingTask,
+    deletingTaskId,
     handleUpdateTask,
     isUpdatingTask,
   } = useDefaultChecklistHandler();
@@ -60,6 +63,7 @@ const DefaultChecklistWorkflow = () => {
   const [selectedChecklist, setSelectedChecklist] = useState(null);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const getIcon = name => <Icon name={name} size={20} />;
 
   // Task form drawer states
   const [isTaskFormDrawerOpen, setIsTaskFormDrawerOpen] = useState(false);
@@ -270,7 +274,7 @@ const DefaultChecklistWorkflow = () => {
             <Button
               type="text"
               shape="circle"
-              icon={<EditOutlined style={{ fontSize: '15px' }} />}
+              icon={getIcon('EditOutlined')}
               onClick={() => handleEditTask(record)}
             />
           </Tooltip>
@@ -282,8 +286,8 @@ const DefaultChecklistWorkflow = () => {
               <Button
                 type="text"
                 shape="circle"
-                icon={<DeleteOutlined style={{ fontSize: '15px', color: 'red' }} />}
-                loading={isDeletingTask}
+                icon={getIcon('DeleteOutlined')}
+                loading={deletingTaskId === record._id}
               />
             </Tooltip>
           </Popconfirm>
@@ -320,7 +324,7 @@ const DefaultChecklistWorkflow = () => {
             <Button
               type="text"
               shape="circle"
-              icon={<EditOutlined style={{ fontSize: '15px' }} />}
+              icon={getIcon('EditOutlined')}
               onClick={() => handleEditChecklist(record)}
             />
           </Tooltip>
@@ -332,8 +336,8 @@ const DefaultChecklistWorkflow = () => {
               <Button
                 type="text"
                 shape="circle"
-                icon={<DeleteOutlined style={{ color: 'red', fontSize: '15px' }} />}
-                loading={isDeletingDefaultChecklist}
+                icon={getIcon('DeleteOutlined')}
+                loading={deletingChecklistId === record._id}
               />
             </Tooltip>
           </Popconfirm>
@@ -341,7 +345,7 @@ const DefaultChecklistWorkflow = () => {
             <Button
               type="text"
               shape="circle"
-              icon={<OrderedListOutlined style={{ color: PRIMARY_COLOR, fontSize: '15px' }} />}
+              icon={getIcon('Tasks')}
               onClick={() => handleOpenTaskDrawer(record)}
             />
           </Tooltip>
@@ -380,6 +384,11 @@ const DefaultChecklistWorkflow = () => {
           position: ['bottomLeft'],
           showSizeChanger: false,
           showQuickJumper: false,
+        }}
+        locale={{
+          emptyText: searchText
+            ? `No checklists found matching "${searchText}"`
+            : 'No default checklists available',
         }}
       />
 

@@ -9,7 +9,12 @@ import {
   useUpdateTaskMutation,
 } from '../../../services/api';
 import { notification } from 'antd';
+import { useState } from 'react';
+
 export const useDefaultChecklistHandler = () => {
+  const [deletingChecklistId, setDeletingChecklistId] = useState(null);
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+
   const {
     data: defaultChecklists,
     isLoading,
@@ -27,6 +32,7 @@ export const useDefaultChecklistHandler = () => {
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [deleteTask, { isLoading: isDeletingTask }] = useDeleteTaskMutation();
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
+
   const handleAddDefaultChecklist = async (data, closeDrawer) => {
     try {
       const response = await addDefaultChecklist(data).unwrap();
@@ -50,16 +56,19 @@ export const useDefaultChecklistHandler = () => {
 
   const handleDeleteDefaultChecklist = async (id, closeDrawer) => {
     try {
+      setDeletingChecklistId(id);
       const response = await deleteDefaultChecklist(id).unwrap();
       if (response.success) {
         notification.success({
           message: 'Default checklist deleted successfully',
           description: response.message,
         });
-        closeDrawer();
+        if (closeDrawer) closeDrawer();
       }
     } catch (error) {
       console.error('Error deleting default checklist:', error);
+    } finally {
+      setDeletingChecklistId(null);
     }
   };
 
@@ -148,6 +157,7 @@ export const useDefaultChecklistHandler = () => {
 
   const handleDeleteTask = async (id, onSuccess) => {
     try {
+      setDeletingTaskId(id);
       const response = await deleteTask(id).unwrap();
       if (response.success) {
         notification.success({
@@ -170,6 +180,8 @@ export const useDefaultChecklistHandler = () => {
         description: 'Something went wrong while deleting the task',
       });
       return null;
+    } finally {
+      setDeletingTaskId(null);
     }
   };
 
@@ -211,6 +223,7 @@ export const useDefaultChecklistHandler = () => {
     isAddingDefaultChecklist,
     handleDeleteDefaultChecklist,
     isDeletingDefaultChecklist,
+    deletingChecklistId,
     handleUpdateDefaultChecklist,
     isUpdatingDefaultChecklist,
     handleUploadImage,
@@ -219,6 +232,7 @@ export const useDefaultChecklistHandler = () => {
     isCreatingTask,
     handleDeleteTask,
     isDeletingTask,
+    deletingTaskId,
     handleUpdateTask,
     isUpdatingTask,
   };

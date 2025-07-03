@@ -57,6 +57,7 @@ function DashboardWorkflow() {
     isGeneratingToken,
     handleUsageReport,
     reportGenerateLoading,
+    generateTokenID,
   } = useReportHandler();
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
   const [currentUserToken, setCurrentUserToken] = useState(null);
@@ -156,7 +157,7 @@ function DashboardWorkflow() {
 
   const columns = [
     {
-      title: '#',
+      title: 'User Avatar',
       key: 'user',
       width: 15,
       align: 'center',
@@ -173,14 +174,25 @@ function DashboardWorkflow() {
       dataIndex: 'fullname',
       key: 'fullname',
       width: 30,
-      render: fullname => <span style={{ fontSize: '14px' }}>{fullname}</span>,
+      render: fullname => (
+        <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
+      ),
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
       width: 60,
-      render: email => <span style={{ fontSize: '14px' }}>{email}</span>,
+      render: email => (
+        <a
+          href={`mailto:${email}`}
+          style={{ fontSize: '14px', color: 'inherit', textDecoration: 'none' }}
+          onMouseEnter={e => (e.target.style.textDecoration = 'underline')}
+          onMouseLeave={e => (e.target.style.textDecoration = 'none')}
+        >
+          {email}
+        </a>
+      ),
     },
     {
       title: 'Last Login',
@@ -201,7 +213,7 @@ function DashboardWorkflow() {
     {
       title: 'Role',
       key: 'role',
-      width: 15,
+      width: 20,
       align: 'center',
       render: (_, record) => (
         <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
@@ -212,9 +224,15 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: 20,
+      width: 25,
       fixed: 'right',
       align: 'center',
+      onHeaderCell: () => ({
+        style: {
+          backgroundColor: 'white',
+          borderRight: '1px solid #f0f0f0',
+        },
+      }),
       render: (_, record) => (
         <Space>
           <Tooltip title={'Export Report'}>
@@ -226,7 +244,11 @@ function DashboardWorkflow() {
                 handleExportReportClick(record);
               }}
             >
-              {isGeneratingToken ? <LoadingOutlined /> : getIcon('Export')}
+              {isGeneratingToken && generateTokenID === record._id ? (
+                <LoadingOutlined />
+              ) : (
+                getIcon('Export')
+              )}
             </Button>
           </Tooltip>
           <Tooltip title={'View User Checklist'}>
@@ -246,12 +268,10 @@ function DashboardWorkflow() {
                 {
                   key: 'dashboard',
                   label: 'Login to Old Dashboard',
-                  icon: <KeyOutlined />,
                 },
                 {
                   key: 'portal',
-                  label: 'Login to Portal',
-                  icon: <UserOutlined />,
+                  label: 'Login to New Dashboard',
                 },
               ],
               onClick: ({ key }) => handleMenuClick(key, record),

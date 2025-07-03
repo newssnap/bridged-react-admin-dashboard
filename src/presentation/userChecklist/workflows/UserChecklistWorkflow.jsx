@@ -353,6 +353,7 @@ const UserChecklistWorkflow = UserDetails => {
     {
       title: 'Actions',
       key: 'actions',
+      align: 'center',
       render: (_, record) => (
         <Space>
           <Tooltip title="Task Information">
@@ -427,6 +428,8 @@ const UserChecklistWorkflow = UserDetails => {
       title: 'Actions',
       dataIndex: 'actions',
       key: 'actions',
+      align: 'center',
+      width: 20,
       render: (_, record) => {
         return (
           <Space>
@@ -490,6 +493,11 @@ const UserChecklistWorkflow = UserDetails => {
           position: ['bottomLeft'],
           showSizeChanger: false,
           showQuickJumper: false,
+        }}
+        locale={{
+          emptyText: searchText
+            ? `No checklists found matching "${searchText}"`
+            : 'No default checklists available',
         }}
       />
       <ChecklistDrawer
