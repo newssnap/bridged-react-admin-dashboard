@@ -27,10 +27,12 @@ const TaskFormDrawer = ({
       placement="right"
       onClose={handleClose}
       open={isOpen}
-      width={600}
+      width={'40%'}
       footer={
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleClose} size="large">
+            Cancel
+          </Button>
           <Button type="primary" onClick={() => form.submit()} loading={isLoading}>
             {isEditing ? 'Update Task' : 'Add Task'}
           </Button>

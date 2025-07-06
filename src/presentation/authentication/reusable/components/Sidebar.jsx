@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
-import { Col, Row } from "antd";
-import VanillaTilt from "vanilla-tilt";
-import TitleLeftBorder from "../../../../utils/components/TitleLeftBorder";
+import React, { useEffect, useRef } from 'react';
+import { Col, Row } from 'antd';
+import VanillaTilt from 'vanilla-tilt';
+import TitleLeftBorder from '../../../../utils/components/TitleLeftBorder';
 
 function Sidebar({ Sidebarcontent }) {
   // Create a ref for VanillaTilt
@@ -22,30 +22,30 @@ function Sidebar({ Sidebarcontent }) {
   return (
     <Row
       style={{
-        backgroundColor: "var(--secondary-Color)",
-        height: "100%",
-        padding: "var(--mpr-large)",
-        position: "relative",
-        overflow: "hidden",
+        backgroundColor: 'var(--secondary-Color)',
+        height: '100%',
+        padding: 'var(--mpr-large)',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
       <Col style={{ zIndex: 1 }} span={24}>
         <img
           src="/company/logo_White.png"
           style={{
-            width: "130px",
+            width: '130px',
           }}
         />
       </Col>
 
-      <Col span={24} style={{ alignSelf: "center", zIndex: 1 }}>
+      <Col span={24} style={{ alignSelf: 'center', zIndex: 1 }}>
         <Row justify="center" align="middle">
           <img
             ref={tilt}
             style={{
-              width: "80%",
-              borderRadius: "var(--mpr-3)",
-              cursor: "pointer",
+              width: '80%',
+              borderRadius: 'var(--mpr-3)',
+              cursor: 'pointer',
             }}
             className="whiteShadow"
             src="/company/sidebar.png"
@@ -53,26 +53,26 @@ function Sidebar({ Sidebarcontent }) {
         </Row>
       </Col>
 
-      <Col style={{ alignSelf: "end", color: "white", zIndex: 1 }} span={24}>
+      <Col style={{ alignSelf: 'end', color: 'white', zIndex: 1 }} span={24}>
         <TitleLeftBorder
           style={{
-            borderRadius: "50px",
-            left: "-20px",
+            borderRadius: '50px',
+            left: '-20px',
           }}
         >
           <Row
             style={{
-              flexDirection: "column",
+              flexDirection: 'column',
             }}
           >
             <h1>
-              Join our <br /> community
+              Manage your users <br /> with ease
             </h1>
             <h2
               style={{
                 fontWeight: 300,
-                marginTop: "var(--mpr-2)",
-                fontSize: "1.3rem",
+                marginTop: 'var(--mpr-2)',
+                fontSize: '1.3rem',
               }}
             >
               {Sidebarcontent}
@@ -85,19 +85,19 @@ function Sidebar({ Sidebarcontent }) {
       <div
         className="primaryBlob blobAnimate1"
         style={{
-          position: "absolute",
+          position: 'absolute',
           top: 0,
           left: 0,
-          opacity: "1",
+          opacity: '1',
         }}
       ></div>
       <div
         className="primaryBlob primaryBlobSm blobAnimate2"
         style={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 0,
           right: 0,
-          opacity: "0.3",
+          opacity: '0.3',
         }}
       ></div>
     </Row>

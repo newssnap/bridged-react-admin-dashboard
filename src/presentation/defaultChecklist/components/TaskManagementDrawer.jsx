@@ -19,16 +19,20 @@ const TaskManagementDrawer = ({
       placement="right"
       onClose={onClose}
       open={isOpen}
-      width={'70%'}
+      width={'40%'}
       footer={
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose} size="large">
+            Close
+          </Button>
         </Space>
       }
     >
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-          <Title level={3}>Tasks</Title>
+          <Title level={3} style={{ fontWeight: 300 }}>
+            Tasks
+          </Title>
           <Button size="large" type="primary" icon={<PlusOutlined />} onClick={onAddTask}>
             Add Task
           </Button>

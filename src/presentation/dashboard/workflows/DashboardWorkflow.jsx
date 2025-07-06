@@ -159,11 +159,11 @@ function DashboardWorkflow() {
     {
       title: 'User Avatar',
       key: 'user',
-      width: 15,
+      width: '13px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
-          <Avatar src={record.picture} alt={record.fullname} size={50}>
+          <Avatar src={record.picture} icon={<UserOutlined />} alt={record.fullname} size={50}>
             {record.fullname.charAt(0).toUpperCase()}
           </Avatar>
         </Space>
@@ -173,7 +173,7 @@ function DashboardWorkflow() {
       title: 'Fullname',
       dataIndex: 'fullname',
       key: 'fullname',
-      width: 30,
+      width: '20px',
       render: fullname => (
         <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
       ),
@@ -182,11 +182,11 @@ function DashboardWorkflow() {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      width: 60,
+      width: '50px',
       render: email => (
         <a
           href={`mailto:${email}`}
-          style={{ fontSize: '14px', color: 'inherit', textDecoration: 'none' }}
+          style={{ fontSize: '14px', color: PRIMARY_COLOR, textDecoration: 'none' }}
           onMouseEnter={e => (e.target.style.textDecoration = 'underline')}
           onMouseLeave={e => (e.target.style.textDecoration = 'none')}
         >
@@ -199,7 +199,7 @@ function DashboardWorkflow() {
       dataIndex: 'lastLoggedInDate',
       key: 'lastLoggedInDate',
       align: 'center',
-      width: 15,
+      width: '10%',
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
@@ -208,7 +208,7 @@ function DashboardWorkflow() {
       key: 'verificationCode',
       align: 'center',
       width: 20,
-      render: code => <span style={{ fontSize: '14px' }}>{code}</span>,
+      render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
     },
     {
       title: 'Role',
@@ -224,7 +224,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: 25,
+      width: '13%',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -290,7 +290,7 @@ function DashboardWorkflow() {
 
   return (
     <Space direction="vertical" size={'large'} style={{ width: '100%' }}>
-      <Title level={2} style={{ marginBottom: '24px' }}>
+      <Title level={2} style={{ marginBottom: '24px', fontWeight: 300 }}>
         Users
       </Title>
       <Flex justify="space-between" align="center" style={{ width: '100%' }}>
@@ -436,6 +436,9 @@ function DashboardWorkflow() {
           showQuickJumper: false,
         }}
         scroll={{ x: 990 }}
+        locale={{
+          emptyText: searchText ? `No users found matching "${searchText}"` : 'No users available',
+        }}
       />
     </Space>
   );

@@ -13,11 +13,13 @@ const ChecklistDrawer = ({ isOpen, onClose, isEditing, form, onSubmit, isLoading
       placement="right"
       onClose={handleClose}
       open={isOpen}
-      width={400}
+      width={'40%'}
       footer={
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button type="primary" onClick={() => form.submit()} loading={isLoading}>
+          <Button onClick={handleClose} size="large">
+            Cancel
+          </Button>
+          <Button type="primary" onClick={() => form.submit()} loading={isLoading} size="large">
             {isEditing ? 'Update' : 'Add'}
           </Button>
         </Space>

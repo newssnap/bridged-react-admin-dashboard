@@ -301,13 +301,13 @@ const DefaultChecklistWorkflow = () => {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
-      width: 200,
+      width: '200px',
     },
     {
       title: 'Tasks',
       dataIndex: 'tasks',
       key: 'tasks',
-      width: 150,
+      width: '150px',
       render: (_, record) => (
         <Space>{record.tasks.length > 0 ? record.tasks.length + ' tasks' : 'No tasks'}</Space>
       ),
@@ -315,7 +315,7 @@ const DefaultChecklistWorkflow = () => {
     {
       title: 'Actions',
       key: 'actions',
-      width: 10,
+      width: '10%',
       fixed: 'right',
       align: 'center',
       render: (_, record) => (
@@ -361,7 +361,9 @@ const DefaultChecklistWorkflow = () => {
   }, [defaultChecklists, searchText]);
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Title level={2}>Default Checklists</Title>
+      <Title level={2} style={{ fontWeight: 300 }}>
+        Default Checklists
+      </Title>
       <Flex justify="space-between" align="center" style={{ width: '100%' }}>
         <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleAddChecklist}>
           <PlusOutlined />

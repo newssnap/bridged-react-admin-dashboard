@@ -30,6 +30,7 @@ import {
   DeleteOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import ChecklistDrawer from '../../defaultChecklist/components/ChecklistDrawer';
 import { message as messageComponent } from 'antd';
 import formatDate from '../../../utils/formatting/formateDate';
@@ -39,6 +40,7 @@ const { Search } = Input;
 
 const UserChecklistWorkflow = UserDetails => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const {
     userChecklist,
     teamMembers,
@@ -470,7 +472,17 @@ const UserChecklistWorkflow = UserDetails => {
   ];
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Title level={2}>User Checklist</Title>
+      <Flex align="center" gap={'20px'} style={{ marginBottom: 'var(--mpr-3)' }}>
+        <Icon
+          name="ArrowRightOutlined"
+          style={{ rotate: '180deg', marginTop: '2px', cursor: 'pointer' }}
+          size="small"
+          onClick={() => navigate(-1)}
+        />
+        <Title level={2} style={{ fontWeight: 300 }}>
+          User Checklist
+        </Title>
+      </Flex>
       <Flex justify="space-between" align="center" style={{ width: '100%' }}>
         <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleDrawerOpen}>
           <PlusOutlined />
@@ -518,7 +530,7 @@ const UserChecklistWorkflow = UserDetails => {
         bodyStyle={{ paddingBottom: 80 }}
         footer={
           <div style={{ textAlign: 'right' }}>
-            <Button onClick={handleTasksDrawerClose} style={{ width: '100px' }}>
+            <Button onClick={handleTasksDrawerClose} style={{ width: '100px' }} size="large">
               Close
             </Button>
           </div>
@@ -552,8 +564,10 @@ const UserChecklistWorkflow = UserDetails => {
           footer={
             <div style={{ textAlign: 'right' }}>
               <Space>
-                <Button onClick={handleTaskFormDrawerClose}>Cancel</Button>
-                <Button type="primary" onClick={() => taskForm.submit()}>
+                <Button onClick={handleTaskFormDrawerClose} size="large">
+                  Cancel
+                </Button>
+                <Button type="primary" onClick={() => taskForm.submit()} size="large">
                   {isEditingTask ? 'Update Task' : 'Create Task'}
                 </Button>
               </Space>
@@ -667,7 +681,7 @@ const UserChecklistWorkflow = UserDetails => {
           bodyStyle={{ paddingBottom: 80 }}
           footer={
             <div style={{ textAlign: 'right' }}>
-              <Button onClick={handleTaskInfoDrawerClose} style={{ width: '100px' }}>
+              <Button onClick={handleTaskInfoDrawerClose} style={{ width: '100px' }} size="large">
                 Close
               </Button>
             </div>
@@ -726,7 +740,9 @@ const UserChecklistWorkflow = UserDetails => {
 
               {/* Comments Section */}
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <Title level={4}>Comments</Title>
+                <Title level={4} style={{ fontWeight: 300 }}>
+                  Comments
+                </Title>
                 {isLoadingTaskComments ? (
                   <div>Loading comments...</div>
                 ) : (
@@ -799,7 +815,9 @@ const UserChecklistWorkflow = UserDetails => {
                     {/* Add Comment Section */}
                     <Divider />
                     <div>
-                      <Title level={5}>Add Comment</Title>
+                      <Title level={5} style={{ fontWeight: 300 }}>
+                        Add Comment
+                      </Title>
                       <Space.Compact style={{ width: '100%', marginTop: '10px' }}>
                         <Input
                           placeholder="Write a comment..."

@@ -9,7 +9,7 @@ function LoginWorkflow() {
   const [form] = Form.useForm();
 
   return (
-    <AuthenticationLayout Sidebarcontent="Creating AI-powered customer agents that engage, convert and retain your users">
+    <AuthenticationLayout Sidebarcontent="Empower your team with full control over user access and roles in a powerful admin dashboard.">
       <Form
         form={form}
         onFinish={loginHandler}
@@ -26,7 +26,7 @@ function LoginWorkflow() {
             >
               Welcome back
             </h1>
-            <p className="opacity05">Please enter your details</p>
+            <p className="opacity05">Access your dashboard to manage users and system settings.</p>
           </Col>
           <Col style={{ alignSelf: 'center' }} span={24}>
             <Row gutter={[30, 15]}>
