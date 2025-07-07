@@ -87,24 +87,36 @@ function DashboardWorkflow() {
       } else if (key === 'portal') {
         window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
       } else if (key === 'plugin') {
-        if (window.chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage(
-            PLUGIN_ID,
-            {
-              type: 'SET_TOKEN',
+        window.postMessage(
+          {
+            source: 'qweek-website',
+            payload: {
+              type: 'LOGIN_TOKEN',
               token: token,
             },
-            response => {
-              if (chrome.runtime.lastError) {
-                console.error('Error:', chrome.runtime.lastError.message);
-              } else {
-                console.log('Success:', response);
-              }
+          },
+          '*'
+        );
+        window.addEventListener('message', event => {
+          if (event.source !== window) return;
+
+          const message = event.data;
+
+          if (message?.source === 'qweek-website' && message.payload?.type === 'LOGIN_STATUS') {
+            console.log('Login status:', message.payload.status);
+            if (message.payload.status === 'success') {
+              notification.success({
+                message: 'Login Success',
+                description: 'You have been logged in successfully.',
+              });
+            } else {
+              notification.error({
+                message: 'Login Failed',
+                description: 'Failed to login. Please try again.',
+              });
             }
-          );
-        } else {
-          console.warn('chrome.runtime not available — are you in a regular website context?');
-        }
+          }
+        });
       }
     } else {
       notification.error({
@@ -197,7 +209,7 @@ function DashboardWorkflow() {
     {
       title: 'User Avatar',
       key: 'user',
-      width: '13px',
+      width: '50px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
@@ -211,7 +223,7 @@ function DashboardWorkflow() {
       title: 'Fullname',
       dataIndex: 'fullname',
       key: 'fullname',
-      width: '20px',
+      width: '200px',
       render: fullname => (
         <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
       ),
@@ -220,7 +232,7 @@ function DashboardWorkflow() {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      width: '50px',
+      width: '100px',
       render: email => (
         <a
           href={`mailto:${email}`}
@@ -237,7 +249,7 @@ function DashboardWorkflow() {
       dataIndex: 'lastLoggedInDate',
       key: 'lastLoggedInDate',
       align: 'center',
-      width: '10%',
+      width: '100px',
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
@@ -245,13 +257,13 @@ function DashboardWorkflow() {
       dataIndex: 'verificationCode',
       key: 'verificationCode',
       align: 'center',
-      width: 20,
+      width: '50px',
       render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
     },
     {
       title: 'Role',
       key: 'role',
-      width: 20,
+      width: '50px',
       align: 'center',
       render: (_, record) => (
         <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
@@ -262,7 +274,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '20%',
+      width: '150px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
