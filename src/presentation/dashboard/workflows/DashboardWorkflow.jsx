@@ -408,7 +408,7 @@ function DashboardWorkflow() {
           <PlusOutlined />
           Add User
         </Button>
-        <Search
+        <Input
           placeholder="Search by email"
           allowClear
           size="large"
@@ -440,14 +440,14 @@ function DashboardWorkflow() {
             label="Username"
             rules={[{ required: true, message: 'Please input the username!' }]}
           >
-            <Input />
+            <Input size="large" />
           </Form.Item>
           <Form.Item
             name="password"
             label="Password"
             rules={[{ required: true, message: 'Please input the password!' }]}
           >
-            <Input.Password />
+            <Input.Password size="large" />
           </Form.Item>
         </Form>
       </Drawer>

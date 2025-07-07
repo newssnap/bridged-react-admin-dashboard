@@ -580,7 +580,7 @@ const UserChecklistWorkflow = UserDetails => {
               label="Title"
               rules={[{ required: true, message: 'Please input the task title!' }]}
             >
-              <Input placeholder="Enter task title" />
+              <Input placeholder="Enter task title" size="large" />
             </Form.Item>
 
             <Form.Item
@@ -588,7 +588,7 @@ const UserChecklistWorkflow = UserDetails => {
               label="Description"
               rules={[{ required: true, message: 'Please input the task description!' }]}
             >
-              <Input.TextArea placeholder="Enter task description" rows={4} />
+              <Input.TextArea placeholder="Enter task description" rows={4} size="large" />
             </Form.Item>
 
             <Form.Item name="dueDate" label="Due Date">
@@ -825,6 +825,7 @@ const UserChecklistWorkflow = UserDetails => {
                           onChange={e => setNewComment(e.target.value)}
                           onPressEnter={handleAddComment}
                           disabled={isAddingTaskComment}
+                          size="large"
                         />
                         <Button
                           type="primary"

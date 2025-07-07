@@ -41,7 +41,7 @@ function LoginWorkflow() {
                     },
                   ]}
                 >
-                  <Input placeholder="Enter your username" />
+                  <Input placeholder="Enter your username" size="large" />
                 </Form.Item>
               </Col>
               <Col {...{ xs: 24, sm: 24, md: 24, lg: 24 }}>
@@ -54,7 +54,7 @@ function LoginWorkflow() {
                     },
                   ]}
                 >
-                  <Input.Password placeholder="Enter your password" />
+                  <Input.Password placeholder="Enter your password" size="large" />
                 </Form.Item>
                 <Col
                   span={24}

@@ -217,12 +217,14 @@ function TaskDetails({
               autoSize={{ minRows: 4, maxRows: 4 }}
               value={comment}
               onChange={e => setComment(e.target.value)}
+              size="large"
             />
             <Button
               type="primary"
               style={{ position: 'absolute', right: 24, bottom: 24, opacity: 1 }}
               onClick={() => handleAddComment()}
               loading={isAddCommentLoading}
+              size="large"
             >
               Comment
             </Button>
@@ -282,6 +284,7 @@ function TaskDetails({
                   placeholder="No description added"
                   style={{ borderRadius: '6px' }}
                   readOnly
+                  size="large"
                 />
               </Flex>
             </Flex>
@@ -439,6 +442,7 @@ function TaskDetails({
                                 onChange={e => setEditCommentText(e.target.value)}
                                 autoSize={{ minRows: 2, maxRows: 4 }}
                                 style={{ borderRadius: '6px' }}
+                                size="large"
                               />
                               <Flex gap={8} justify="flex-end">
                                 <Button
@@ -446,6 +450,7 @@ function TaskDetails({
                                     setEditingComment(null);
                                     setEditCommentText('');
                                   }}
+                                  size="large"
                                 >
                                   Cancel
                                 </Button>
@@ -453,6 +458,7 @@ function TaskDetails({
                                   type="primary"
                                   onClick={() => handleUpdateComment(comment._id)}
                                   loading={isUpdateTaskCommentLoading}
+                                  size="large"
                                 >
                                   Update
                                 </Button>
