@@ -1,3 +1,4 @@
+/* global chrome */
 import {
   theme,
   Typography,
@@ -34,6 +35,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 import { useNavigate } from 'react-router-dom';
+import { PLUGIN_ID } from '../../../config/Config';
 const { Title } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
@@ -84,6 +86,25 @@ function DashboardWorkflow() {
         window.open(`https://dashboard.bridged.media/?accessToken=${token}`, '_blank');
       } else if (key === 'portal') {
         window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
+      } else if (key === 'plugin') {
+        if (window.chrome?.runtime?.sendMessage) {
+          chrome.runtime.sendMessage(
+            PLUGIN_ID,
+            {
+              type: 'SET_TOKEN',
+              token: token,
+            },
+            response => {
+              if (chrome.runtime.lastError) {
+                console.error('Error:', chrome.runtime.lastError.message);
+              } else {
+                console.log('Success:', response);
+              }
+            }
+          );
+        } else {
+          console.warn('chrome.runtime not available — are you in a regular website context?');
+        }
       }
     } else {
       notification.error({
@@ -241,7 +262,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '17%',
+      width: '20%',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -330,6 +351,24 @@ function DashboardWorkflow() {
               {isGeneratingTokenForLogin &&
               generateTokenIDLogin &&
               tokenType === 'portal' &&
+              generateTokenIDLogin === record._id ? (
+                <LoadingOutlined />
+              ) : (
+                getIcon('KeyCircleOutlined')
+              )}
+            </Button>
+          </Tooltip>
+          <Tooltip title={'Login to Plugin'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => {
+                handleMenuClick('plugin', record);
+              }}
+            >
+              {isGeneratingTokenForLogin &&
+              generateTokenIDLogin &&
+              tokenType === 'plugin' &&
               generateTokenIDLogin === record._id ? (
                 <LoadingOutlined />
               ) : (
