@@ -44,7 +44,17 @@ function DashboardWorkflow() {
     token: { colorBgLayout },
   } = theme.useToken();
 
-  const { users, isLoading, error, handleAddUser, isAddingUser } = useDashboardHandler();
+  const {
+    users,
+    isLoading,
+    error,
+    handleAddUser,
+    isAddingUser,
+    handleGenerateUserTokenForLogin,
+    isGeneratingTokenForLogin,
+    generateTokenIDLogin,
+    tokenType,
+  } = useDashboardHandler();
   const [searchText, setSearchText] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
@@ -62,17 +72,24 @@ function DashboardWorkflow() {
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
   const [currentUserToken, setCurrentUserToken] = useState(null);
   const navigate = useNavigate();
-  const handleMenuClick = (key, record) => {
-    if (key === 'dashboard') {
-      window.open(
-        `https://dashboard.bridged.media/?accessToken=${localStorage.getItem('accessToken')}`,
-        '_blank'
-      );
-    } else if (key === 'portal') {
-      window.open(
-        `https://portal.bridged.media/?accessToken=${localStorage.getItem('accessToken')}`,
-        '_blank'
-      );
+  const handleMenuClick = async (key, record) => {
+    const token = await handleGenerateUserTokenForLogin(
+      {
+        _id: record._id,
+      },
+      key
+    );
+    if (token) {
+      if (key === 'dashboard') {
+        window.open(`https://dashboard.bridged.media/?accessToken=${token}`, '_blank');
+      } else if (key === 'portal') {
+        window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
+      }
+    } else {
+      notification.error({
+        message: 'Error',
+        description: 'Failed to generate user token. Please try again.',
+      });
     }
   };
 
@@ -224,7 +241,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '13%',
+      width: '17%',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -239,7 +256,7 @@ function DashboardWorkflow() {
             <Button
               type="text"
               shape="circle"
-              disabled={isGeneratingToken}
+              disabled={isGeneratingTokenForLogin}
               onClick={() => {
                 handleExportReportClick(record);
               }}
@@ -262,12 +279,13 @@ function DashboardWorkflow() {
               {getIcon('UserCheck')}
             </Button>
           </Tooltip>
-          <Dropdown
+          {/* <Dropdown
             menu={{
               items: [
                 {
                   key: 'dashboard',
                   label: 'Login to Old Dashboard',
+                  loading: isGeneratingTokenForLogin && generateTokenIDLogin === record._id,
                 },
                 {
                   key: 'portal',
@@ -282,7 +300,43 @@ function DashboardWorkflow() {
             <Button type="text" shape="circle">
               <MoreOutlined />
             </Button>
-          </Dropdown>
+          </Dropdown> */}
+          <Tooltip title={'Login to Old Dashboard'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => {
+                handleMenuClick('dashboard', record);
+              }}
+            >
+              {isGeneratingTokenForLogin &&
+              generateTokenIDLogin &&
+              tokenType === 'dashboard' &&
+              generateTokenIDLogin === record._id ? (
+                <LoadingOutlined />
+              ) : (
+                getIcon('KeySquareOutlined')
+              )}
+            </Button>
+          </Tooltip>
+          <Tooltip title={'Login to New Dashboard'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => {
+                handleMenuClick('portal', record);
+              }}
+            >
+              {isGeneratingTokenForLogin &&
+              generateTokenIDLogin &&
+              tokenType === 'portal' &&
+              generateTokenIDLogin === record._id ? (
+                <LoadingOutlined />
+              ) : (
+                getIcon('KeyCircleOutlined')
+              )}
+            </Button>
+          </Tooltip>
         </Space>
       ),
     },
