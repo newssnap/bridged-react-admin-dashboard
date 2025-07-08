@@ -369,7 +369,7 @@ const DefaultChecklistWorkflow = () => {
           <PlusOutlined />
           Add Checklist
         </Button>
-        <Search
+        <Input
           placeholder="Search by title"
           allowClear
           size="large"

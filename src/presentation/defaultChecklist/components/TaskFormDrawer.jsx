@@ -33,7 +33,7 @@ const TaskFormDrawer = ({
           <Button onClick={handleClose} size="large">
             Cancel
           </Button>
-          <Button type="primary" onClick={() => form.submit()} loading={isLoading}>
+          <Button type="primary" size="large" onClick={() => form.submit()} loading={isLoading}>
             {isEditing ? 'Update Task' : 'Add Task'}
           </Button>
         </Space>

@@ -83,9 +83,17 @@ function DashboardWorkflow() {
     );
     if (token) {
       if (key === 'dashboard') {
-        window.open(`https://dashboard.bridged.media/?accessToken=${token}`, '_blank');
+        if (process.env.NODE_ENV === 'development') {
+          window.open(`https://stg-dashboard.bridged.media/?accessToken=${token}`, '_blank');
+        } else {
+          window.open(`https://dashboard.bridged.media/?accessToken=${token}`, '_blank');
+        }
       } else if (key === 'portal') {
-        window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
+        if (process.env.NODE_ENV === 'development') {
+          window.open(`https://stg-portal.bridged.media/?accessToken=${token}`, '_blank');
+        } else {
+          window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
+        }
       } else if (key === 'plugin') {
         window.postMessage(
           {
@@ -263,7 +271,7 @@ function DashboardWorkflow() {
     {
       title: 'Role',
       key: 'role',
-      width: '50px',
+      width: '60px',
       align: 'center',
       render: (_, record) => (
         <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
@@ -426,10 +434,17 @@ function DashboardWorkflow() {
         footer={
           <div style={{ textAlign: 'right' }}>
             <Space>
-              <Button type="primary" onClick={handleAddUserSubmit} loading={isAddingUser}>
+              <Button
+                type="primary"
+                size="large"
+                onClick={handleAddUserSubmit}
+                loading={isAddingUser}
+              >
                 Add User
               </Button>
-              <Button onClick={handleCloseDrawer}>Close</Button>
+              <Button size="large" onClick={handleCloseDrawer}>
+                Close
+              </Button>
             </Space>
           </div>
         }
@@ -462,8 +477,15 @@ function DashboardWorkflow() {
         footer={
           <div style={{ textAlign: 'right' }}>
             <Space>
-              <Button onClick={handleCloseReportDrawer}>Close</Button>
-              <Button type="primary" onClick={handleGenerateReport} loading={reportGenerateLoading}>
+              <Button size="large" onClick={handleCloseReportDrawer}>
+                Close
+              </Button>
+              <Button
+                size="large"
+                type="primary"
+                onClick={handleGenerateReport}
+                loading={reportGenerateLoading}
+              >
                 Generate Report
               </Button>
             </Space>
