@@ -9,7 +9,7 @@ const ChecklistDrawer = ({ isOpen, onClose, isEditing, form, onSubmit, isLoading
 
   return (
     <Drawer
-      title={isEditing ? 'Edit Checklist' : 'Add New Checklist'}
+      title={isEditing ? 'Edit Tasklist' : 'Add New Tasklist'}
       placement="right"
       onClose={handleClose}
       open={isOpen}
@@ -32,11 +32,11 @@ const ChecklistDrawer = ({ isOpen, onClose, isEditing, form, onSubmit, isLoading
           rules={[
             {
               required: true,
-              message: 'Please enter a title for the checklist',
+              message: 'Please enter a title for the tasklist',
             },
           ]}
         >
-          <Input placeholder="Enter checklist title" size="large" />
+          <Input placeholder="Enter tasklist title" size="large" />
         </Form.Item>
       </Form>
     </Drawer>

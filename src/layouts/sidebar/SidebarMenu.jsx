@@ -19,7 +19,7 @@ const SidebarMenu = ({ secondary }) => {
     },
     {
       key: 'defaultChecklist',
-      label: 'Default Checklist',
+      label: 'Default Tasklist',
       icon: getIcon('BarChartOutlined'),
       onClick: () => navigate('/defaultChecklist'),
       path: '/defaultChecklist',

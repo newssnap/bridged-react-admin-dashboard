@@ -320,7 +320,7 @@ const DefaultChecklistWorkflow = () => {
       align: 'center',
       render: (_, record) => (
         <Space>
-          <Tooltip title="Edit Checklist Name">
+          <Tooltip title="Edit Tasklist Name">
             <Button
               type="text"
               shape="circle"
@@ -329,10 +329,10 @@ const DefaultChecklistWorkflow = () => {
             />
           </Tooltip>
           <Popconfirm
-            title="Are you sure you want to delete this checklist?"
+            title="Are you sure you want to delete this tasklist?"
             onConfirm={() => handleDeleteChecklist(record._id)}
           >
-            <Tooltip title="Delete Checklist">
+            <Tooltip title="Delete Tasklist">
               <Button
                 type="text"
                 shape="circle"
@@ -362,12 +362,12 @@ const DefaultChecklistWorkflow = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Title level={2} style={{ fontWeight: 300 }}>
-        Default Checklists
+        Default Tasklists
       </Title>
       <Flex justify="space-between" align="center" style={{ width: '100%' }}>
         <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleAddChecklist}>
           <PlusOutlined />
-          Add Checklist
+          Add Tasklist
         </Button>
         <Input
           placeholder="Search by title"
@@ -389,8 +389,8 @@ const DefaultChecklistWorkflow = () => {
         }}
         locale={{
           emptyText: searchText
-            ? `No checklists found matching "${searchText}"`
-            : 'No default checklists available',
+            ? `No tasklists found matching "${searchText}"`
+            : 'No default tasklists available',
         }}
       />
 

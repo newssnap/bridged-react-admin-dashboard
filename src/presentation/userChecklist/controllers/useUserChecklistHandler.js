@@ -54,19 +54,19 @@ export const useUserChecklistHandler = userId => {
       const response = await addDefaultChecklist(data).unwrap();
       if (response.success) {
         notification.success({
-          message: 'Default checklist added successfully',
+          message: 'Default tasklist added successfully',
           description: response.message,
         });
         closeDrawer();
       } else {
         notification.error({
-          message: 'Error adding default checklist',
+          message: 'Error adding default tasklist',
           description: response.message,
         });
         closeDrawer();
       }
     } catch (error) {
-      console.error('Error adding default checklist:', error);
+      console.error('Error adding default tasklist:', error);
     }
   };
 
@@ -75,18 +75,18 @@ export const useUserChecklistHandler = userId => {
       const response = await updateUserChecklist({ id, data }).unwrap();
       if (response.success) {
         notification.success({
-          message: 'Default checklist updated successfully',
+          message: 'Default tasklist updated successfully',
           description: response.message,
         });
         closeDrawer();
       } else {
         notification.error({
-          message: 'Error updating default checklist',
+          message: 'Error updating default tasklist',
           description: response.message,
         });
       }
     } catch (error) {
-      console.error('Error updating default checklist:', error);
+      console.error('Error updating default tasklist:', error);
     }
   };
 
@@ -95,13 +95,13 @@ export const useUserChecklistHandler = userId => {
       const response = await deleteUserChecklist(id).unwrap();
       if (response.success) {
         notification.success({
-          message: 'Default checklist deleted successfully',
+          message: 'Default tasklist deleted successfully',
           description: response.message,
         });
         closeDrawer();
       }
     } catch (error) {
-      console.error('Error deleting default checklist:', error);
+      console.error('Error deleting default tasklist:', error);
     }
   };
 

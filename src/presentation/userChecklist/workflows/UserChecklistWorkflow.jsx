@@ -445,9 +445,9 @@ const UserChecklistWorkflow = UserDetails => {
                 onClick={() => handleTasksDrawerOpen(record)}
               />
             </Tooltip>
-            <Tooltip title="Delete Checklist">
+            <Tooltip title="Delete Tasklist">
               <Popconfirm
-                title="Are you sure you want to delete this checklist?"
+                title="Are you sure you want to delete this tasklist?"
                 onConfirm={() => handleDeleteChecklist(record._id)}
               >
                 <Button
@@ -459,7 +459,7 @@ const UserChecklistWorkflow = UserDetails => {
                 />
               </Popconfirm>
             </Tooltip>
-            <Tooltip title="Edit Checklist">
+            <Tooltip title="Edit Tasklist">
               <Button
                 type="text"
                 icon={getIcon('EditOutlined')}
@@ -482,13 +482,13 @@ const UserChecklistWorkflow = UserDetails => {
           onClick={() => navigate(-1)}
         />
         <Title level={2} style={{ fontWeight: 300 }}>
-          User Checklist
+          User Tasklist
         </Title>
       </Flex>
       <Flex justify="space-between" align="center" style={{ width: '100%' }}>
         <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleDrawerOpen}>
           <PlusOutlined />
-          Add Checklist
+          Add Tasklist
         </Button>
         <Search
           placeholder="Search by title"
@@ -510,8 +510,8 @@ const UserChecklistWorkflow = UserDetails => {
         }}
         locale={{
           emptyText: searchText
-            ? `No checklists found matching "${searchText}"`
-            : 'No default checklists available',
+            ? `No tasklists found matching "${searchText}"`
+            : 'No default tasklists available',
         }}
       />
       <ChecklistDrawer

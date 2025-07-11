@@ -258,7 +258,7 @@ function DashboardWorkflow() {
       dataIndex: 'lastLoggedInDate',
       key: 'lastLoggedInDate',
       align: 'center',
-      width: '100px',
+      width: '120px',
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
@@ -266,13 +266,13 @@ function DashboardWorkflow() {
       dataIndex: 'verificationCode',
       key: 'verificationCode',
       align: 'center',
-      width: '80px',
+      width: '100px',
       render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
     },
     {
       title: 'Role',
       key: 'role',
-      width: '80px',
+      width: '100px',
       align: 'center',
       render: (_, record) => (
         <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
@@ -310,7 +310,7 @@ function DashboardWorkflow() {
               )}
             </Button>
           </Tooltip>
-          <Tooltip title={'View User Checklist'}>
+          <Tooltip title={'View User Tasklist'}>
             <Button
               type="text"
               shape="circle"
