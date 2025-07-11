@@ -36,7 +36,7 @@ import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { PLUGIN_ID } from '../../../config/Config';
+import { API_URL } from '../../../config/Config';
 const { Title } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
@@ -84,13 +84,13 @@ function DashboardWorkflow() {
     );
     if (token) {
       if (key === 'dashboard') {
-        if (process.env.NODE_ENV === 'development') {
+        if (API_URL.includes('stg')) {
           window.open(`https://stg-dashboard.bridged.media/?accessToken=${token}`, '_blank');
         } else {
           window.open(`https://dashboard.bridged.media/?accessToken=${token}`, '_blank');
         }
       } else if (key === 'portal') {
-        if (process.env.NODE_ENV === 'development') {
+        if (API_URL.includes('stg')) {
           window.open(`https://stg-portal.bridged.media/?accessToken=${token}`, '_blank');
         } else {
           window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
