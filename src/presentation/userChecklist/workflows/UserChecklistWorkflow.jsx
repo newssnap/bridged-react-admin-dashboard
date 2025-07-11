@@ -106,11 +106,13 @@ const UserChecklistWorkflow = UserDetails => {
       setIsEditingTask(true);
       setEditingTask(task);
       setTaskAttachments(task.attachments || []);
+      const assignedUser = teamMembers?.data?.find(member => member._id === task.assignedUser);
+      const userEmail = assignedUser ? assignedUser.email : 'Unknown User';
       taskForm.setFieldsValue({
         title: task.title,
         description: task.description,
         dueDate: task.dueDate ? dayjs(task.dueDate) : null,
-        assignedUser: task.assignedUser,
+        assignedUser: task.userEmail,
         isCompleted: task.isCompleted,
       });
     } else {

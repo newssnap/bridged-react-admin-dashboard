@@ -34,6 +34,7 @@ import { useReportHandler } from '../controllers/useReportHandler';
 import { useState, useMemo, useEffect } from 'react';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
+import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { PLUGIN_ID } from '../../../config/Config';
 const { Title } = Typography;
@@ -217,7 +218,7 @@ function DashboardWorkflow() {
     {
       title: 'User Avatar',
       key: 'user',
-      width: '50px',
+      width: '70px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
@@ -231,7 +232,7 @@ function DashboardWorkflow() {
       title: 'Fullname',
       dataIndex: 'fullname',
       key: 'fullname',
-      width: '200px',
+      width: '150px',
       render: fullname => (
         <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
       ),
@@ -240,7 +241,7 @@ function DashboardWorkflow() {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      width: '100px',
+      width: '150px',
       render: email => (
         <a
           href={`mailto:${email}`}
@@ -265,13 +266,13 @@ function DashboardWorkflow() {
       dataIndex: 'verificationCode',
       key: 'verificationCode',
       align: 'center',
-      width: '50px',
+      width: '80px',
       render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
     },
     {
       title: 'Role',
       key: 'role',
-      width: '60px',
+      width: '80px',
       align: 'center',
       render: (_, record) => (
         <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
@@ -320,29 +321,7 @@ function DashboardWorkflow() {
               {getIcon('UserCheck')}
             </Button>
           </Tooltip>
-          {/* <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'dashboard',
-                  label: 'Login to Old Dashboard',
-                  loading: isGeneratingTokenForLogin && generateTokenIDLogin === record._id,
-                },
-                {
-                  key: 'portal',
-                  label: 'Login to New Dashboard',
-                },
-              ],
-              onClick: ({ key }) => handleMenuClick(key, record),
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Button type="text" shape="circle">
-              <MoreOutlined />
-            </Button>
-          </Dropdown> */}
-          <Tooltip title={'Login to Old Dashboard'}>
+          {/* <Tooltip title={'Login to Old Dashboard'}>
             <Button
               type="text"
               shape="circle"
@@ -351,16 +330,16 @@ function DashboardWorkflow() {
               }}
             >
               {isGeneratingTokenForLogin &&
-              generateTokenIDLogin &&
-              tokenType === 'dashboard' &&
-              generateTokenIDLogin === record._id ? (
+                generateTokenIDLogin &&
+                tokenType === 'dashboard' &&
+                generateTokenIDLogin === record._id ? (
                 <LoadingOutlined />
               ) : (
                 getIcon('KeySquareOutlined')
               )}
             </Button>
-          </Tooltip>
-          <Tooltip title={'Login to New Dashboard'}>
+          </Tooltip> */}
+          <Tooltip title={'Login to Dashboard'}>
             <Button
               type="text"
               shape="circle"
@@ -374,7 +353,7 @@ function DashboardWorkflow() {
               generateTokenIDLogin === record._id ? (
                 <LoadingOutlined />
               ) : (
-                getIcon('KeyCircleOutlined')
+                getIcon('ComputerOutlined')
               )}
             </Button>
           </Tooltip>
@@ -392,7 +371,7 @@ function DashboardWorkflow() {
               generateTokenIDLogin === record._id ? (
                 <LoadingOutlined />
               ) : (
-                getIcon('KeyCircleOutlined')
+                <ChromeOutlined style={{ fontSize: '16px' }} />
               )}
             </Button>
           </Tooltip>
@@ -434,6 +413,9 @@ function DashboardWorkflow() {
         footer={
           <div style={{ textAlign: 'right' }}>
             <Space>
+              <Button size="large" onClick={handleCloseDrawer}>
+                Close
+              </Button>
               <Button
                 type="primary"
                 size="large"
@@ -441,9 +423,6 @@ function DashboardWorkflow() {
                 loading={isAddingUser}
               >
                 Add User
-              </Button>
-              <Button size="large" onClick={handleCloseDrawer}>
-                Close
               </Button>
             </Space>
           </div>
