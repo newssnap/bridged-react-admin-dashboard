@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { useUserInfoQuery } from "../../../../services/api";
-import { setUserData } from "../../../../redux/slices/user/profileSlice";
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { useUserInfoQuery } from '../../../../services/api';
+import { setUserData } from '../../../../redux/slices/user/profileSlice';
 
 const useProfileHandler = () => {
   const dispatch = useDispatch();
-  const { data, isLoading, isSuccess } = useUserInfoQuery();
+  // const { data, isLoading, isSuccess } = useUserInfoQuery();
 
   useEffect(() => {
     if (isSuccess) {

@@ -1,14 +1,14 @@
 import React from 'react';
-import { Menu } from 'antd';
+import { Menu, Modal } from 'antd';
 import Icon from '../../utils/components/Icon';
 import { useLocation, useNavigate } from 'react-router-dom';
+import logoutHandler from '../../utils/controllers/logoutHandler';
 
 const getIcon = name => <Icon name={name} />;
 
 const SidebarMenu = ({ secondary }) => {
   const location = useLocation();
   const navigate = useNavigate();
-
   const navItems = [
     {
       key: '',
@@ -16,6 +16,21 @@ const SidebarMenu = ({ secondary }) => {
       icon: getIcon('AppStoreOutlined'),
       onClick: () => navigate('/'),
       path: '/',
+    },
+    {
+      key: 'defaultChecklist',
+      label: 'Default Tasklist',
+      icon: getIcon('BarChartOutlined'),
+      onClick: () => navigate('/defaultChecklist'),
+      path: '/defaultChecklist',
+    },
+  ];
+
+  const bottomNavItems = [
+    {
+      key: 'logout',
+      label: 'Logout',
+      icon: getIcon('LogoutOutlined'),
     },
   ];
 
@@ -29,6 +44,23 @@ const SidebarMenu = ({ secondary }) => {
         border: 'none',
         width: '100%',
       }}
+      onClick={e => {
+        if (e.key === 'logout') {
+          Modal.confirm({
+            title: 'Logout',
+            content: 'Are you sure you want to logout?',
+            onOk: () => {
+              logoutHandler();
+            },
+            okText: 'Logout',
+            cancelText: 'Cancel',
+            centered: true,
+            okButtonProps: {
+              danger: true,
+            },
+          });
+        }
+      }}
       className="sidebarMenu"
     />
   );
@@ -36,6 +68,7 @@ const SidebarMenu = ({ secondary }) => {
   return (
     <>
       {!secondary && menuComp(navItems)}
+      {secondary && menuComp(bottomNavItems)}
     </>
   );
 };

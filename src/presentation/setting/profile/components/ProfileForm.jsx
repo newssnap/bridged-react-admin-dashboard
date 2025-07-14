@@ -12,7 +12,7 @@ const { Title } = Typography;
 const ProfileTitles = ({ title, description }) => {
   return (
     <Col span={24} style={{ marginBottom: 'var(--mpr-3)' }}>
-      <Title level={3} style={{ fontWeight: 400 }}>
+      <Title level={3} style={{ fontWeight: 300 }}>
         {title}
       </Title>
       <p style={{ marginTop: 'var(--mpr-3)' }} className="opacity05">
