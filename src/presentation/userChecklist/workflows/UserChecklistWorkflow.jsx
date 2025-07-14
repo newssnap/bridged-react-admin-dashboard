@@ -22,6 +22,7 @@ import {
   Divider,
 } from 'antd';
 import { Space as SpaceComponent, Typography as TypographyComponent, Image } from 'antd';
+import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import Icon from '../../../utils/components/Icon';
 import {
   PlusOutlined,
@@ -480,17 +481,42 @@ const UserChecklistWorkflow = UserDetails => {
           style={{ rotate: '180deg', marginTop: '2px', cursor: 'pointer' }}
           size="small"
           onClick={() => navigate(-1)}
+          onMouseEnter={e => {
+            e.target.style.transition = 'color 0.3s';
+            e.target.style.color = PRIMARY_COLOR;
+          }}
+          onMouseLeave={e => {
+            e.target.style.transition = 'color 0.3s';
+            e.target.style.color = 'inherit';
+          }}
         />
-        <Title level={2} style={{ fontWeight: 300 }}>
-          User Tasklist
-        </Title>
+        <Space>
+          <Title
+            level={2}
+            style={{ fontWeight: 300, marginRight: '0px', cursor: 'pointer' }}
+            onClick={() => navigate(-1)}
+            onMouseEnter={e => {
+              e.target.style.transition = 'color 0.3s';
+              e.target.style.color = PRIMARY_COLOR;
+            }}
+            onMouseLeave={e => {
+              e.target.style.transition = 'color 0.3s';
+              e.target.style.color = 'inherit';
+            }}
+          >
+            Users |
+          </Title>
+          <Title level={2} style={{ fontWeight: 300 }}>
+            User Tasklist
+          </Title>
+        </Space>
       </Flex>
       <Flex justify="space-between" align="center" style={{ width: '100%' }}>
         <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleDrawerOpen}>
           <PlusOutlined />
           Add Tasklist
         </Button>
-        <Search
+        <Input
           placeholder="Search by title"
           allowClear
           size="large"

@@ -229,15 +229,6 @@ function DashboardWorkflow() {
       ),
     },
     {
-      title: 'Fullname',
-      dataIndex: 'fullname',
-      key: 'fullname',
-      width: '150px',
-      render: fullname => (
-        <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
-      ),
-    },
-    {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
@@ -251,6 +242,15 @@ function DashboardWorkflow() {
         >
           {email}
         </a>
+      ),
+    },
+    {
+      title: 'Fullname',
+      dataIndex: 'fullname',
+      key: 'fullname',
+      width: '150px',
+      render: fullname => (
+        <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
       ),
     },
     {
