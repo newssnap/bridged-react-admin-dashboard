@@ -20,7 +20,9 @@ import {
   Upload,
   List,
   Divider,
+  Row,
 } from 'antd';
+import { theme } from 'antd';
 import { Space as SpaceComponent, Typography as TypographyComponent, Image } from 'antd';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import Icon from '../../../utils/components/Icon';
@@ -101,7 +103,9 @@ const UserChecklistWorkflow = UserDetails => {
     setIsTasksDrawerOpen(false);
     setSelectedChecklist(null);
   };
-
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken();
   const handleTaskFormDrawerOpen = (task = null) => {
     if (task) {
       setIsEditingTask(true);
@@ -318,7 +322,9 @@ const UserChecklistWorkflow = UserDetails => {
       key: 'dueDate',
       align: 'center',
       render: dueDate => (
-        <span style={{ fontSize: '14px' }}>{dueDate ? formatDate(dueDate) : 'No due date'}</span>
+        <span style={{ fontSize: '14px' }}>
+          {dueDate ? formatDate(dueDate, true) : 'No due date'}
+        </span>
       ),
     },
     {
@@ -634,6 +640,13 @@ const UserChecklistWorkflow = UserDetails => {
             >
               <Select
                 placeholder="Select a team member"
+                showSearch
+                optionFilterProp="label"
+                filterSort={(optionA, optionB) =>
+                  (optionA?.label ?? '')
+                    .toLowerCase()
+                    .localeCompare((optionB?.label ?? '').toLowerCase())
+                }
                 options={
                   teamMembers?.data?.map(member => ({
                     label: member.email,
@@ -674,7 +687,8 @@ const UserChecklistWorkflow = UserDetails => {
                       actions={[
                         <Button
                           type="text"
-                          icon={<CloseOutlined />}
+                          shape="circle"
+                          icon={getIcon('DeleteOutlined')}
                           onClick={() => handleRemoveAttachment(file)}
                           danger
                         />,
@@ -702,17 +716,38 @@ const UserChecklistWorkflow = UserDetails => {
         </Drawer>
         {/* Task Information Drawer */}
         <Drawer
-          title="Task Information"
+          title={selectedTaskInfo?.title ? selectedTaskInfo?.title : 'Task Information'}
           width={600}
           onClose={handleTaskInfoDrawerClose}
           open={isTaskInfoDrawerOpen}
+          extra={
+            <div>
+              <div style={{ marginTop: '4px' }}>
+                <Tag color={selectedTaskInfo?.isCompleted ? 'green' : 'orange'}>
+                  {selectedTaskInfo?.isCompleted ? 'Completed' : 'Pending'}
+                </Tag>
+              </div>
+            </div>
+          }
           bodyStyle={{ paddingBottom: 80 }}
           footer={
-            <div style={{ textAlign: 'right' }}>
-              <Button onClick={handleTaskInfoDrawerClose} style={{ width: '100px' }} size="large">
-                Close
+            <Row style={{ padding: 'var(--mpr-2)', width: '100%', position: 'relative' }}>
+              <Input.TextArea
+                placeholder="Add a comment"
+                style={{ width: '100%' }}
+                autoSize={{ minRows: 4, maxRows: 4 }}
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+              />
+              <Button
+                type="primary"
+                style={{ position: 'absolute', right: 24, bottom: 24, opacity: 1 }}
+                onClick={() => handleAddComment()}
+                loading={isAddingTaskComment}
+              >
+                Comment
               </Button>
-            </div>
+            </Row>
           }
         >
           {selectedTaskInfo && (
@@ -724,47 +759,61 @@ const UserChecklistWorkflow = UserDetails => {
                   size="middle"
                   style={{ width: '100%', marginTop: '10px' }}
                 >
-                  <div>
-                    <strong>Title:</strong>
-                    <div style={{ marginTop: '4px' }}>{selectedTaskInfo.title}</div>
-                  </div>
-                  <div>
-                    <strong>Description:</strong>
-                    <div style={{ marginTop: '4px' }}>{selectedTaskInfo.description}</div>
-                  </div>
-                  <div>
-                    <strong>Due Date:</strong>
-                    <div style={{ marginTop: '4px' }}>
-                      {selectedTaskInfo.dueDate
-                        ? formatDate(selectedTaskInfo.dueDate)
+                  <Flex gap={10} align="center">
+                    <Title level={4} className="lightTitle" style={{ width: '100px' }}>
+                      Assignee
+                    </Title>
+                    <Button
+                      style={{
+                        backgroundColor: colorBgLayout,
+                        cursor: 'not-allowed',
+                        width: '150px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontWeight: 500,
+                      }}
+                      type="text"
+                    >
+                      {selectedTaskInfo?.userEmail?.split('@')[0]}
+                      <CloseOutlined style={{ opacity: 0.8 }} />
+                    </Button>
+                  </Flex>
+                  <Flex gap={10} align="center">
+                    <Title level={4} className="lightTitle" style={{ width: '100px' }}>
+                      Due Date
+                    </Title>
+                    <Button
+                      style={{
+                        backgroundColor: colorBgLayout,
+                        cursor: 'not-allowed',
+                        width: '150px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontWeight: 500,
+                      }}
+                      type="text"
+                    >
+                      {selectedTaskInfo?.dueDate
+                        ? formatDate(selectedTaskInfo.dueDate, true)
                         : 'No due date'}
-                    </div>
-                  </div>
-                  <div>
-                    <strong>Assigned To:</strong>
-                    <div style={{ marginTop: '4px' }}>
-                      <Space>
-                        <Avatar src={selectedTaskInfo.userAvatar} size={32}>
-                          {selectedTaskInfo.userFullname
-                            ? selectedTaskInfo.userFullname.charAt(0).toUpperCase()
-                            : 'U'}
-                        </Avatar>
-                        <span>{selectedTaskInfo.userEmail}</span>
-                      </Space>
-                    </div>
-                  </div>
-                  <div>
-                    <strong>Status:</strong>
-                    <div style={{ marginTop: '4px' }}>
-                      <Tag color={selectedTaskInfo.isCompleted ? 'green' : 'orange'}>
-                        {selectedTaskInfo.isCompleted ? 'Completed' : 'Pending'}
-                      </Tag>
-                    </div>
-                  </div>
+                      <CloseOutlined style={{ opacity: 0.8 }} />
+                    </Button>
+                  </Flex>
+                  <Flex gap={15} align="flex-start" vertical>
+                    <Title level={4} className="lightTitle">
+                      Description
+                    </Title>
+
+                    <Input.TextArea
+                      value={selectedTaskInfo?.description}
+                      autoSize={{ minRows: 10, maxRows: 10 }}
+                      placeholder="No description added"
+                      style={{ borderRadius: '6px' }}
+                      readOnly
+                    />
+                  </Flex>
                 </Space>
               </div>
-
-              <Divider />
 
               {/* Comments Section */}
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -839,32 +888,6 @@ const UserChecklistWorkflow = UserDetails => {
                         No comments yet
                       </div>
                     )}
-
-                    {/* Add Comment Section */}
-                    <Divider />
-                    <div>
-                      <Title level={5} style={{ fontWeight: 300 }}>
-                        Add Comment
-                      </Title>
-                      <Space.Compact style={{ width: '100%', marginTop: '10px' }}>
-                        <Input
-                          placeholder="Write a comment..."
-                          value={newComment}
-                          onChange={e => setNewComment(e.target.value)}
-                          onPressEnter={handleAddComment}
-                          disabled={isAddingTaskComment}
-                          size="large"
-                        />
-                        <Button
-                          type="primary"
-                          onClick={handleAddComment}
-                          loading={isAddingTaskComment}
-                          disabled={!newComment.trim() || isAddingTaskComment}
-                        >
-                          Add
-                        </Button>
-                      </Space.Compact>
-                    </div>
                   </Space>
                 )}
               </div>

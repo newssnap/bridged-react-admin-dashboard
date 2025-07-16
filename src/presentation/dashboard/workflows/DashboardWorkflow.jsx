@@ -232,7 +232,7 @@ function DashboardWorkflow() {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      width: '150px',
+      width: '190px',
       render: email => (
         <a
           href={`mailto:${email}`}
@@ -339,7 +339,7 @@ function DashboardWorkflow() {
               )}
             </Button>
           </Tooltip> */}
-          <Tooltip title={'Login to Dashboard'}>
+          <Tooltip title={'Login to Portal'}>
             <Button
               type="text"
               shape="circle"
