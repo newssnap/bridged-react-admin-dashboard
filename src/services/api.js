@@ -43,7 +43,14 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const bridgedApi = createApi({
   reducerPath: 'bridgedApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['userInfo', 'users', 'defaultChecklists', 'userChecklists', 'taskComments'],
+  tagTypes: [
+    'userInfo',
+    'users',
+    'defaultChecklists',
+    'userChecklists',
+    'taskComments',
+    'userConfiguration',
+  ],
   endpoints: builder => ({
     // User login mutation
     login: builder.mutation({
@@ -244,6 +251,22 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: (result, error, { taskId }) => [{ type: 'taskComments', id: taskId }],
     }),
+    // User Configuration (Agents Lock/Unlock)
+    getUserConfiguration: builder.query({
+      query: userId => ({
+        url: `/UserConfiguration/Admin?userId=${userId}`,
+        method: 'GET',
+      }),
+      providesTags: (result, error, userId) => [{ type: 'userConfiguration', id: userId }],
+    }),
+    updateUserConfiguration: builder.mutation({
+      query: data => ({
+        url: `/UserConfiguration/Admin`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { userId }) => [{ type: 'userConfiguration', id: userId }],
+    }),
   }),
 });
 
@@ -276,4 +299,6 @@ export const {
   useUpdateUserChecklistMutation,
   useGetUserChecklistTaskCommentsQuery,
   useAddTaskCommentMutation,
+  useLazyGetUserConfigurationQuery,
+  useUpdateUserConfigurationMutation,
 } = bridgedApi;

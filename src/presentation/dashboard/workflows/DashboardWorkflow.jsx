@@ -17,6 +17,10 @@ import {
   Flex,
   Select,
   DatePicker,
+  Divider,
+  Alert,
+  Spin,
+  Badge,
 } from 'antd';
 import {
   MoreOutlined,
@@ -31,12 +35,14 @@ import dayjs from 'dayjs';
 import Icon from '../../../utils/components/Icon';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
 import { useReportHandler } from '../controllers/useReportHandler';
+import { useAgentManagementHandler } from '../controllers/useAgentManagementHandler';
 import { useState, useMemo, useEffect } from 'react';
 import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
+import { CAMPAIGN_OPTIONS, AI_AGENT_OPTIONS } from '../../../constants/agents';
 const { Title } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
@@ -61,8 +67,10 @@ function DashboardWorkflow() {
   const [searchText, setSearchText] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
+  const [isAgentsDrawerOpen, setIsAgentsDrawerOpen] = useState(false);
   const [form] = Form.useForm();
   const [reportForm] = Form.useForm();
+  const [agentsForm] = Form.useForm();
   const {
     userDomains,
     handleGenerateUserToken,
@@ -74,7 +82,54 @@ function DashboardWorkflow() {
   } = useReportHandler();
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
   const [currentUserToken, setCurrentUserToken] = useState(null);
+
+  // Agent management hook
+  const {
+    // Existing user states
+    selectedUserForAgents,
+    allowedCampaigns,
+    allowedAIAgents,
+    setAllowedCampaigns,
+    setAllowedAIAgents,
+
+    // New user states
+    newUserAllowedCampaigns,
+    newUserAllowedAIAgents,
+    setNewUserAllowedCampaigns,
+    setNewUserAllowedAIAgents,
+
+    // Loading states
+    isFetchingUserConfig,
+    isSavingUserConfig,
+
+    // Existing user handlers
+    handleSelectAllCampaigns,
+    handleClearCampaigns,
+    handleSelectAllAIAgents,
+    handleClearAIAgents,
+    handleOpenAgentsDrawer,
+    handleCloseAgentsDrawer,
+    handleSaveAgentsConfig,
+
+    // New user handlers
+    handleSelectAllNewUserCampaigns,
+    handleClearNewUserCampaigns,
+    handleSelectAllNewUserAIAgents,
+    handleClearNewUserAIAgents,
+    resetNewUserAgentStates,
+    generateNewUserConfigurations,
+  } = useAgentManagementHandler();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // sync form fields when allowed lists change (pre-check on load)
+    if (isAgentsDrawerOpen && selectedUserForAgents) {
+      agentsForm.setFieldsValue({
+        allowedCampaigns,
+        allowedAIAgents,
+      });
+    }
+  }, [allowedCampaigns, allowedAIAgents, isAgentsDrawerOpen, selectedUserForAgents]);
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
       {
@@ -135,14 +190,37 @@ function DashboardWorkflow() {
     }
   };
 
+  const handleOpenAgentsDrawerWrapper = async record => {
+    await handleOpenAgentsDrawer(record);
+    setIsAgentsDrawerOpen(true);
+  };
+
+  const handleCloseAgentsDrawerWrapper = () => {
+    setIsAgentsDrawerOpen(false);
+    agentsForm.resetFields();
+    handleCloseAgentsDrawer();
+  };
+
   const handleAddUserSubmit = async () => {
     const values = await form.validateFields();
-    const result = await handleAddUser(values, handleCloseDrawer);
+
+    // Generate user configurations using the hook
+    const userConfigurations = generateNewUserConfigurations();
+
+    // Add userConfigurations to the payload
+    const userDataWithConfig = {
+      ...values,
+      userConfigurations,
+    };
+
+    const result = await handleAddUser(userDataWithConfig, handleCloseDrawer);
   };
 
   const handleCloseDrawer = () => {
     form.resetFields();
     setIsDrawerOpen(false);
+    // Reset new user agent configuration states using the hook
+    resetNewUserAgentStates();
   };
 
   const handleCloseReportDrawer = () => {
@@ -321,6 +399,15 @@ function DashboardWorkflow() {
               {getIcon('UserCheck')}
             </Button>
           </Tooltip>
+          <Tooltip title={'Agents Management'}>
+            <Button
+              type="text"
+              shape="circle"
+              onClick={() => handleOpenAgentsDrawerWrapper(record)}
+            >
+              {getIcon('SettingOutlined')}
+            </Button>
+          </Tooltip>
           {/* <Tooltip title={'Login to Old Dashboard'}>
             <Button
               type="text"
@@ -406,7 +493,7 @@ function DashboardWorkflow() {
 
       <Drawer
         title="Add User"
-        width={400}
+        width={600}
         onClose={handleCloseDrawer}
         open={isDrawerOpen}
         bodyStyle={{ paddingBottom: 80 }}
@@ -443,7 +530,205 @@ function DashboardWorkflow() {
           >
             <Input.Password size="large" />
           </Form.Item>
+
+          {/* Agent Management Section */}
+          <Divider style={{ margin: '24px 0 16px' }} />
+
+          <Alert
+            type="info"
+            showIcon
+            message="Agent Access Control"
+            description="Select agents you want to give access to this new user."
+            style={{ marginBottom: 16 }}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={5} style={{ margin: 0 }}>
+              Customer Facing Agents (Campaigns)
+            </Title>
+            <Space size={8}>
+              <Badge
+                count={`${newUserAllowedCampaigns.length}/${CAMPAIGN_OPTIONS.length}`}
+                style={{ backgroundColor: PRIMARY_COLOR }}
+              />
+              <Button
+                size="small"
+                onClick={handleSelectAllNewUserCampaigns}
+                disabled={isAddingUser}
+              >
+                Select All
+              </Button>
+              <Button size="small" onClick={handleClearNewUserCampaigns} disabled={isAddingUser}>
+                Clear
+              </Button>
+            </Space>
+          </div>
+          <Form.Item name="newUserAllowedCampaigns" style={{ marginTop: 12 }}>
+            <Checkbox.Group
+              options={CAMPAIGN_OPTIONS}
+              value={newUserAllowedCampaigns}
+              onChange={setNewUserAllowedCampaigns}
+              disabled={isAddingUser}
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+            />
+          </Form.Item>
+
+          <Divider style={{ margin: '8px 0 16px' }} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={5} style={{ margin: 0 }}>
+              Productivity Agents (AI Agents)
+            </Title>
+            <Space size={8}>
+              <Badge
+                count={`${newUserAllowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                style={{ backgroundColor: PRIMARY_COLOR }}
+              />
+              <Button size="small" onClick={handleSelectAllNewUserAIAgents} disabled={isAddingUser}>
+                Select All
+              </Button>
+              <Button size="small" onClick={handleClearNewUserAIAgents} disabled={isAddingUser}>
+                Clear
+              </Button>
+            </Space>
+          </div>
+          <Form.Item name="newUserAllowedAIAgents" style={{ marginTop: 12 }}>
+            <Checkbox.Group
+              options={AI_AGENT_OPTIONS}
+              value={newUserAllowedAIAgents}
+              onChange={setNewUserAllowedAIAgents}
+              disabled={isAddingUser}
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+            />
+          </Form.Item>
         </Form>
+      </Drawer>
+
+      {/* Agents Management Drawer */}
+      <Drawer
+        title={
+          <Space direction="vertical" size={2}>
+            <span style={{ fontSize: 16, fontWeight: 600 }}>
+              This user will have access to the selected agents
+            </span>
+            {selectedUserForAgents ? (
+              <span style={{ color: '#888', fontSize: 12 }}>
+                {selectedUserForAgents.fullname || ''}{' '}
+                {selectedUserForAgents.email ? `(${selectedUserForAgents.email})` : ''}
+              </span>
+            ) : null}
+          </Space>
+        }
+        width={500}
+        onClose={handleCloseAgentsDrawerWrapper}
+        open={isAgentsDrawerOpen}
+        bodyStyle={{ paddingBottom: 80 }}
+        footer={
+          <div style={{ textAlign: 'right' }}>
+            <Space>
+              <Button
+                size="large"
+                onClick={handleCloseAgentsDrawerWrapper}
+                style={{ color: PRIMARY_COLOR }}
+              >
+                Close
+              </Button>
+              <Button
+                size="large"
+                type="primary"
+                onClick={handleSaveAgentsConfig}
+                loading={isSavingUserConfig}
+                disabled={isFetchingUserConfig}
+                style={{ backgroundColor: PRIMARY_COLOR, borderColor: PRIMARY_COLOR }}
+              >
+                Save
+              </Button>
+            </Space>
+          </div>
+        }
+      >
+        <Spin spinning={isFetchingUserConfig} tip="Loading configuration...">
+          <Alert
+            type="info"
+            showIcon
+            message="Agent Access Control"
+            description="Select agents you want to give access to this user."
+            style={{ marginBottom: 16 }}
+          />
+          <Form form={agentsForm} layout="vertical">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Title level={5} style={{ margin: 0 }}>
+                Customer Facing Agents (Campaigns)
+              </Title>
+              <Space size={8}>
+                <Badge
+                  count={`${allowedCampaigns.length}/${CAMPAIGN_OPTIONS.length}`}
+                  style={{ backgroundColor: PRIMARY_COLOR }}
+                />
+                <Button
+                  size="small"
+                  onClick={handleSelectAllCampaigns}
+                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  onClick={handleClearCampaigns}
+                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                >
+                  Clear
+                </Button>
+              </Space>
+            </div>
+            <Form.Item name="allowedCampaigns" style={{ marginTop: 12 }}>
+              <Checkbox.Group
+                options={CAMPAIGN_OPTIONS}
+                value={allowedCampaigns}
+                onChange={setAllowedCampaigns}
+                disabled={isFetchingUserConfig}
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+              />
+            </Form.Item>
+
+            <Divider style={{ margin: '8px 0 16px' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Title level={5} style={{ margin: 0 }}>
+                Productivity Agents (AI Agents)
+              </Title>
+              <Space size={8}>
+                <Badge
+                  count={`${allowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                  style={{ backgroundColor: PRIMARY_COLOR }}
+                />
+                <Button
+                  size="small"
+                  onClick={handleSelectAllAIAgents}
+                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  onClick={handleClearAIAgents}
+                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                >
+                  Clear
+                </Button>
+              </Space>
+            </div>
+            <Form.Item name="allowedAIAgents" style={{ marginTop: 12 }}>
+              <Checkbox.Group
+                options={AI_AGENT_OPTIONS}
+                value={allowedAIAgents}
+                onChange={setAllowedAIAgents}
+                disabled={isFetchingUserConfig}
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+              />
+            </Form.Item>
+          </Form>
+        </Spin>
       </Drawer>
 
       {/* Report Generation Drawer */}
