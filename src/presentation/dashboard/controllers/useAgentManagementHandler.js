@@ -4,16 +4,22 @@ import {
   useLazyGetUserConfigurationQuery,
   useUpdateUserConfigurationMutation,
 } from '../../../services/api';
-import { CAMPAIGN_OPTIONS, AI_AGENT_OPTIONS } from '../../../constants/agents';
+import {
+  CAMPAIGN_OPTIONS,
+  MONETIZE_PACK_OPTIONS,
+  AI_AGENT_OPTIONS,
+} from '../../../constants/agents';
 
 export const useAgentManagementHandler = () => {
   // Existing user agent management states
   const [selectedUserForAgents, setSelectedUserForAgents] = useState(null);
   const [allowedCampaigns, setAllowedCampaigns] = useState([]);
+  const [allowedMonetizePack, setAllowedMonetizePack] = useState([]);
   const [allowedAIAgents, setAllowedAIAgents] = useState([]);
 
   // New user agent configuration states
   const [newUserAllowedCampaigns, setNewUserAllowedCampaigns] = useState([]);
+  const [newUserAllowedMonetizePack, setNewUserAllowedMonetizePack] = useState([]);
   const [newUserAllowedAIAgents, setNewUserAllowedAIAgents] = useState([]);
 
   // API hooks
@@ -46,6 +52,14 @@ export const useAgentManagementHandler = () => {
     setAllowedAIAgents([]);
   };
 
+  const handleSelectAllMonetizePack = () => {
+    setAllowedMonetizePack(MONETIZE_PACK_OPTIONS.map(o => o.value));
+  };
+
+  const handleClearMonetizePack = () => {
+    setAllowedMonetizePack([]);
+  };
+
   // New user agent management handlers
   const handleSelectAllNewUserCampaigns = () => {
     setNewUserAllowedCampaigns(CAMPAIGN_OPTIONS.map(o => o.value));
@@ -63,6 +77,14 @@ export const useAgentManagementHandler = () => {
     setNewUserAllowedAIAgents([]);
   };
 
+  const handleSelectAllNewUserMonetizePack = () => {
+    setNewUserAllowedMonetizePack(MONETIZE_PACK_OPTIONS.map(o => o.value));
+  };
+
+  const handleClearNewUserMonetizePack = () => {
+    setNewUserAllowedMonetizePack([]);
+  };
+
   // Open agents drawer for existing user
   const handleOpenAgentsDrawer = async record => {
     try {
@@ -70,6 +92,7 @@ export const useAgentManagementHandler = () => {
 
       // Reset states first
       setAllowedCampaigns([]);
+      setAllowedMonetizePack([]);
       setAllowedAIAgents([]);
 
       const response = await fetchUserConfig(record._id).unwrap();
@@ -85,6 +108,10 @@ export const useAgentManagementHandler = () => {
         CAMPAIGN_OPTIONS.map(opt => opt.value)
       );
       console.log(
+        'Available Monetize Pack Options:',
+        MONETIZE_PACK_OPTIONS.map(opt => opt.value)
+      );
+      console.log(
         'Available AI Agent Options:',
         AI_AGENT_OPTIONS.map(opt => opt.value)
       );
@@ -94,18 +121,27 @@ export const useAgentManagementHandler = () => {
       const allowedCampaignsList = CAMPAIGN_OPTIONS.filter(
         opt => !lockedCampaigns.includes(opt.value)
       ).map(opt => opt.value);
+      const allowedMonetizePackList = MONETIZE_PACK_OPTIONS.filter(
+        opt => !lockedCampaigns.includes(opt.value)
+      ).map(opt => opt.value);
       const allowedAIAgentsList = AI_AGENT_OPTIONS.filter(
         opt => !lockedAIAgents.includes(opt.value)
       ).map(opt => opt.value);
 
-      console.log('Converted to allowed:', { allowedCampaignsList, allowedAIAgentsList });
+      console.log('Converted to allowed:', {
+        allowedCampaignsList,
+        allowedMonetizePackList,
+        allowedAIAgentsList,
+      });
 
       setAllowedCampaigns(allowedCampaignsList);
+      setAllowedMonetizePack(allowedMonetizePackList);
       setAllowedAIAgents(allowedAIAgentsList);
     } catch (error) {
       console.error('Error fetching user config:', error);
       // If there's an error, set all agents as allowed (default state)
       setAllowedCampaigns(CAMPAIGN_OPTIONS.map(opt => opt.value));
+      setAllowedMonetizePack(MONETIZE_PACK_OPTIONS.map(opt => opt.value));
       setAllowedAIAgents(AI_AGENT_OPTIONS.map(opt => opt.value));
       notification.error({
         message: 'Error',
@@ -118,6 +154,7 @@ export const useAgentManagementHandler = () => {
   const handleCloseAgentsDrawer = () => {
     setSelectedUserForAgents(null);
     setAllowedCampaigns([]);
+    setAllowedMonetizePack([]);
     setAllowedAIAgents([]);
   };
 
@@ -126,9 +163,15 @@ export const useAgentManagementHandler = () => {
     if (!selectedUserForAgents?._id) return;
     try {
       // Convert allowed to locked (opposite logic)
-      const lockedCampaigns = CAMPAIGN_OPTIONS.filter(
-        opt => !allowedCampaigns.includes(opt.value)
-      ).map(opt => opt.value);
+      // Combine campaigns and monetize pack for lockedCampaigns since monetize pack behaves as campaign
+      const allCampaignValues = [...CAMPAIGN_OPTIONS, ...MONETIZE_PACK_OPTIONS].map(
+        opt => opt.value
+      );
+      const allAllowedCampaignValues = [...allowedCampaigns, ...allowedMonetizePack];
+
+      const lockedCampaigns = allCampaignValues.filter(
+        opt => !allAllowedCampaignValues.includes(opt)
+      );
       const lockedAIAgents = AI_AGENT_OPTIONS.filter(
         opt => !allowedAIAgents.includes(opt.value)
       ).map(opt => opt.value);
@@ -154,15 +197,20 @@ export const useAgentManagementHandler = () => {
   // Reset new user agent configuration states
   const resetNewUserAgentStates = () => {
     setNewUserAllowedCampaigns([]);
+    setNewUserAllowedMonetizePack([]);
     setNewUserAllowedAIAgents([]);
   };
 
   // Generate user configurations for new user
   const generateNewUserConfigurations = () => {
     // Convert allowed to locked (opposite logic) for new user
-    const lockedCampaigns = CAMPAIGN_OPTIONS.filter(
-      opt => !newUserAllowedCampaigns.includes(opt.value)
-    ).map(opt => opt.value);
+    // Combine campaigns and monetize pack for lockedCampaigns since monetize pack behaves as campaign
+    const allCampaignValues = [...CAMPAIGN_OPTIONS, ...MONETIZE_PACK_OPTIONS].map(opt => opt.value);
+    const allAllowedCampaignValues = [...newUserAllowedCampaigns, ...newUserAllowedMonetizePack];
+
+    const lockedCampaigns = allCampaignValues.filter(
+      opt => !allAllowedCampaignValues.includes(opt)
+    );
     const lockedAIAgents = AI_AGENT_OPTIONS.filter(
       opt => !newUserAllowedAIAgents.includes(opt.value)
     ).map(opt => opt.value);
@@ -177,14 +225,18 @@ export const useAgentManagementHandler = () => {
     // Existing user states
     selectedUserForAgents,
     allowedCampaigns,
+    allowedMonetizePack,
     allowedAIAgents,
     setAllowedCampaigns,
+    setAllowedMonetizePack,
     setAllowedAIAgents,
 
     // New user states
     newUserAllowedCampaigns,
+    newUserAllowedMonetizePack,
     newUserAllowedAIAgents,
     setNewUserAllowedCampaigns,
+    setNewUserAllowedMonetizePack,
     setNewUserAllowedAIAgents,
 
     // Loading states
@@ -194,6 +246,8 @@ export const useAgentManagementHandler = () => {
     // Existing user handlers
     handleSelectAllCampaigns,
     handleClearCampaigns,
+    handleSelectAllMonetizePack,
+    handleClearMonetizePack,
     handleSelectAllAIAgents,
     handleClearAIAgents,
     handleOpenAgentsDrawer,
@@ -203,6 +257,8 @@ export const useAgentManagementHandler = () => {
     // New user handlers
     handleSelectAllNewUserCampaigns,
     handleClearNewUserCampaigns,
+    handleSelectAllNewUserMonetizePack,
+    handleClearNewUserMonetizePack,
     handleSelectAllNewUserAIAgents,
     handleClearNewUserAIAgents,
     resetNewUserAgentStates,
