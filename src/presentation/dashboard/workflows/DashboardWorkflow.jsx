@@ -42,7 +42,11 @@ import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
-import { CAMPAIGN_OPTIONS, AI_AGENT_OPTIONS } from '../../../constants/agents';
+import {
+  CAMPAIGN_OPTIONS,
+  MONETIZE_PACK_OPTIONS,
+  AI_AGENT_OPTIONS,
+} from '../../../constants/agents';
 const { Title } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
@@ -88,14 +92,18 @@ function DashboardWorkflow() {
     // Existing user states
     selectedUserForAgents,
     allowedCampaigns,
+    allowedMonetizePack,
     allowedAIAgents,
     setAllowedCampaigns,
+    setAllowedMonetizePack,
     setAllowedAIAgents,
 
     // New user states
     newUserAllowedCampaigns,
+    newUserAllowedMonetizePack,
     newUserAllowedAIAgents,
     setNewUserAllowedCampaigns,
+    setNewUserAllowedMonetizePack,
     setNewUserAllowedAIAgents,
 
     // Loading states
@@ -105,6 +113,8 @@ function DashboardWorkflow() {
     // Existing user handlers
     handleSelectAllCampaigns,
     handleClearCampaigns,
+    handleSelectAllMonetizePack,
+    handleClearMonetizePack,
     handleSelectAllAIAgents,
     handleClearAIAgents,
     handleOpenAgentsDrawer,
@@ -114,6 +124,8 @@ function DashboardWorkflow() {
     // New user handlers
     handleSelectAllNewUserCampaigns,
     handleClearNewUserCampaigns,
+    handleSelectAllNewUserMonetizePack,
+    handleClearNewUserMonetizePack,
     handleSelectAllNewUserAIAgents,
     handleClearNewUserAIAgents,
     resetNewUserAgentStates,
@@ -126,10 +138,17 @@ function DashboardWorkflow() {
     if (isAgentsDrawerOpen && selectedUserForAgents) {
       agentsForm.setFieldsValue({
         allowedCampaigns,
+        allowedMonetizePack,
         allowedAIAgents,
       });
     }
-  }, [allowedCampaigns, allowedAIAgents, isAgentsDrawerOpen, selectedUserForAgents]);
+  }, [
+    allowedCampaigns,
+    allowedMonetizePack,
+    allowedAIAgents,
+    isAgentsDrawerOpen,
+    selectedUserForAgents,
+  ]);
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
       {
@@ -361,7 +380,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '150px',
+      width: '180px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -541,10 +560,37 @@ function DashboardWorkflow() {
             description="Select agents you want to give access to this new user."
             style={{ marginBottom: 16 }}
           />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={5} style={{ margin: 0 }}>
+              Automate Pack
+            </Title>
+            <Space size={8}>
+              <Badge
+                count={`${newUserAllowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                style={{ backgroundColor: PRIMARY_COLOR }}
+              />
+              <Button size="small" onClick={handleSelectAllNewUserAIAgents} disabled={isAddingUser}>
+                Select All
+              </Button>
+              <Button size="small" onClick={handleClearNewUserAIAgents} disabled={isAddingUser}>
+                Clear
+              </Button>
+            </Space>
+          </div>
+          <Form.Item name="newUserAllowedAIAgents" style={{ marginTop: 12 }}>
+            <Checkbox.Group
+              options={AI_AGENT_OPTIONS}
+              value={newUserAllowedAIAgents}
+              onChange={setNewUserAllowedAIAgents}
+              disabled={isAddingUser}
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+            />
+          </Form.Item>
+          <Divider style={{ margin: '8px 0 16px' }} />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={5} style={{ margin: 0 }}>
-              Customer Facing Agents (Campaigns)
+              Engage Pack
             </Title>
             <Space size={8}>
               <Badge
@@ -577,26 +623,30 @@ function DashboardWorkflow() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={5} style={{ margin: 0 }}>
-              Productivity Agents (AI Agents)
+              Monetize Pack
             </Title>
             <Space size={8}>
               <Badge
-                count={`${newUserAllowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                count={`${newUserAllowedMonetizePack.length}/${MONETIZE_PACK_OPTIONS.length}`}
                 style={{ backgroundColor: PRIMARY_COLOR }}
               />
-              <Button size="small" onClick={handleSelectAllNewUserAIAgents} disabled={isAddingUser}>
+              <Button
+                size="small"
+                onClick={handleSelectAllNewUserMonetizePack}
+                disabled={isAddingUser}
+              >
                 Select All
               </Button>
-              <Button size="small" onClick={handleClearNewUserAIAgents} disabled={isAddingUser}>
+              <Button size="small" onClick={handleClearNewUserMonetizePack} disabled={isAddingUser}>
                 Clear
               </Button>
             </Space>
           </div>
-          <Form.Item name="newUserAllowedAIAgents" style={{ marginTop: 12 }}>
+          <Form.Item name="newUserAllowedMonetizePack" style={{ marginTop: 12 }}>
             <Checkbox.Group
-              options={AI_AGENT_OPTIONS}
-              value={newUserAllowedAIAgents}
-              onChange={setNewUserAllowedAIAgents}
+              options={MONETIZE_PACK_OPTIONS}
+              value={newUserAllowedMonetizePack}
+              onChange={setNewUserAllowedMonetizePack}
               disabled={isAddingUser}
               style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
             />
@@ -658,7 +708,43 @@ function DashboardWorkflow() {
           <Form form={agentsForm} layout="vertical">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Title level={5} style={{ margin: 0 }}>
-                Customer Facing Agents (Campaigns)
+                Automate Pack
+              </Title>
+              <Space size={8}>
+                <Badge
+                  count={`${allowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                  style={{ backgroundColor: PRIMARY_COLOR }}
+                />
+                <Button
+                  size="small"
+                  onClick={handleSelectAllAIAgents}
+                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  onClick={handleClearAIAgents}
+                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                >
+                  Clear
+                </Button>
+              </Space>
+            </div>
+            <Form.Item name="allowedAIAgents" style={{ marginTop: 12 }}>
+              <Checkbox.Group
+                options={AI_AGENT_OPTIONS}
+                value={allowedAIAgents}
+                onChange={setAllowedAIAgents}
+                disabled={isFetchingUserConfig}
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+              />
+            </Form.Item>
+
+            <Divider style={{ margin: '8px 0 16px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Title level={5} style={{ margin: 0 }}>
+                Engage Pack
               </Title>
               <Space size={8}>
                 <Badge
@@ -692,37 +778,36 @@ function DashboardWorkflow() {
             </Form.Item>
 
             <Divider style={{ margin: '8px 0 16px' }} />
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Title level={5} style={{ margin: 0 }}>
-                Productivity Agents (AI Agents)
+                Monetize Pack
               </Title>
               <Space size={8}>
                 <Badge
-                  count={`${allowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                  count={`${allowedMonetizePack.length}/${MONETIZE_PACK_OPTIONS.length}`}
                   style={{ backgroundColor: PRIMARY_COLOR }}
                 />
                 <Button
                   size="small"
-                  onClick={handleSelectAllAIAgents}
+                  onClick={handleSelectAllMonetizePack}
                   disabled={isFetchingUserConfig || isSavingUserConfig}
                 >
                   Select All
                 </Button>
                 <Button
                   size="small"
-                  onClick={handleClearAIAgents}
+                  onClick={handleClearMonetizePack}
                   disabled={isFetchingUserConfig || isSavingUserConfig}
                 >
                   Clear
                 </Button>
               </Space>
             </div>
-            <Form.Item name="allowedAIAgents" style={{ marginTop: 12 }}>
+            <Form.Item name="allowedMonetizePack" style={{ marginTop: 12 }}>
               <Checkbox.Group
-                options={AI_AGENT_OPTIONS}
-                value={allowedAIAgents}
-                onChange={setAllowedAIAgents}
+                options={MONETIZE_PACK_OPTIONS}
+                value={allowedMonetizePack}
+                onChange={setAllowedMonetizePack}
                 disabled={isFetchingUserConfig}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
               />
