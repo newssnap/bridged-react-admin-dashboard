@@ -149,6 +149,16 @@ function DashboardWorkflow() {
     isAgentsDrawerOpen,
     selectedUserForAgents,
   ]);
+
+  useEffect(() => {
+    if (isDrawerOpen) {
+      form.setFieldsValue({
+        newUserAllowedCampaigns,
+        newUserAllowedMonetizePack,
+        newUserAllowedAIAgents,
+      });
+    }
+  }, [newUserAllowedCampaigns, newUserAllowedMonetizePack, newUserAllowedAIAgents, isDrawerOpen]);
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
       {
@@ -228,7 +238,8 @@ function DashboardWorkflow() {
 
     // Add userConfigurations to the payload
     const userDataWithConfig = {
-      ...values,
+      username: values.username,
+      password: values.password,
       userConfigurations,
     };
 
