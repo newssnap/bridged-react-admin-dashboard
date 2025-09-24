@@ -149,6 +149,17 @@ function DashboardWorkflow() {
     isAgentsDrawerOpen,
     selectedUserForAgents,
   ]);
+
+  // Sync new user form fields with state
+  useEffect(() => {
+    if (isDrawerOpen) {
+      form.setFieldsValue({
+        newUserAllowedCampaigns,
+        newUserAllowedMonetizePack,
+        newUserAllowedAIAgents,
+      });
+    }
+  }, [newUserAllowedCampaigns, newUserAllowedMonetizePack, newUserAllowedAIAgents, isDrawerOpen]);
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
       {
@@ -222,13 +233,13 @@ function DashboardWorkflow() {
 
   const handleAddUserSubmit = async () => {
     const values = await form.validateFields();
-
     // Generate user configurations using the hook
     const userConfigurations = generateNewUserConfigurations();
 
     // Add userConfigurations to the payload
     const userDataWithConfig = {
-      ...values,
+      username: values.username,
+      password: values.password,
       userConfigurations,
     };
 
