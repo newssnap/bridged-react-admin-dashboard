@@ -43,9 +43,9 @@ import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
 import {
-  CAMPAIGN_OPTIONS,
+  AUTOMATE_PACK_OPTIONS,
+  ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
-  AI_AGENT_OPTIONS,
 } from '../../../constants/agents';
 const { Title } = Typography;
 const { Search } = Input;
@@ -577,7 +577,7 @@ function DashboardWorkflow() {
             </Title>
             <Space size={8}>
               <Badge
-                count={`${newUserAllowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                count={`${newUserAllowedAIAgents.length}/${AUTOMATE_PACK_OPTIONS.length}`}
                 style={{ backgroundColor: PRIMARY_COLOR }}
               />
               <Button size="small" onClick={handleSelectAllNewUserAIAgents} disabled={isAddingUser}>
@@ -590,7 +590,7 @@ function DashboardWorkflow() {
           </div>
           <Form.Item name="newUserAllowedAIAgents" style={{ marginTop: 12 }}>
             <Checkbox.Group
-              options={AI_AGENT_OPTIONS}
+              options={AUTOMATE_PACK_OPTIONS}
               value={newUserAllowedAIAgents}
               onChange={setNewUserAllowedAIAgents}
               disabled={isAddingUser}
@@ -605,7 +605,7 @@ function DashboardWorkflow() {
             </Title>
             <Space size={8}>
               <Badge
-                count={`${newUserAllowedCampaigns.length}/${CAMPAIGN_OPTIONS.length}`}
+                count={`${newUserAllowedCampaigns.length}/${ENGAGE_PACK_OPTIONS.length}`}
                 style={{ backgroundColor: PRIMARY_COLOR }}
               />
               <Button
@@ -622,7 +622,7 @@ function DashboardWorkflow() {
           </div>
           <Form.Item name="newUserAllowedCampaigns" style={{ marginTop: 12 }}>
             <Checkbox.Group
-              options={CAMPAIGN_OPTIONS}
+              options={ENGAGE_PACK_OPTIONS}
               value={newUserAllowedCampaigns}
               onChange={setNewUserAllowedCampaigns}
               disabled={isAddingUser}
@@ -723,7 +723,7 @@ function DashboardWorkflow() {
               </Title>
               <Space size={8}>
                 <Badge
-                  count={`${allowedAIAgents.length}/${AI_AGENT_OPTIONS.length}`}
+                  count={`${allowedAIAgents.length}/${AUTOMATE_PACK_OPTIONS.length}`}
                   style={{ backgroundColor: PRIMARY_COLOR }}
                 />
                 <Button
@@ -744,7 +744,7 @@ function DashboardWorkflow() {
             </div>
             <Form.Item name="allowedAIAgents" style={{ marginTop: 12 }}>
               <Checkbox.Group
-                options={AI_AGENT_OPTIONS}
+                options={AUTOMATE_PACK_OPTIONS}
                 value={allowedAIAgents}
                 onChange={setAllowedAIAgents}
                 disabled={isFetchingUserConfig}
@@ -759,7 +759,7 @@ function DashboardWorkflow() {
               </Title>
               <Space size={8}>
                 <Badge
-                  count={`${allowedCampaigns.length}/${CAMPAIGN_OPTIONS.length}`}
+                  count={`${allowedCampaigns.length}/${ENGAGE_PACK_OPTIONS.length}`}
                   style={{ backgroundColor: PRIMARY_COLOR }}
                 />
                 <Button
@@ -780,7 +780,7 @@ function DashboardWorkflow() {
             </div>
             <Form.Item name="allowedCampaigns" style={{ marginTop: 12 }}>
               <Checkbox.Group
-                options={CAMPAIGN_OPTIONS}
+                options={ENGAGE_PACK_OPTIONS}
                 value={allowedCampaigns}
                 onChange={setAllowedCampaigns}
                 disabled={isFetchingUserConfig}
