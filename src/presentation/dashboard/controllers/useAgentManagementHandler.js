@@ -5,10 +5,22 @@ import {
   useUpdateUserConfigurationMutation,
 } from '../../../services/api';
 import {
-  CAMPAIGN_OPTIONS,
+  AUTOMATE_PACK_OPTIONS,
+  ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
-  AI_AGENT_OPTIONS,
+  AGENT_TYPES,
 } from '../../../constants/agents';
+
+// Helper function to filter agents by type
+const filterAgentsByType = (agents, type) => {
+  return agents.filter(agent => agent.type === type).map(agent => agent.value);
+};
+
+// Helper function to get all agent values by type from selected values
+const getAgentValuesByType = (selectedValues, allAgents, type) => {
+  const agentsOfType = allAgents.filter(agent => agent.type === type);
+  return selectedValues.filter(value => agentsOfType.some(agent => agent.value === value));
+};
 
 export const useAgentManagementHandler = () => {
   // Existing user agent management states
@@ -37,7 +49,9 @@ export const useAgentManagementHandler = () => {
 
   // Existing user agent management handlers
   const handleSelectAllCampaigns = () => {
-    setAllowedCampaigns(CAMPAIGN_OPTIONS.map(o => o.value));
+    const campaigns = filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN);
+    const smartReply = filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.SMART_REPLY_AGENT);
+    setAllowedCampaigns([...campaigns, ...smartReply]);
   };
 
   const handleClearCampaigns = () => {
@@ -45,7 +59,7 @@ export const useAgentManagementHandler = () => {
   };
 
   const handleSelectAllAIAgents = () => {
-    setAllowedAIAgents(AI_AGENT_OPTIONS.map(o => o.value));
+    setAllowedAIAgents(filterAgentsByType(AUTOMATE_PACK_OPTIONS, AGENT_TYPES.AI_AGENT));
   };
 
   const handleClearAIAgents = () => {
@@ -53,7 +67,7 @@ export const useAgentManagementHandler = () => {
   };
 
   const handleSelectAllMonetizePack = () => {
-    setAllowedMonetizePack(MONETIZE_PACK_OPTIONS.map(o => o.value));
+    setAllowedMonetizePack(filterAgentsByType(MONETIZE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN));
   };
 
   const handleClearMonetizePack = () => {
@@ -62,7 +76,9 @@ export const useAgentManagementHandler = () => {
 
   // New user agent management handlers
   const handleSelectAllNewUserCampaigns = () => {
-    setNewUserAllowedCampaigns(CAMPAIGN_OPTIONS.map(o => o.value));
+    const campaigns = filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN);
+    const smartReply = filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.SMART_REPLY_AGENT);
+    setNewUserAllowedCampaigns([...campaigns, ...smartReply]);
   };
 
   const handleClearNewUserCampaigns = () => {
@@ -70,7 +86,7 @@ export const useAgentManagementHandler = () => {
   };
 
   const handleSelectAllNewUserAIAgents = () => {
-    setNewUserAllowedAIAgents(AI_AGENT_OPTIONS.map(o => o.value));
+    setNewUserAllowedAIAgents(filterAgentsByType(AUTOMATE_PACK_OPTIONS, AGENT_TYPES.AI_AGENT));
   };
 
   const handleClearNewUserAIAgents = () => {
@@ -78,7 +94,7 @@ export const useAgentManagementHandler = () => {
   };
 
   const handleSelectAllNewUserMonetizePack = () => {
-    setNewUserAllowedMonetizePack(MONETIZE_PACK_OPTIONS.map(o => o.value));
+    setNewUserAllowedMonetizePack(filterAgentsByType(MONETIZE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN));
   };
 
   const handleClearNewUserMonetizePack = () => {
@@ -101,48 +117,45 @@ export const useAgentManagementHandler = () => {
         ? payload.lockedCampaigns
         : [];
       const lockedAIAgents = Array.isArray(payload?.lockedAIAgents) ? payload.lockedAIAgents : [];
+      const lockedSmartReplyAgents = Array.isArray(payload?.lockedSmartReplyAgents)
+        ? payload.lockedSmartReplyAgents
+        : [];
 
-      console.log('API Response:', { lockedCampaigns, lockedAIAgents });
-      console.log(
-        'Available Campaign Options:',
-        CAMPAIGN_OPTIONS.map(opt => opt.value)
-      );
-      console.log(
-        'Available Monetize Pack Options:',
-        MONETIZE_PACK_OPTIONS.map(opt => opt.value)
-      );
-      console.log(
-        'Available AI Agent Options:',
-        AI_AGENT_OPTIONS.map(opt => opt.value)
-      );
+      console.log('API Response:', { lockedCampaigns, lockedAIAgents, lockedSmartReplyAgents });
 
       // Convert locked to allowed (opposite logic)
       // If agent is locked, it should NOT be in allowed list
-      const allowedCampaignsList = CAMPAIGN_OPTIONS.filter(
-        opt => !lockedCampaigns.includes(opt.value)
-      ).map(opt => opt.value);
-      const allowedMonetizePackList = MONETIZE_PACK_OPTIONS.filter(
-        opt => !lockedCampaigns.includes(opt.value)
-      ).map(opt => opt.value);
-      const allowedAIAgentsList = AI_AGENT_OPTIONS.filter(
-        opt => !lockedAIAgents.includes(opt.value)
-      ).map(opt => opt.value);
+      const allowedCampaignsList = filterAgentsByType(
+        ENGAGE_PACK_OPTIONS,
+        AGENT_TYPES.CAMPAIGN
+      ).filter(value => !lockedCampaigns.includes(value));
+      const allowedMonetizePackList = filterAgentsByType(
+        MONETIZE_PACK_OPTIONS,
+        AGENT_TYPES.CAMPAIGN
+      ).filter(value => !lockedCampaigns.includes(value));
+      const allowedAIAgentsList = filterAgentsByType(
+        AUTOMATE_PACK_OPTIONS,
+        AGENT_TYPES.AI_AGENT
+      ).filter(value => !lockedAIAgents.includes(value));
 
-      console.log('Converted to allowed:', {
-        allowedCampaignsList,
-        allowedMonetizePackList,
-        allowedAIAgentsList,
-      });
+      // Handle SmartReplyAgents - they are in ENGAGE_PACK_OPTIONS but should be filtered by lockedSmartReplyAgents
+      const allowedSmartReplyList = filterAgentsByType(
+        ENGAGE_PACK_OPTIONS,
+        AGENT_TYPES.SMART_REPLY_AGENT
+      ).filter(value => !lockedSmartReplyAgents.includes(value));
 
-      setAllowedCampaigns(allowedCampaignsList);
+      // Combine campaigns and smart reply agents for the campaigns state since they're in the same UI section
+      setAllowedCampaigns([...allowedCampaignsList, ...allowedSmartReplyList]);
       setAllowedMonetizePack(allowedMonetizePackList);
       setAllowedAIAgents(allowedAIAgentsList);
     } catch (error) {
       console.error('Error fetching user config:', error);
       // If there's an error, set all agents as allowed (default state)
-      setAllowedCampaigns(CAMPAIGN_OPTIONS.map(opt => opt.value));
-      setAllowedMonetizePack(MONETIZE_PACK_OPTIONS.map(opt => opt.value));
-      setAllowedAIAgents(AI_AGENT_OPTIONS.map(opt => opt.value));
+      const allCampaigns = filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN);
+      const allSmartReply = filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.SMART_REPLY_AGENT);
+      setAllowedCampaigns([...allCampaigns, ...allSmartReply]);
+      setAllowedMonetizePack(filterAgentsByType(MONETIZE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN));
+      setAllowedAIAgents(filterAgentsByType(AUTOMATE_PACK_OPTIONS, AGENT_TYPES.AI_AGENT));
       notification.error({
         message: 'Error',
         description: 'Failed to fetch user configuration.',
@@ -150,7 +163,6 @@ export const useAgentManagementHandler = () => {
     }
   };
 
-  // Close agents drawer
   const handleCloseAgentsDrawer = () => {
     setSelectedUserForAgents(null);
     setAllowedCampaigns([]);
@@ -158,28 +170,50 @@ export const useAgentManagementHandler = () => {
     setAllowedAIAgents([]);
   };
 
-  // Save agents configuration for existing user
   const handleSaveAgentsConfig = async () => {
     if (!selectedUserForAgents?._id) return;
     try {
       // Convert allowed to locked (opposite logic)
-      // Combine campaigns and monetize pack for lockedCampaigns since monetize pack behaves as campaign
-      const allCampaignValues = [...CAMPAIGN_OPTIONS, ...MONETIZE_PACK_OPTIONS].map(
-        opt => opt.value
+      // Get all possible values for each type
+      const allCampaignValues = [
+        ...filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN),
+        ...filterAgentsByType(MONETIZE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN),
+      ];
+      const allAIAgentValues = filterAgentsByType(AUTOMATE_PACK_OPTIONS, AGENT_TYPES.AI_AGENT);
+      const allSmartReplyValues = filterAgentsByType(
+        ENGAGE_PACK_OPTIONS,
+        AGENT_TYPES.SMART_REPLY_AGENT
       );
+
       const allAllowedCampaignValues = [...allowedCampaigns, ...allowedMonetizePack];
+      const allAllowedAIAgentValues = allowedAIAgents;
+
+      const allowedCampaignsOnly = getAgentValuesByType(
+        allowedCampaigns,
+        ENGAGE_PACK_OPTIONS,
+        AGENT_TYPES.CAMPAIGN
+      );
+      const allAllowedSmartReplyValues = getAgentValuesByType(
+        allowedCampaigns,
+        ENGAGE_PACK_OPTIONS,
+        AGENT_TYPES.SMART_REPLY_AGENT
+      );
 
       const lockedCampaigns = allCampaignValues.filter(
-        opt => !allAllowedCampaignValues.includes(opt)
+        value => !allowedCampaignsOnly.includes(value)
       );
-      const lockedAIAgents = AI_AGENT_OPTIONS.filter(
-        opt => !allowedAIAgents.includes(opt.value)
-      ).map(opt => opt.value);
+      const lockedAIAgents = allAIAgentValues.filter(
+        value => !allAllowedAIAgentValues.includes(value)
+      );
+      const lockedSmartReplyAgents = allSmartReplyValues.filter(
+        value => !allAllowedSmartReplyValues.includes(value)
+      );
 
       await updateUserConfiguration({
         userId: selectedUserForAgents._id,
         lockedCampaigns,
         lockedAIAgents,
+        lockedSmartReplyAgents,
       }).unwrap();
       notification.success({
         message: 'Saved',
@@ -194,30 +228,53 @@ export const useAgentManagementHandler = () => {
     }
   };
 
-  // Reset new user agent configuration states
   const resetNewUserAgentStates = () => {
     setNewUserAllowedCampaigns([]);
     setNewUserAllowedMonetizePack([]);
     setNewUserAllowedAIAgents([]);
   };
 
-  // Generate user configurations for new user
   const generateNewUserConfigurations = () => {
     // Convert allowed to locked (opposite logic) for new user
-    // Combine campaigns and monetize pack for lockedCampaigns since monetize pack behaves as campaign
-    const allCampaignValues = [...CAMPAIGN_OPTIONS, ...MONETIZE_PACK_OPTIONS].map(opt => opt.value);
-    const allAllowedCampaignValues = [...newUserAllowedCampaigns, ...newUserAllowedMonetizePack];
+    // Get all possible values for each type
+    const allCampaignValues = [
+      ...filterAgentsByType(ENGAGE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN),
+      ...filterAgentsByType(MONETIZE_PACK_OPTIONS, AGENT_TYPES.CAMPAIGN),
+    ];
+    const allAIAgentValues = filterAgentsByType(AUTOMATE_PACK_OPTIONS, AGENT_TYPES.AI_AGENT);
+    const allSmartReplyValues = filterAgentsByType(
+      ENGAGE_PACK_OPTIONS,
+      AGENT_TYPES.SMART_REPLY_AGENT
+    );
+
+    const allAllowedAIAgentValues = newUserAllowedAIAgents;
+
+    const allowedCampaignsOnly = getAgentValuesByType(
+      newUserAllowedCampaigns,
+      ENGAGE_PACK_OPTIONS,
+      AGENT_TYPES.CAMPAIGN
+    );
+    const allAllowedSmartReplyValues = getAgentValuesByType(
+      newUserAllowedCampaigns,
+      ENGAGE_PACK_OPTIONS,
+      AGENT_TYPES.SMART_REPLY_AGENT
+    );
+    const allowedMonetizePackValues = newUserAllowedMonetizePack;
 
     const lockedCampaigns = allCampaignValues.filter(
-      opt => !allAllowedCampaignValues.includes(opt)
+      value => !allowedCampaignsOnly.includes(value)
     );
-    const lockedAIAgents = AI_AGENT_OPTIONS.filter(
-      opt => !newUserAllowedAIAgents.includes(opt.value)
-    ).map(opt => opt.value);
+    const lockedAIAgents = allAIAgentValues.filter(
+      value => !allAllowedAIAgentValues.includes(value)
+    );
+    const lockedSmartReplyAgents = allSmartReplyValues.filter(
+      value => !allAllowedSmartReplyValues.includes(value)
+    );
 
     return {
       lockedCampaigns,
       lockedAIAgents,
+      lockedSmartReplyAgents,
     };
   };
 

@@ -1,4 +1,28 @@
-// CampaignType (Customer Facing Agents)
+export const AGENT_TYPES = {
+  CAMPAIGN: 'Campaign',
+  AI_AGENT: 'AiAgent',
+  SMART_REPLY_AGENT: 'SmartReplyAgent',
+};
+
+export const AUTOMATE_PACK_OPTIONS = [
+  { label: 'Drafter Agent', value: 'ResearchPartner', type: AGENT_TYPES.AI_AGENT },
+  { label: 'Data Explorer Agent', value: 'DEA', type: AGENT_TYPES.AI_AGENT },
+  { label: 'SEO Agent', value: 'ProSEOOptimizer', type: AGENT_TYPES.AI_AGENT },
+  { label: 'Rule Checker Agent', value: 'RuleChecker', type: AGENT_TYPES.AI_AGENT },
+];
+
+export const ENGAGE_PACK_OPTIONS = [
+  { label: 'Email Knowledge Agent', value: 'email', type: AGENT_TYPES.SMART_REPLY_AGENT },
+  { label: 'Smart Reading Agent', value: 'xRay', type: AGENT_TYPES.CAMPAIGN },
+  { label: 'Polling Agent', value: 'pollingAgent', type: AGENT_TYPES.CAMPAIGN },
+  { label: 'Email Collection Agent', value: 'emailCollection', type: AGENT_TYPES.CAMPAIGN },
+  { label: 'Knowledge Agent', value: 'rag', type: AGENT_TYPES.CAMPAIGN },
+];
+
+export const MONETIZE_PACK_OPTIONS = [
+  { label: 'Smart Offerwal Agent', value: 'affiliateLink', type: AGENT_TYPES.CAMPAIGN },
+];
+
 export const CampaignType = {
   NewsLetterSignup: 'newsLetterSignup',
   AffiliateLink: 'affiliateLink',
@@ -9,10 +33,9 @@ export const CampaignType = {
   EngagementOnly: 'engagementOnly',
   Rag: 'rag',
   EmailCollection: 'emailCollection',
-  PoolingAgent: 'poolingAgent',
+  PollingAgent: 'pollingAgent',
 };
 
-// AIAgentTypes (Productivity Agents)
 export const AIAgentTypes = {
   SEOOptimizer: 'SEOOptimizer',
   AISummaryGenerator: 'AISummaryGenerator',
@@ -25,22 +48,10 @@ export const AIAgentTypes = {
   DEA: 'DEA',
 };
 
-// Options for UI components (Checkbox.Group, Select, etc.)
-export const CAMPAIGN_OPTIONS = [
-  // { label: 'Recirculation Agent', value: CampaignType.Recirculation },
-  { label: 'Pooling Agent', value: CampaignType.PoolingAgent },
-  { label: 'Smart Reading Agent', value: CampaignType.XRay },
-  { label: 'Knowledge Agent', value: CampaignType.Rag },
-  { label: 'Email Collection Agent', value: CampaignType.EmailCollection },
-];
-
-export const MONETIZE_PACK_OPTIONS = [
-  { label: 'Smart Offerwal Agent', value: CampaignType.AffiliateLink },
-];
-
-export const AI_AGENT_OPTIONS = [
-  { label: 'Rule Checker Agent', value: AIAgentTypes.RuleChecker },
-  { label: 'Drafter Agent', value: AIAgentTypes.ResearchPartner },
-  { label: 'SEO Agent', value: AIAgentTypes.ProSEOOptimizer },
-  { label: 'Data Explorer Agent', value: AIAgentTypes.DEA },
-];
+// Legacy options for backward compatibility
+export const CAMPAIGN_OPTIONS = ENGAGE_PACK_OPTIONS.filter(
+  option => option.type === AGENT_TYPES.CAMPAIGN
+);
+export const AI_AGENT_OPTIONS = AUTOMATE_PACK_OPTIONS.filter(
+  option => option.type === AGENT_TYPES.AI_AGENT
+);
