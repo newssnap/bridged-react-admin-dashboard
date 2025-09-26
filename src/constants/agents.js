@@ -14,7 +14,7 @@ export const AUTOMATE_PACK_OPTIONS = [
 export const ENGAGE_PACK_OPTIONS = [
   { label: 'Email Knowledge Agent', value: 'email', type: AGENT_TYPES.SMART_REPLY_AGENT },
   { label: 'Smart Reading Agent', value: 'xRay', type: AGENT_TYPES.CAMPAIGN },
-  { label: 'Polling Agent', value: 'poolingAgent', type: AGENT_TYPES.CAMPAIGN },
+  { label: 'Polling Agent', value: 'pollingAgent', type: AGENT_TYPES.CAMPAIGN },
   { label: 'Email Collection Agent', value: 'emailCollection', type: AGENT_TYPES.CAMPAIGN },
   { label: 'Knowledge Agent', value: 'rag', type: AGENT_TYPES.CAMPAIGN },
 ];
@@ -33,7 +33,7 @@ export const CampaignType = {
   EngagementOnly: 'engagementOnly',
   Rag: 'rag',
   EmailCollection: 'emailCollection',
-  PoolingAgent: 'poolingAgent',
+  PollingAgent: 'pollingAgent',
 };
 
 export const AIAgentTypes = {
