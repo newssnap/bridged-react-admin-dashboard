@@ -150,7 +150,6 @@ function DashboardWorkflow() {
     selectedUserForAgents,
   ]);
 
-  // Sync new user form fields with state
   useEffect(() => {
     if (isDrawerOpen) {
       form.setFieldsValue({
