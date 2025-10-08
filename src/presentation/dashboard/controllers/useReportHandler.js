@@ -158,6 +158,15 @@ export const useReportHandler = () => {
     var dayCount = getDayDifference(filter.startDate, endDate);
     // calculate number of days between startdate and endDate
 
+    // Add report title with date range and domain
+    const domainText =
+      filter.hostnames && filter.hostnames.length > 0
+        ? ` - Domains: ${filter.hostnames.join(', ')}`
+        : '';
+    const reportTitle = `Productivity Usage Report (${filter.startDate} to ${endDate})${domainText}`;
+    wsData.push([reportTitle]);
+    wsData.push([]); // Empty row for spacing
+
     for (let serviceName of serviceNames) {
       var filteredData = flattenedData.filter(s => s.serviceName == serviceName);
       if (filteredData.length < 1) continue;
@@ -202,10 +211,15 @@ export const useReportHandler = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Report');
 
-    XLSX.writeFile(wb, 'ProductivityUsage.xlsx');
+    // Create filename with date range and domain
+    const domainSuffix =
+      filter.hostnames && filter.hostnames.length > 0 ? `_${filter.hostnames.join('_')}` : '';
+    const filename = `ProductivityUsage_${filter.startDate}_to_${endDate}${domainSuffix}.xlsx`;
+    XLSX.writeFile(wb, filename);
   }
 
   function exportCustomerFacingExcel(data, filter) {
+    console.log('data', data);
     const filteredDate = data.filteredCampaigns;
     const allTimeCampaigns = data.allTimeAllCampaigns;
 
@@ -214,7 +228,16 @@ export const useReportHandler = () => {
     endDate = new Date(endDate.setHours(23, 59, 59, 999)).toISOString().split('T')[0];
     var dayCount = getDayDifference(filter.startDate, endDate);
 
+    // Add report title with date range and domain
+    const domainText =
+      filter.hostnames && filter.hostnames.length > 0
+        ? ` - Domains: ${filter.hostnames.join(', ')}`
+        : '';
+    const reportTitle = `Customer Facing Report (${filter.startDate} to ${endDate})${domainText}`;
+
     const filteredDataExcell = [];
+    filteredDataExcell.push([reportTitle]);
+    filteredDataExcell.push([]); // Empty row for spacing
     for (let item of filteredDate) {
       filteredDataExcell.push([item.title]);
       filteredDataExcell.push([
@@ -237,6 +260,9 @@ export const useReportHandler = () => {
       filteredDataExcell.push([]);
     }
     const allTimeCampaignDataExcell = [];
+    const allTimeReportTitle = `All Time Campaigns Report${domainText}`;
+    allTimeCampaignDataExcell.push([allTimeReportTitle]);
+    allTimeCampaignDataExcell.push([]); // Empty row for spacing
     for (let item of allTimeCampaigns) {
       allTimeCampaignDataExcell.push([item.title]);
       allTimeCampaignDataExcell.push(['Views', 'Engagement', 'Conversion']);
@@ -252,7 +278,11 @@ export const useReportHandler = () => {
     XLSX.utils.book_append_sheet(wb, fc, 'Report With Date Filter');
     XLSX.utils.book_append_sheet(wb, ac, 'All Time');
 
-    XLSX.writeFile(wb, 'CustomerFacingReport.xlsx');
+    // Create filename with date range and domain
+    const domainSuffix =
+      filter.hostnames && filter.hostnames.length > 0 ? `_${filter.hostnames.join('_')}` : '';
+    const filename = `CustomerFacingReport_${filter.startDate}_to_${endDate}${domainSuffix}.xlsx`;
+    XLSX.writeFile(wb, filename);
   }
 
   function capitalize(str) {
