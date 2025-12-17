@@ -18,6 +18,13 @@ const SidebarMenu = ({ secondary }) => {
       path: '/',
     },
     {
+      key: 'companies',
+      label: 'Companies',
+      icon: getIcon('UsersOutlined'),
+      onClick: () => navigate('/companies'),
+      path: '/companies',
+    },
+    {
       key: 'defaultChecklist',
       label: 'Default Tasklist',
       icon: getIcon('BarChartOutlined'),
