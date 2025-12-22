@@ -121,8 +121,6 @@ export const useAgentManagementHandler = () => {
         ? payload.lockedSmartReplyAgents
         : [];
 
-      console.log('API Response:', { lockedCampaigns, lockedAIAgents, lockedSmartReplyAgents });
-
       // Convert locked to allowed (opposite logic)
       // If agent is locked, it should NOT be in allowed list
       const allowedCampaignsList = filterAgentsByType(

@@ -178,7 +178,6 @@ const UserChecklistWorkflow = UserDetails => {
       };
       let updatedTasks = [...selectedChecklist.tasks];
       if (isEditingTask) {
-        console.log('Updating task:', editingTask._id, taskData);
         // Add your update task logic here
         updatedTasks = updatedTasks.map(task =>
           task._id === editingTask._id
@@ -209,7 +208,6 @@ const UserChecklistWorkflow = UserDetails => {
           }
         );
       } else {
-        console.log('Creating new task:', taskData);
         // Add your create task logic here
         handleCreateTask(taskData, updatedTasks, () => {
           setSelectedChecklist({
@@ -260,7 +258,6 @@ const UserChecklistWorkflow = UserDetails => {
     try {
       if (isEditing) {
         // Handle edit logic here
-        console.log('Editing checklist:', editingRecord.id, values);
         handleUpdateUserChecklist(
           editingRecord._id,
           { title: values.title, isDefault: false, assignedUser: id },
@@ -268,7 +265,6 @@ const UserChecklistWorkflow = UserDetails => {
         );
       } else {
         // Handle add logic here
-        console.log('Adding new checklist:', values);
         handleAddDefaultChecklist(
           { title: values.title, tasks: [], isDefault: false, assignedUser: id },
           handleDrawerClose
@@ -302,9 +298,6 @@ const UserChecklistWorkflow = UserDetails => {
       messageComponent.error('Failed to upload file');
     }
   };
-  useEffect(() => {
-    console.log(userChecklist);
-  }, [userChecklist]);
 
   const getIcon = name => <Icon name={name} size={20} />;
 

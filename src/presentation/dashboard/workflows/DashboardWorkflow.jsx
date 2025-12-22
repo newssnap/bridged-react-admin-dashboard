@@ -1,43 +1,36 @@
 /* global chrome */
 import {
-  theme,
   Typography,
   Table,
   Avatar,
   Tag,
   Space,
-  Dropdown,
+  Row,
+  Col,
   Button,
-  Tooltip,
   Input,
   Drawer,
   Form,
   Checkbox,
   notification,
-  Flex,
   Select,
   DatePicker,
   Divider,
   Alert,
   Spin,
   Badge,
+  Tooltip,
 } from 'antd';
-import {
-  MoreOutlined,
-  UserOutlined,
-  LoadingOutlined,
-  KeyOutlined,
-  SearchOutlined,
-  PlusOutlined,
-  FileExcelOutlined,
-} from '@ant-design/icons';
+import { UserOutlined, PlusOutlined, LoadingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Icon from '../../../utils/components/Icon';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
+import useUsersTableHandler from '../controllers/useUsersTableHandler';
+import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
 import { useReportHandler } from '../controllers/useReportHandler';
 import { useAgentManagementHandler } from '../controllers/useAgentManagementHandler';
-import { useState, useMemo, useEffect } from 'react';
-import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { ACTIVE_COLOR, PRIMARY_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -47,20 +40,45 @@ import {
   ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
 } from '../../../constants/agents';
+import { useGetCompaniesQuery } from '../../../services/api';
+import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
+import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
+import { useDispatch } from 'react-redux';
 const { Title } = Typography;
-const { Search } = Input;
 const { RangePicker } = DatePicker;
 const getIcon = name => <Icon name={name} />;
 
 function DashboardWorkflow() {
+  const dispatch = useDispatch();
   const {
-    token: { colorBgLayout },
-  } = theme.useToken();
+    inputQuery: searchText,
+    debouncedValue: debouncedSearchText,
+    inputHandler,
+  } = useDebouncedInput('');
 
   const {
-    users,
-    isLoading,
-    error,
+    inputQuery: companySearchText,
+    debouncedValue: debouncedCompanySearchText,
+    inputHandler: companySearchInputHandler,
+  } = useDebouncedInput('');
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedSort, setSelectedSort] = useState('lastLogin_DESC');
+  const { users, total, page, limit, handlePageChange, isLoading } = useUsersTableHandler(
+    debouncedSearchText,
+    selectedCompanyId,
+    selectedStatus,
+    selectedSort
+  );
+
+  const { data: companies, isLoading: isLoadingCompanies } = useGetCompaniesQuery({
+    page: 1,
+    limit: 100,
+    search: debouncedCompanySearchText || '',
+  });
+
+  const {
     handleAddUser,
     isAddingUser,
     handleGenerateUserTokenForLogin,
@@ -68,8 +86,10 @@ function DashboardWorkflow() {
     generateTokenIDLogin,
     tokenType,
   } = useDashboardHandler();
-  const [searchText, setSearchText] = useState('');
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const selectRef = useRef(null);
+  const companySelectRef = useRef(null);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
   const [isAgentsDrawerOpen, setIsAgentsDrawerOpen] = useState(false);
   const [form] = Form.useForm();
@@ -85,7 +105,6 @@ function DashboardWorkflow() {
     generateTokenID,
   } = useReportHandler();
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
-  const [currentUserToken, setCurrentUserToken] = useState(null);
 
   // Agent management hook
   const {
@@ -131,6 +150,7 @@ function DashboardWorkflow() {
     resetNewUserAgentStates,
     generateNewUserConfigurations,
   } = useAgentManagementHandler();
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -159,6 +179,7 @@ function DashboardWorkflow() {
       });
     }
   }, [newUserAllowedCampaigns, newUserAllowedMonetizePack, newUserAllowedAIAgents, isDrawerOpen]);
+
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
       {
@@ -196,7 +217,6 @@ function DashboardWorkflow() {
           const message = event.data;
 
           if (message?.source === 'qweek-website' && message.payload?.type === 'LOGIN_STATUS') {
-            console.log('Login status:', message.payload.status);
             if (message.payload.status === 'success') {
               notification.success({
                 message: 'Login Success',
@@ -239,10 +259,11 @@ function DashboardWorkflow() {
     const userDataWithConfig = {
       username: values.username,
       password: values.password,
+      companyId: values.company,
       userConfigurations,
     };
 
-    const result = await handleAddUser(userDataWithConfig, handleCloseDrawer);
+    await handleAddUser(userDataWithConfig, handleCloseDrawer);
   };
 
   const handleCloseDrawer = () => {
@@ -256,28 +277,24 @@ function DashboardWorkflow() {
     reportForm.resetFields();
     setSelectedReportTypes([]);
     setIsExportReportOpen(false);
-    setCurrentUserToken(null);
   };
 
   const handleGenerateReport = async () => {
     try {
       const values = await reportForm.validateFields();
-      console.log('Report values:', values);
 
       if (selectedReportTypes.includes('customer')) {
-        const reportData = await handleCustomerReport({
+        await handleCustomerReport({
           startDate: values.dateRange[0].format('YYYY-MM-DD'),
           endDate: values.dateRange[1].format('YYYY-MM-DD'),
         });
-        console.log('Report data:', reportData);
       }
       if (selectedReportTypes.includes('productivity')) {
-        const reportData = await handleUsageReport({
+        await handleUsageReport({
           startDate: values.dateRange[0].format('YYYY-MM-DD'),
           endDate: values.dateRange[1].format('YYYY-MM-DD'),
           hostnames: values.domain,
         });
-        console.log('Report data:', reportData);
       }
 
       // Add your report generation logic here
@@ -301,10 +318,9 @@ function DashboardWorkflow() {
 
   const handleExportReportClick = async record => {
     try {
-      const token = await handleGenerateUserToken({
+      await handleGenerateUserToken({
         _id: record._id,
       });
-      setCurrentUserToken(token);
       setIsExportReportOpen(true);
     } catch (error) {
       console.error('Error generating user token:', error);
@@ -315,28 +331,36 @@ function DashboardWorkflow() {
     }
   };
 
-  // Filter users based on search text
-  const filteredUsers = useMemo(() => {
-    if (!searchText) return users;
-    return users.filter(user => user.email.toLowerCase().includes(searchText.toLowerCase()));
-  }, [users, searchText]);
+  const openCreateDrawer = () =>
+    dispatch(setCompaniesDrawerState({ open: true, mode: 'create', record: null }));
 
   const columns = [
     {
-      title: 'User Avatar',
+      title: 'Avatar',
       key: 'user',
       width: '70px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
-          <Avatar src={record.picture} icon={<UserOutlined />} alt={record.fullname} size={50}>
-            {record.fullname.charAt(0).toUpperCase()}
-          </Avatar>
+          <Tooltip title={record?.status === 'active' ? 'Active user' : 'Inactive user'}>
+            <Avatar
+              style={{
+                borderColor: record?.status === 'active' ? ACTIVE_COLOR : '#97999c',
+                borderWidth: '2px',
+              }}
+              src={record.picture}
+              icon={<UserOutlined />}
+              alt={record.fullname}
+              size={40}
+            >
+              {record.fullname.charAt(0).toUpperCase()}
+            </Avatar>
+          </Tooltip>
         </Space>
       ),
     },
     {
-      title: 'Email',
+      title: 'User Email',
       dataIndex: 'email',
       key: 'email',
       width: '190px',
@@ -352,7 +376,7 @@ function DashboardWorkflow() {
       ),
     },
     {
-      title: 'Fullname',
+      title: 'Full Name',
       dataIndex: 'fullname',
       key: 'fullname',
       width: '150px',
@@ -362,19 +386,27 @@ function DashboardWorkflow() {
     },
     {
       title: 'Last Login',
-      dataIndex: 'lastLoggedInDate',
-      key: 'lastLoggedInDate',
+      dataIndex: 'last_login_at',
+      key: 'last_login_at',
       align: 'center',
       width: '120px',
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
+    // {
+    //   title: () => <span style={{ fontSize: '14px' }}>Verification Code</span>,
+    //   dataIndex: 'verificationCode',
+    //   key: 'verificationCode',
+    //   align: 'center',
+    //   width: '100px',
+    //   render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
+    // },
     {
-      title: () => <span style={{ fontSize: '12px' }}>Verification Code</span>,
-      dataIndex: 'verificationCode',
-      key: 'verificationCode',
-      align: 'center',
+      title: 'Company',
+      dataIndex: 'company',
+      key: 'company',
       width: '100px',
-      render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
+      align: 'center',
+      render: company => <span style={{ fontSize: '14px' }}>{company ? company.name : '--'}</span>,
     },
     {
       title: 'Role',
@@ -437,24 +469,6 @@ function DashboardWorkflow() {
               {getIcon('SettingOutlined')}
             </Button>
           </Tooltip>
-          {/* <Tooltip title={'Login to Old Dashboard'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => {
-                handleMenuClick('dashboard', record);
-              }}
-            >
-              {isGeneratingTokenForLogin &&
-                generateTokenIDLogin &&
-                tokenType === 'dashboard' &&
-                generateTokenIDLogin === record._id ? (
-                <LoadingOutlined />
-              ) : (
-                getIcon('KeySquareOutlined')
-              )}
-            </Button>
-          </Tooltip> */}
           <Tooltip title={'Login to Portal'}>
             <Button
               type="text"
@@ -497,28 +511,133 @@ function DashboardWorkflow() {
   ];
 
   return (
-    <Space direction="vertical" size={'large'} style={{ width: '100%' }}>
-      <Title level={2} style={{ marginBottom: '24px', fontWeight: 300 }}>
-        Users
-      </Title>
-      <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-        <Button
-          size="large"
-          type="primary"
-          style={{ width: '100px' }}
-          onClick={() => setIsDrawerOpen(true)}
-        >
-          <PlusOutlined />
-          Add User
-        </Button>
-        <Input
-          placeholder="Search by email"
-          allowClear
-          size="large"
-          onChange={e => setSearchText(e.target.value)}
-          style={{ maxWidth: '400px' }}
-        />
-      </Flex>
+    <>
+      <Row gutter={[15, 30]} justify="space-between" align="middle">
+        <Col span={24}>
+          <Title level={2} style={{ marginBottom: '24px', fontWeight: 300 }}>
+            Users
+          </Title>
+        </Col>
+        <Col span={24}>
+          <Row gutter={[15, 15]} justify="space-between" align="middle">
+            <Col span={6}>
+              <Space size="middle">
+                <Button
+                  size="large"
+                  type="primary"
+                  onClick={() => setIsDrawerOpen(true)}
+                  icon={<PlusOutlined />}
+                >
+                  Add User
+                </Button>
+                <Select
+                  options={[
+                    { label: 'Last login (Newest)', value: 'lastLogin_DESC' },
+                    { label: 'Last login (Oldest)', value: 'lastLogin_ASC' },
+                  ]}
+                  defaultValue="lastLogin_DESC"
+                  size="large"
+                  style={{ width: 175 }}
+                  placeholder="Select order"
+                  value={selectedSort}
+                  onChange={value => setSelectedSort(value)}
+                />
+                <Select
+                  ref={selectRef}
+                  options={[
+                    { label: 'All companies', value: 'all' },
+                    ...(companies?.data?.data?.map(company => ({
+                      label: company.name,
+                      value: company.id,
+                    })) || []),
+                  ]}
+                  loading={isLoadingCompanies}
+                  showSearch
+                  value={selectedCompanyId}
+                  size="large"
+                  style={{ width: 150 }}
+                  placeholder="Select Company"
+                  filterOption={false}
+                  onChange={value => {
+                    setSelectedCompanyId(value);
+
+                    // Remove focus after selection
+                    setTimeout(() => {
+                      selectRef.current?.blur();
+                    }, 0);
+                  }}
+                  onSearch={companySearchInputHandler}
+                  onBlur={() => {
+                    companySearchInputHandler('');
+                  }}
+                  dropdownRender={menu => (
+                    <>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined style={{ opacity: 1 }} />}
+                        block
+                        onClick={() => openCreateDrawer()}
+                      >
+                        Add Company
+                      </Button>
+                    </>
+                  )}
+                />
+
+                <Select
+                  defaultValue="all"
+                  options={[
+                    { label: 'All', value: 'all' },
+                    { label: 'Active', value: 'active' },
+                    { label: 'Inactive', value: 'inactive' },
+                  ]}
+                  size="large"
+                  style={{ width: 125 }}
+                  placeholder="Select Status"
+                  value={selectedStatus}
+                  onChange={value => setSelectedStatus(value)}
+                />
+              </Space>
+            </Col>
+            <Col span={6}>
+              <Input
+                placeholder="Search by email"
+                allowClear
+                size="large"
+                value={searchText}
+                onChange={e => inputHandler(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </Col>
+          </Row>
+        </Col>
+        <Col span={24}>
+          <Table
+            columns={columns}
+            dataSource={Array.isArray(users) ? users : []}
+            rowKey="_id"
+            loading={isLoading}
+            bordered
+            pagination={{
+              current: page,
+              pageSize: limit,
+              total: total,
+              position: ['bottomLeft'],
+              showSizeChanger: false,
+              showQuickJumper: false,
+              onChange: handlePageChange,
+            }}
+            scroll={{ x: 990 }}
+            locale={{
+              emptyText: searchText
+                ? `No users found matching "${searchText}"`
+                : 'No users available',
+            }}
+          />
+        </Col>
+      </Row>
 
       <Drawer
         title="Add User"
@@ -558,6 +677,37 @@ function DashboardWorkflow() {
             rules={[{ required: true, message: 'Please input the password!' }]}
           >
             <Input.Password size="large" />
+          </Form.Item>
+          <Form.Item
+            name="company"
+            label="Company"
+            rules={[{ required: true, message: 'Please select the company!' }]}
+          >
+            <Select
+              ref={companySelectRef}
+              options={[
+                { label: 'All', value: 'all' },
+                ...(companies?.data?.data?.map(company => ({
+                  label: company.name,
+                  value: company.id,
+                })) || []),
+              ]}
+              loading={isLoadingCompanies}
+              showSearch
+              size="large"
+              placeholder="Select Company"
+              filterOption={false}
+              onChange={() => {
+                // Remove focus after selection
+                setTimeout(() => {
+                  companySelectRef.current?.blur();
+                }, 0);
+              }}
+              onSearch={companySearchInputHandler}
+              onBlur={() => {
+                companySearchInputHandler('');
+              }}
+            />
           </Form.Item>
 
           {/* Agent Management Section */}
@@ -910,23 +1060,9 @@ function DashboardWorkflow() {
         </Form>
       </Drawer>
 
-      <Table
-        columns={columns}
-        dataSource={filteredUsers}
-        rowKey="_id"
-        loading={isLoading}
-        bordered
-        pagination={{
-          position: ['bottomLeft'],
-          showSizeChanger: false,
-          showQuickJumper: false,
-        }}
-        scroll={{ x: 990 }}
-        locale={{
-          emptyText: searchText ? `No users found matching "${searchText}"` : 'No users available',
-        }}
-      />
-    </Space>
+      {/* add company drawer */}
+      <CompaniesWorkflow isUsersDashboard={true} />
+    </>
   );
 }
 

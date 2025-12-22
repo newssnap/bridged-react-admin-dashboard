@@ -1,25 +1,9 @@
-import { Col, Divider, Row, Skeleton } from 'antd';
-// import { useUserInfoQuery } from '../services/api';
+import { Col, Divider, Row } from 'antd';
 import UserInfo from './sidebar/UserInfo';
 import SidebarMenu from './sidebar/SidebarMenu';
 import { Link } from 'react-router-dom';
 
-// Skeleton component for loading state
-const SkeletonLoader = () => (
-  <Skeleton.Button
-    size="large"
-    block
-    active
-    style={{
-      backgroundColor: '#34374c',
-      borderRadius: '0px',
-      height: '74px',
-    }}
-  />
-);
-
 function GlobalSidebar() {
-  // const { data, isLoading } = useUserInfoQuery();
   return (
     <>
       <Row

@@ -50,6 +50,7 @@ export const bridgedApi = createApi({
     'userChecklists',
     'taskComments',
     'userConfiguration',
+    'companies',
   ],
   endpoints: builder => ({
     // User login mutation
@@ -60,14 +61,41 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     userInfo: builder.query({
       query: () => '/User/Profile',
       providesTags: ['userInfo'],
     }),
+
     findAllUsers: builder.query({
       query: () => '/User/Admin/FindAllUsers',
       providesTags: ['users'],
     }),
+
+    findAllUsersPagination: builder.mutation({
+      query: ({ companyId, status, sort, search, page, limit }) => ({
+        url: `/User/Admin/FindAllUsers?companyId=${companyId}&status=${status}&sort=${sort}&search=${search}&page=${page}&limit=${limit}`,
+        method: 'POST',
+        body: { companyId, status, sort, search, page, limit },
+      }),
+      invalidatesTags: ['users'],
+    }),
+
+    getUserAdminPagination: builder.mutation({
+      query: ({ companyId, status, sort, search, pageNumber, limit }) => ({
+        url: '/User/Admin/Pagination',
+        method: 'POST',
+        body: {
+          ...(companyId && { companyId }),
+          status: status || 'all',
+          sort: sort || 'lastLogin_DESC',
+          search: search || '',
+          pageNumber: pageNumber || 1,
+          limit: limit || 10,
+        },
+      }),
+    }),
+
     addUser: builder.mutation({
       query: data => ({
         url: '/User/Admin/CreateByAdmin',
@@ -76,6 +104,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['users'],
     }),
+
     generateUserToken: builder.mutation({
       query: data => ({
         url: '/User/Admin/GenerateTokenForUserByAdmin',
@@ -83,6 +112,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getAllUserDomains: builder.mutation({
       query: ({ customToken }) => ({
         url: '/Domain/FindAll',
@@ -94,6 +124,7 @@ export const bridgedApi = createApi({
           : {},
       }),
     }),
+
     getCustomerReport: builder.mutation({
       query: ({ data, customToken }) => ({
         url: '/Campaign/dataExport',
@@ -106,6 +137,7 @@ export const bridgedApi = createApi({
           : {},
       }),
     }),
+
     getResearchPartnerDate: builder.mutation({
       query: data => ({
         url: 'https://ai-agents-api.bridged.media/api/rp_agent/data_export',
@@ -113,6 +145,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getDiscoveryAgentData: builder.mutation({
       query: data => ({
         url: 'https://ai-agents-api.bridged.media/api/discovery_agent/data_export',
@@ -120,6 +153,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getSummaryUsageData: builder.mutation({
       query: data => ({
         url: 'https://summary-agent.bridged.media/exportSummaryUsageData',
@@ -127,6 +161,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getSEOV3Data: builder.mutation({
       query: data => ({
         url: 'https://seo-agent.bridged.media/exportSEOV3UsageData',
@@ -134,6 +169,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getSEOV4Data: builder.mutation({
       query: data => ({
         url: 'https://seo-agent.bridged.media/exportSEOV4UsageData',
@@ -141,6 +177,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getBacklinkUsageData: builder.mutation({
       query: data => ({
         url: 'https://backlink-agent.bridged.media/exportBacklinkUsageData',
@@ -155,6 +192,7 @@ export const bridgedApi = createApi({
       }),
       providesTags: ['defaultChecklists'],
     }),
+
     addDefaultChecklist: builder.mutation({
       query: data => ({
         url: '/checklists/Admin',
@@ -163,6 +201,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['defaultChecklists', 'userChecklists'],
     }),
+
     deleteDefaultChecklist: builder.mutation({
       query: id => ({
         url: `/checklists/Admin/?_id=${id}`,
@@ -170,6 +209,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['defaultChecklists'],
     }),
+
     deleteUserChecklist: builder.mutation({
       query: id => ({
         url: `/checklists/Admin?_id=${id}`,
@@ -177,6 +217,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['userChecklists'],
     }),
+
     updateDefaultChecklist: builder.mutation({
       query: ({ id, data }) => ({
         url: `/checklists/Admin/?_id=${id}`,
@@ -185,6 +226,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['defaultChecklists'],
     }),
+
     updateUserChecklist: builder.mutation({
       query: ({ id, data }) => ({
         url: `/checklists/Admin?_id=${id}`,
@@ -193,6 +235,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['userChecklists'],
     }),
+
     uploadImage: builder.mutation({
       query: data => ({
         url: '/Media/Admin/Upload?type=image',
@@ -200,6 +243,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     createTask: builder.mutation({
       query: data => ({
         url: `/tasks/Admin`,
@@ -208,6 +252,7 @@ export const bridgedApi = createApi({
         invalidatesTags: ['defaultChecklists'],
       }),
     }),
+
     updateTask: builder.mutation({
       query: ({ id, data }) => ({
         url: `/tasks/Admin/?_id=${id}`,
@@ -215,6 +260,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     deleteTask: builder.mutation({
       query: id => ({
         url: `/tasks/Admin/?_id=${id}`,
@@ -222,6 +268,7 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['defaultChecklists'],
     }),
+
     getUserChecklist: builder.query({
       query: id => ({
         url: `/checklists/Admin/UsersChecklists/?userId=${id}`,
@@ -229,6 +276,7 @@ export const bridgedApi = createApi({
       }),
       providesTags: ['userChecklists'],
     }),
+
     getTeamMembers: builder.query({
       query: id => ({
         url: `/Team/Admin/GetTeamMembers?userId=${id}`,
@@ -236,6 +284,7 @@ export const bridgedApi = createApi({
       }),
       providesTags: ['teamMembers'],
     }),
+
     getUserChecklistTaskComments: builder.query({
       query: taskId => ({
         url: `/TaskComments/Admin/FindAllByTaskId/?_id=${taskId}`,
@@ -243,6 +292,7 @@ export const bridgedApi = createApi({
       }),
       providesTags: (result, error, taskId) => [{ type: 'taskComments', id: taskId }],
     }),
+
     addTaskComment: builder.mutation({
       query: data => ({
         url: `/TaskComments/Admin/Create`,
@@ -251,6 +301,56 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: (result, error, { taskId }) => [{ type: 'taskComments', id: taskId }],
     }),
+
+    // * Companies related
+    getCompanies: builder.query({
+      query: ({ page, limit, search }) => ({
+        url: `/companies/pagination`,
+        method: 'POST',
+        body: {
+          page,
+          limit,
+          ...(search && { search }),
+        },
+      }),
+      providesTags: ['companies'],
+    }),
+
+    createCompany: builder.mutation({
+      query: name => ({
+        url: `/companies`,
+        method: 'POST',
+        body: { name: name },
+      }),
+      invalidatesTags: ['companies'],
+    }),
+
+    updateCompany: builder.mutation({
+      query: ({ id, name }) => ({
+        url: `/companies/?companyId=${id}`,
+        method: 'PUT',
+        body: { name: name },
+      }),
+      invalidatesTags: ['companies'],
+    }),
+
+    deleteCompany: builder.mutation({
+      query: id => ({
+        url: `/companies/?companyId=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['companies'],
+    }),
+
+    setCompanyUsers: builder.mutation({
+      query: ({ id, userIds }) => ({
+        url: `/companies/bulkUpdateUsers/?companyId=${id}`,
+        method: 'PUT',
+        body: { userIds: userIds },
+      }),
+      invalidatesTags: ['companies', 'users'],
+    }),
+
     // User Configuration (Agents Lock/Unlock)
     getUserConfiguration: builder.query({
       query: userId => ({
@@ -259,6 +359,7 @@ export const bridgedApi = createApi({
       }),
       providesTags: (result, error, userId) => [{ type: 'userConfiguration', id: userId }],
     }),
+
     updateUserConfiguration: builder.mutation({
       query: data => ({
         url: `/UserConfiguration/Admin`,
@@ -301,4 +402,12 @@ export const {
   useAddTaskCommentMutation,
   useLazyGetUserConfigurationQuery,
   useUpdateUserConfigurationMutation,
+
+  // * Companies related
+  useGetCompaniesQuery,
+  useCreateCompanyMutation,
+  useUpdateCompanyMutation,
+  useDeleteCompanyMutation,
+  useSetCompanyUsersMutation,
+  useGetUserAdminPaginationMutation,
 } = bridgedApi;
