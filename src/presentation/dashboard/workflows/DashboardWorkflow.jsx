@@ -41,11 +41,15 @@ import {
   MONETIZE_PACK_OPTIONS,
 } from '../../../constants/agents';
 import { useGetCompaniesQuery } from '../../../services/api';
+import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
+import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
+import { useDispatch } from 'react-redux';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 const getIcon = name => <Icon name={name} />;
 
 function DashboardWorkflow() {
+  const dispatch = useDispatch();
   const {
     inputQuery: searchText,
     debouncedValue: debouncedSearchText,
@@ -327,6 +331,9 @@ function DashboardWorkflow() {
     }
   };
 
+  const openCreateDrawer = () =>
+    dispatch(setCompaniesDrawerState({ open: true, mode: 'create', record: null }));
+
   const columns = [
     {
       title: 'Avatar',
@@ -563,6 +570,20 @@ function DashboardWorkflow() {
                   onBlur={() => {
                     companySearchInputHandler('');
                   }}
+                  dropdownRender={menu => (
+                    <>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined style={{ opacity: 1 }} />}
+                        block
+                        onClick={() => openCreateDrawer()}
+                      >
+                        Add Company
+                      </Button>
+                    </>
+                  )}
                 />
 
                 <Select
@@ -1040,6 +1061,7 @@ function DashboardWorkflow() {
       </Drawer>
 
       {/* add company drawer */}
+      <CompaniesWorkflow isUsersDashboard={true} />
     </>
   );
 }

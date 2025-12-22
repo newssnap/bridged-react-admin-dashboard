@@ -5,13 +5,12 @@ import {
   useDeleteCompanyMutation,
   useUpdateCompanyMutation,
 } from '../../../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
 
 const useCompaniesHandler = () => {
-  const [drawerState, setDrawerState] = useState({
-    open: false,
-    mode: 'create',
-    record: null,
-  });
+  const dispatch = useDispatch();
+  const drawerState = useSelector(state => state?.companies?.drawerState);
 
   const [manageUsersDrawer, setManageUsersDrawer] = useState({
     open: false,
@@ -22,9 +21,12 @@ const useCompaniesHandler = () => {
   const [_UPDATE_COMPANY, { isLoading: isUpdatingCompany }] = useUpdateCompanyMutation();
   const [_DELETE_COMPANY, { isLoading: isDeletingCompany }] = useDeleteCompanyMutation();
 
-  const openCreateDrawer = () => setDrawerState({ open: true, mode: 'create', record: null });
-  const openEditDrawer = record => setDrawerState({ open: true, mode: 'edit', record });
-  const closeDrawer = () => setDrawerState(prev => ({ ...prev, open: false }));
+  const openCreateDrawer = () =>
+    dispatch(setCompaniesDrawerState({ open: true, mode: 'create', record: null }));
+  const openEditDrawer = record =>
+    dispatch(setCompaniesDrawerState({ open: true, mode: 'edit', record: record }));
+  const closeDrawer = () =>
+    dispatch(setCompaniesDrawerState({ open: false, mode: 'create', record: null }));
 
   const createCompany = async values => {
     try {

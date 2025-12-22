@@ -6,7 +6,7 @@ import CompanyFormDrawer from '../components/CompanyFormDrawer';
 import useCompaniesHandler from '../controllers/useCompaniesHandler';
 import ManageUsersDrawer from '../components/ManageUsersDrawer';
 
-const CompaniesWorkflow = () => {
+const CompaniesWorkflow = ({ isUsersDashboard = false }) => {
   const [searchValue, setSearchValue] = useState('');
 
   const {
@@ -23,18 +23,22 @@ const CompaniesWorkflow = () => {
 
   return (
     <Row gutter={[15, 30]}>
-      <Col span={24}>
-        <CompaniesTopbar onSearchChange={setSearchValue} onAddCompany={openCreateDrawer} />
-      </Col>
+      {!isUsersDashboard && (
+        <Col span={24}>
+          <CompaniesTopbar onSearchChange={setSearchValue} onAddCompany={openCreateDrawer} />
+        </Col>
+      )}
 
-      <Col span={24}>
-        <CompaniesTable
-          onEdit={openEditDrawer}
-          onDelete={deleteCompany}
-          searchValue={searchValue}
-          setManageUsersDrawer={setManageUsersDrawer}
-        />
-      </Col>
+      {!isUsersDashboard && (
+        <Col span={24}>
+          <CompaniesTable
+            onEdit={openEditDrawer}
+            onDelete={deleteCompany}
+            searchValue={searchValue}
+            setManageUsersDrawer={setManageUsersDrawer}
+          />
+        </Col>
+      )}
 
       <CompanyFormDrawer
         open={drawerState?.open}
@@ -45,11 +49,13 @@ const CompaniesWorkflow = () => {
         confirmLoading={submitting}
       />
 
-      <ManageUsersDrawer
-        open={manageUsersDrawer?.open}
-        setManageUsersDrawer={setManageUsersDrawer}
-        companyId={manageUsersDrawer?.companyId}
-      />
+      {!isUsersDashboard && (
+        <ManageUsersDrawer
+          open={manageUsersDrawer?.open}
+          setManageUsersDrawer={setManageUsersDrawer}
+          companyId={manageUsersDrawer?.companyId}
+        />
+      )}
     </Row>
   );
 };
