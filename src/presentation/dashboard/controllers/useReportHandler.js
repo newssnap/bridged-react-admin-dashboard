@@ -68,7 +68,6 @@ export const useReportHandler = () => {
     }
   };
   const handleCustomerReport = async data => {
-    console.log('Using userToken:', userToken);
     try {
       const response = await getCustomerReport({ data, customToken: userToken }).unwrap();
       if (response.success) {
@@ -140,7 +139,6 @@ export const useReportHandler = () => {
 
   function exportProductivityExcell(data, filter) {
     const flattenedData = data.flat(); // Merge all sub-arrays
-    console.log('flattenedData', flattenedData);
     let serviceNames = [
       'researchPartner',
       'summaryGenerator',
@@ -219,7 +217,6 @@ export const useReportHandler = () => {
   }
 
   function exportCustomerFacingExcel(data, filter) {
-    console.log('data', data);
     const filteredDate = data.filteredCampaigns;
     const allTimeCampaigns = data.allTimeAllCampaigns;
 

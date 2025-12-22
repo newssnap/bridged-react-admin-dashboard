@@ -96,7 +96,6 @@ const DefaultChecklistWorkflow = () => {
     try {
       if (isEditing) {
         // Handle edit logic here
-        console.log('Editing checklist:', editingRecord.id, values);
         handleUpdateDefaultChecklist(
           editingRecord._id,
           { title: values.title, tasks: values.tasks, isDefault: true },
@@ -104,7 +103,6 @@ const DefaultChecklistWorkflow = () => {
         );
       } else {
         // Handle add logic here
-        console.log('Adding new checklist:', values);
         handleAddDefaultChecklist(
           { title: values.title, tasks: [], isDefault: true },
           handleDrawerClose
@@ -192,7 +190,6 @@ const DefaultChecklistWorkflow = () => {
   const handleTaskFormSubmit = async values => {
     try {
       let updatedTasks = [...selectedChecklist.tasks];
-      console.log('updatedTasks', updatedTasks);
 
       if (isEditingTask) {
         // Update existing task
