@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   useGetUserAdminPaginationMutation,
   useSetCompanyUsersMutation,
@@ -9,6 +9,9 @@ import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
 const useManageUsersDrawerHandler = companyId => {
   const [userIds, setUserIds] = useState([]);
   const [users, setUsers] = useState([]);
+  const hasInitializedSelection = useRef(false);
+  const previousCompanyId = useRef(null);
+  const userHasManuallyChangedSelection = useRef(false);
   const [filters, setFilters] = useState({
     status: 'all',
     sort: 'lastLogin_DESC',
@@ -88,7 +91,19 @@ const useManageUsersDrawerHandler = companyId => {
   };
 
   const handleRowSelectionChange = selectedRowKeys => {
-    setUserIds(selectedRowKeys);
+    // Mark that user has manually changed selection
+    userHasManuallyChangedSelection.current = true;
+
+    // Get the IDs of all rows on the current page
+    const currentPageIds = users.map(user => user?._id).filter(Boolean);
+
+    // Remove all IDs from the current page from the existing selection
+    // Then add back the newly selected IDs from the current page
+    // This preserves selections from other pages
+    setUserIds(prevUserIds => {
+      const otherPagesIds = prevUserIds.filter(id => !currentPageIds.includes(id));
+      return [...otherPagesIds, ...selectedRowKeys];
+    });
   };
 
   const handleSubmit = async () => {
@@ -124,16 +139,54 @@ const useManageUsersDrawerHandler = companyId => {
   }, [companyId, fetchUsers]);
 
   // Initialize selected userIds based on companyId match
+  // Only run when companyId changes (not on pagination)
   useEffect(() => {
-    if (Array.isArray(users) && users.length > 0 && companyId) {
-      const initialSelectedIds = users
+    // Reset initialization flag when companyId changes
+    if (previousCompanyId.current !== companyId) {
+      hasInitializedSelection.current = false;
+      previousCompanyId.current = companyId;
+      userHasManuallyChangedSelection.current = false;
+      setUserIds([]);
+    }
+  }, [companyId]);
+
+  // Preselect users that match the companyId
+  // This runs on initial load and when navigating pages during initialization
+  // Stops auto-preselecting after user manually changes selections
+  useEffect(() => {
+    // Only auto-preselect if user hasn't manually changed selections yet
+    if (
+      !userHasManuallyChangedSelection.current &&
+      Array.isArray(users) &&
+      users.length > 0 &&
+      companyId
+    ) {
+      const matchingUserIds = users
         .filter(user => user?.company?._id === companyId)
         .map(user => user?._id)
         .filter(Boolean);
 
-      setUserIds(initialSelectedIds);
-    } else {
-      setUserIds([]);
+      if (matchingUserIds.length > 0) {
+        setUserIds(prevUserIds => {
+          // If we haven't initialized yet (first page load), replace with matching users
+          if (!hasInitializedSelection.current) {
+            hasInitializedSelection.current = true;
+            return matchingUserIds;
+          }
+          // If already initialized, merge matching users from current page
+          // This ensures users on other pages are also preselected when we navigate to them
+          const mergedIds = [...prevUserIds];
+          matchingUserIds.forEach(id => {
+            if (!mergedIds.includes(id)) {
+              mergedIds.push(id);
+            }
+          });
+          return mergedIds;
+        });
+      } else if (!hasInitializedSelection.current) {
+        // Mark as initialized even if no matching users on this page
+        hasInitializedSelection.current = true;
+      }
     }
   }, [users, companyId]);
 

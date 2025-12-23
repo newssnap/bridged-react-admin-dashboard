@@ -40,7 +40,7 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
 
   useEffect(() => {
     setPage(1);
-  }, [searchValue]);
+  }, [searchValue, sort]);
 
   useEffect(() => {
     if (isError && error) {
