@@ -284,6 +284,31 @@ h2 {
   transform: scaleX(1);
 }
 
+.pulse {
+  animation: pulse-animation 2s infinite;
+}
+
+.pulse-2 {
+  animation: pulse-animation-2 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0px rgba(127, 244, 91, 0.363);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(167, 245, 98, 0);
+  }
+}
+
+@keyframes pulse-animation-2 {
+  0% {
+    filter: drop-shadow(0 0 0px rgb(58, 247, 1));
+  }
+  100% {
+    filter: drop-shadow(0 0 18px rgb(167, 245, 98));
+  }
+}
 /* -------------------- Blob Animation ------------------------ */
 
 .blobAnimate1 {

@@ -342,20 +342,9 @@ function DashboardWorkflow() {
       align: 'center',
       render: (_, record) => (
         <Space align="center">
-          <Tooltip title={record?.status === 'active' ? 'Active user' : 'Inactive user'}>
-            <Avatar
-              style={{
-                borderColor: record?.status === 'active' ? ACTIVE_COLOR : '#97999c',
-                borderWidth: '2px',
-              }}
-              src={record.picture}
-              icon={<UserOutlined />}
-              alt={record.fullname}
-              size={40}
-            >
-              {record.fullname.charAt(0).toUpperCase()}
-            </Avatar>
-          </Tooltip>
+          <Avatar src={record.picture} icon={<UserOutlined />} alt={record.fullname} size={40}>
+            {record.fullname.charAt(0).toUpperCase()}
+          </Avatar>
         </Space>
       ),
     },
@@ -364,10 +353,27 @@ function DashboardWorkflow() {
       dataIndex: 'email',
       key: 'email',
       width: '190px',
-      render: email => (
-        <a href={`mailto:${email}`} className="linkTag">
-          {email}
-        </a>
+      render: (email, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Tooltip title={record?.status === 'active' ? 'Active user' : 'Inactive user'}>
+            <span>
+              {record?.status === 'active' ? (
+                <Icon
+                  name="PlayFilled"
+                  className={record?.status === 'active' ? 'pulse-2' : ''}
+                  style={{ width: '8px', height: '8px' }}
+                />
+              ) : (
+                <Icon name="PauseFilled" style={{ width: '8px', height: '8px' }} />
+              )}
+            </span>
+          </Tooltip>
+          <span>
+            <a href={`mailto:${email}`} className="linkTag">
+              {email}
+            </a>
+          </span>
+        </div>
       ),
     },
     {
