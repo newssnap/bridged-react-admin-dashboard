@@ -1,21 +1,18 @@
 import { notification } from 'antd';
-import {
-  useFindAllUsersQuery,
-  useAddUserMutation,
-  useGenerateUserTokenMutation,
-} from '../../../services/api';
+import { useAddUserMutation, useGenerateUserTokenMutation } from '../../../services/api';
 import { useState } from 'react';
+
 export const useDashboardHandler = () => {
-  const { data: users, isLoading, error, refetch, isFetching } = useFindAllUsersQuery();
   const [addUser, { isLoading: isAddingUser }] = useAddUserMutation();
   const [generateUserToken, { isLoading: isGeneratingTokenForLogin }] =
     useGenerateUserTokenMutation();
+
   const [generateTokenIDLogin, setGenerateTokenIDLogin] = useState(null);
   const [tokenType, setTokenType] = useState(null);
+
   const handleAddUser = async (userData, handleCloseDrawer) => {
     try {
       const response = await addUser(userData).unwrap();
-      console.log(response);
       if (response?.success) {
         notification.success({
           message: 'User added successfully',
@@ -70,12 +67,6 @@ export const useDashboardHandler = () => {
   };
 
   return {
-    users: users?.data || [],
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-    isSuccess: !isLoading && !error && users,
     handleAddUser,
     isAddingUser,
     handleGenerateUserTokenForLogin,

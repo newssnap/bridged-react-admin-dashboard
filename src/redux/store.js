@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import appReducer from './slices/appSlice';
 import authReducer from './slices/auth/authSlice';
+import companiesReducer from './slices/companiesSlice';
 
 import { bridgedApi } from '../services/api';
 
@@ -10,6 +11,7 @@ const store = configureStore({
     // Include reducers for different parts of your application
     app: appReducer, // App related state
     auth: authReducer, // Authentication related state
+    companies: companiesReducer, // Companies related state
     [bridgedApi.reducerPath]: bridgedApi.reducer, // API related state
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware().concat(bridgedApi.middleware), // Apply middleware for API

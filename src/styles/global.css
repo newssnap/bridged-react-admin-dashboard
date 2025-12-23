@@ -257,16 +257,58 @@ h2 {
 }
 
 .linkTag {
-  transition: 0.2s ease-in-out;
+  position: relative;
+  display: inline-block;
   cursor: pointer;
   color: var(--primary-Color) !important;
+  transition: color 0.2s ease-in-out;
+  word-break: break-word;
+  /* Remove flex properties to prevent full width */
 }
 
-.linkTag:hover {
-  transition: 0.2s ease-in-out;
-  text-decoration: underline;
+.linkTag::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--primary-Color);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s;
+  pointer-events: none;
 }
 
+.linkTag:hover::after {
+  transform: scaleX(1);
+}
+
+.pulse {
+  animation: pulse-animation 2s infinite;
+}
+
+.pulse-2 {
+  animation: pulse-animation-2 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0px rgba(127, 244, 91, 0.363);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(167, 245, 98, 0);
+  }
+}
+
+@keyframes pulse-animation-2 {
+  0% {
+    filter: drop-shadow(0 0 0px rgb(58, 247, 1));
+  }
+  100% {
+    filter: drop-shadow(0 0 18px rgb(167, 245, 98));
+  }
+}
 /* -------------------- Blob Animation ------------------------ */
 
 .blobAnimate1 {
