@@ -30,7 +30,7 @@ const CompanyFormDrawer = ({ open, mode, initialValues, onClose, onSubmit, confi
             Cancel
           </Button>
           <Button size="large" type="primary" onClick={form.submit} loading={confirmLoading}>
-            {mode === 'edit' ? 'Save Changes' : 'Create Company'}
+            {mode === 'edit' ? 'Save Changes' : 'Create'}
           </Button>
         </Space>
       }

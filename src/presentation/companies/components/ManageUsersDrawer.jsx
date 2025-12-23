@@ -63,6 +63,7 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId }) => {
                   { label: 'Active', value: 'active' },
                   { label: 'Inactive', value: 'inactive' },
                 ]}
+                size="large"
               />
               <Select
                 value={filters.sort}
@@ -72,6 +73,7 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId }) => {
                   { label: 'Last Login (Newest)', value: 'lastLogin_DESC' },
                   { label: 'Last Login (Oldest)', value: 'lastLogin_ASC' },
                 ]}
+                size="large"
               />
             </Space>
           </Col>
@@ -81,6 +83,7 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId }) => {
               placeholder="Search users"
               value={searchValue}
               onChange={e => onSearchChange(e.target.value)}
+              size="large"
             />
           </Col>
         </Row>

@@ -365,12 +365,7 @@ function DashboardWorkflow() {
       key: 'email',
       width: '190px',
       render: email => (
-        <a
-          href={`mailto:${email}`}
-          style={{ fontSize: '14px', color: PRIMARY_COLOR, textDecoration: 'none' }}
-          onMouseEnter={e => (e.target.style.textDecoration = 'underline')}
-          onMouseLeave={e => (e.target.style.textDecoration = 'none')}
-        >
+        <a href={`mailto:${email}`} className="linkTag">
           {email}
         </a>
       ),
@@ -392,14 +387,6 @@ function DashboardWorkflow() {
       width: '120px',
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
-    // {
-    //   title: () => <span style={{ fontSize: '14px' }}>Verification Code</span>,
-    //   dataIndex: 'verificationCode',
-    //   key: 'verificationCode',
-    //   align: 'center',
-    //   width: '100px',
-    //   render: code => <span style={{ fontSize: '14px' }}>{code ? code : '--'}</span>,
-    // },
     {
       title: 'Company',
       dataIndex: 'company',
@@ -519,9 +506,10 @@ function DashboardWorkflow() {
           </Title>
         </Col>
         <Col span={24}>
-          <Row gutter={[15, 15]} justify="space-between" align="middle">
-            <Col span={6}>
-              <Space size="middle">
+          <Row gutter={[15, 15]} align="middle">
+            {/* LEFT SIDE: Actions & Filters */}
+            <Col xs={24} sm={24} md={16} lg={16} xl={18} xxl={18}>
+              <Space size="middle" wrap style={{ width: '100%' }}>
                 <Button
                   size="large"
                   type="primary"
@@ -530,18 +518,18 @@ function DashboardWorkflow() {
                 >
                   Add User
                 </Button>
+
                 <Select
                   options={[
                     { label: 'Last login (Newest)', value: 'lastLogin_DESC' },
                     { label: 'Last login (Oldest)', value: 'lastLogin_ASC' },
                   ]}
-                  defaultValue="lastLogin_DESC"
                   size="large"
-                  style={{ width: 175 }}
-                  placeholder="Select order"
+                  style={{ width: 175, minWidth: 150 }}
                   value={selectedSort}
                   onChange={value => setSelectedSort(value)}
                 />
+
                 <Select
                   ref={selectRef}
                   options={[
@@ -553,30 +541,24 @@ function DashboardWorkflow() {
                   ]}
                   loading={isLoadingCompanies}
                   showSearch
-                  value={selectedCompanyId}
                   size="large"
-                  style={{ width: 150 }}
+                  value={selectedCompanyId}
+                  style={{ width: 170, minWidth: 140 }}
                   placeholder="Select Company"
                   filterOption={false}
                   onChange={value => {
                     setSelectedCompanyId(value);
-
-                    // Remove focus after selection
-                    setTimeout(() => {
-                      selectRef.current?.blur();
-                    }, 0);
+                    setTimeout(() => selectRef.current?.blur(), 0);
                   }}
                   onSearch={companySearchInputHandler}
-                  onBlur={() => {
-                    companySearchInputHandler('');
-                  }}
+                  onBlur={() => companySearchInputHandler('')}
                   dropdownRender={menu => (
                     <>
                       {menu}
                       <Divider style={{ margin: '8px 0' }} />
                       <Button
                         type="primary"
-                        icon={<PlusOutlined style={{ opacity: 1 }} />}
+                        icon={<PlusOutlined />}
                         block
                         onClick={() => openCreateDrawer()}
                       >
@@ -587,32 +569,34 @@ function DashboardWorkflow() {
                 />
 
                 <Select
-                  defaultValue="all"
                   options={[
                     { label: 'All', value: 'all' },
                     { label: 'Active', value: 'active' },
                     { label: 'Inactive', value: 'inactive' },
                   ]}
                   size="large"
-                  style={{ width: 125 }}
-                  placeholder="Select Status"
+                  style={{ width: 130, minWidth: 110 }}
                   value={selectedStatus}
                   onChange={value => setSelectedStatus(value)}
                 />
               </Space>
             </Col>
-            <Col span={6}>
+
+            <Col xs={24} sm={24} md={24} lg={8} xl={6} xxl={6}>
               <Input
                 placeholder="Search by email"
                 allowClear
                 size="large"
                 value={searchText}
                 onChange={e => inputHandler(e.target.value)}
-                style={{ width: '100%' }}
+                style={{
+                  width: '100%',
+                }}
               />
             </Col>
           </Row>
         </Col>
+
         <Col span={24}>
           <Table
             columns={columns}

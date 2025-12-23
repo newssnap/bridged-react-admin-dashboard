@@ -12,6 +12,7 @@ const useCompaniesTableHandler = searchValue => {
   const {
     data: response,
     isLoading,
+    isFetching: isCompaniesFetchingQuery,
     isError,
     error,
   } = useGetCompaniesQuery({
@@ -63,7 +64,7 @@ const useCompaniesTableHandler = searchValue => {
     page,
     limit,
     handlePageChange,
-    isLoading,
+    isLoading: isLoading || isCompaniesFetchingQuery,
   };
 };
 
