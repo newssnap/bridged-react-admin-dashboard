@@ -643,11 +643,11 @@ function DashboardWorkflow() {
 
                 <Select
                   options={[
-                    { label: 'Last login (Newest)', value: 'lastLogin_DESC' },
-                    { label: 'Last login (Oldest)', value: 'lastLogin_ASC' },
+                    { label: 'Last login (From newest)', value: 'lastLogin_DESC' },
+                    { label: 'Last login (From oldest)', value: 'lastLogin_ASC' },
                   ]}
                   size="large"
-                  style={{ width: 175, minWidth: 150 }}
+                  style={{ width: 200, minWidth: 150 }}
                   value={selectedSort}
                   onChange={value => setSelectedSort(value)}
                 />
