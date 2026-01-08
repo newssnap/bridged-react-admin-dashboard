@@ -1,6 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { notification } from 'antd';
-import { useGetUserAdminPaginationMutation } from '../../../services/api';
+import {
+  useGetUserAdminPaginationMutation,
+  useActivateUserMutation,
+  useDeactivateUserMutation,
+} from '../../../services/api';
 
 const PAGE_SIZE = 10;
 
@@ -10,6 +14,46 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
 
   const [_GET_USERS, { data: response, isLoading, isError, error }] =
     useGetUserAdminPaginationMutation();
+
+  const [_ACTIVATE_USER, { isLoading: isActivatingUser, error: activateError }] =
+    useActivateUserMutation();
+
+  const [_DEACTIVATE_USER, { isLoading: isDeactivatingUser, error: deactivateError }] =
+    useDeactivateUserMutation();
+
+  const handleUpdateUserStatus = async (userId, status) => {
+    if (status === 'activate') {
+      const response = await _ACTIVATE_USER(userId).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'User activated successfully',
+          placement: 'bottomRight',
+          showProgress: true,
+        });
+      }
+    } else {
+      const response = await _DEACTIVATE_USER(userId).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'User deactivated successfully',
+          placement: 'bottomRight',
+          showProgress: true,
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (deactivateError || activateError) {
+      notification.error({
+        message:
+          deactivateError?.data?.errorObject?.userErrorText ||
+          activateError?.data?.errorObject?.userErrorText,
+        placement: 'bottomRight',
+        showProgress: true,
+      });
+    }
+  }, [deactivateError, activateError]);
 
   useEffect(() => {
     _GET_USERS({
@@ -63,6 +107,8 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
     limit,
     handlePageChange,
     isLoading,
+    handleUpdateUserStatus,
+    isStatusLoading: isActivatingUser || isDeactivatingUser,
   };
 };
 

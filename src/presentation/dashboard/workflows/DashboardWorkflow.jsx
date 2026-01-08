@@ -20,8 +20,10 @@ import {
   Spin,
   Badge,
   Tooltip,
+  Popconfirm,
+  Dropdown,
 } from 'antd';
-import { UserOutlined, PlusOutlined, LoadingOutlined } from '@ant-design/icons';
+import { UserOutlined, PlusOutlined, LoadingOutlined, MoreOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Icon from '../../../utils/components/Icon';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
@@ -63,16 +65,24 @@ function DashboardWorkflow() {
   } = useDebouncedInput('');
 
   const [selectedCompanyId, setSelectedCompanyId] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('active');
   const [selectedSort, setSelectedSort] = useState('lastLogin_DESC');
-  const { users, total, page, limit, handlePageChange, isLoading } = useUsersTableHandler(
-    debouncedSearchText,
-    selectedCompanyId,
-    selectedStatus,
-    selectedSort
-  );
+  const {
+    users,
+    total,
+    page,
+    limit,
+    handlePageChange,
+    isLoading,
+    isStatusLoading,
+    handleUpdateUserStatus,
+  } = useUsersTableHandler(debouncedSearchText, selectedCompanyId, selectedStatus, selectedSort);
 
-  const { data: companies, isLoading: isLoadingCompanies } = useGetCompaniesQuery({
+  const {
+    data: companies,
+    isLoading: isLoadingCompanies,
+    refetch: refetchCompanies,
+  } = useGetCompaniesQuery({
     page: 1,
     limit: 100,
     search: debouncedCompanySearchText || '',
@@ -95,6 +105,9 @@ function DashboardWorkflow() {
   const [form] = Form.useForm();
   const [reportForm] = Form.useForm();
   const [agentsForm] = Form.useForm();
+
+  const hasCompanies = Array.isArray(companies?.data?.data) && companies.data.data.length > 0;
+
   const {
     userDomains,
     handleGenerateUserToken,
@@ -104,6 +117,7 @@ function DashboardWorkflow() {
     reportGenerateLoading,
     generateTokenID,
   } = useReportHandler();
+
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
 
   // Agent management hook
@@ -331,14 +345,45 @@ function DashboardWorkflow() {
     }
   };
 
-  const openCreateDrawer = () =>
-    dispatch(setCompaniesDrawerState({ open: true, mode: 'create', record: null }));
+  const openCreateDrawer = (companyName = null) =>
+    dispatch(
+      setCompaniesDrawerState({ open: true, mode: 'create', record: { name: companyName } })
+    );
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+
+  const handleCompanyCreated = async createdCompany => {
+    if (createdCompany) {
+      // Get the company ID from the response
+      // The response structure may vary, so we'll check multiple possible fields
+      const companyId =
+        createdCompany?.id ||
+        createdCompany?.data?.id ||
+        createdCompany?.data?.data?.id ||
+        createdCompany?._id;
+
+      if (companyId) {
+        // Refetch companies to ensure the new company appears in the list
+        await refetchCompanies();
+
+        // Small delay to ensure the select options are updated
+        setTimeout(() => {
+          // If the "Add User" drawer is open, set the company in the form
+          if (isDrawerOpen) {
+            form.setFieldsValue({ company: companyId });
+          }
+
+          // Set the selected company in the filter select
+          setSelectedCompanyId(companyId);
+        }, 100);
+      }
+    }
+  };
 
   const columns = [
     {
       title: 'Avatar',
       key: 'user',
-      width: '70px',
+      width: '50px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
@@ -415,7 +460,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '180px',
+      width: '50px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -424,82 +469,153 @@ function DashboardWorkflow() {
           borderRight: '1px solid #f0f0f0',
         },
       }),
-      render: (_, record) => (
-        <Space>
-          <Tooltip title={'Export Report'}>
+      render: (_, record) => {
+        const menuItems = [
+          {
+            key: 'export',
+            label: (
+              <Space align="center">
+                {isGeneratingToken && generateTokenID === record._id ? (
+                  <LoadingOutlined />
+                ) : (
+                  <Icon name="Export" style={{ marginBottom: '-3px' }} />
+                )}
+                <span>Export Report</span>
+              </Space>
+            ),
+            disabled: isGeneratingTokenForLogin,
+            onClick: () => {
+              handleExportReportClick(record);
+            },
+          },
+          {
+            key: 'tasklist',
+            label: (
+              <Space>
+                <Icon name="UserCheck" style={{ marginBottom: '-3px' }} />
+                <span>View User Tasklist</span>
+              </Space>
+            ),
+            onClick: () => {
+              navigate(`/userChecklist/${record._id}`);
+            },
+          },
+          {
+            key: 'agents',
+            label: (
+              <Space>
+                <Icon name="SettingOutlined" style={{ marginBottom: '-3px' }} />
+                <span>Agents Management</span>
+              </Space>
+            ),
+            onClick: () => handleOpenAgentsDrawerWrapper(record),
+          },
+          {
+            key: 'portal',
+            label: (
+              <Space>
+                {isGeneratingTokenForLogin &&
+                generateTokenIDLogin &&
+                tokenType === 'portal' &&
+                generateTokenIDLogin === record._id ? (
+                  <LoadingOutlined />
+                ) : (
+                  <Icon name="ComputerOutlined" style={{ marginBottom: '-3px' }} />
+                )}
+                <span>Login to Portal</span>
+              </Space>
+            ),
+            onClick: () => {
+              handleMenuClick('portal', record);
+            },
+          },
+          {
+            key: 'plugin',
+            label: (
+              <Space>
+                {isGeneratingTokenForLogin &&
+                generateTokenIDLogin &&
+                tokenType === 'plugin' &&
+                generateTokenIDLogin === record._id ? (
+                  <LoadingOutlined />
+                ) : (
+                  <ChromeOutlined style={{ fontSize: '15px' }} />
+                )}
+                <span>Login to Plugin</span>
+              </Space>
+            ),
+            onClick: () => {
+              handleMenuClick('plugin', record);
+            },
+          },
+          {
+            type: 'divider',
+          },
+          {
+            key: record?.status === 'inactive' ? 'activate' : 'deactivate',
+            label: (
+              <Popconfirm
+                title={
+                  record?.status === 'inactive'
+                    ? 'Are you sure you want to activate this user?'
+                    : 'Are you sure you want to deactivate this user?'
+                }
+                onConfirm={() => {
+                  handleUpdateUserStatus(
+                    record._id,
+                    record?.status === 'inactive' ? 'activate' : 'deactivate'
+                  );
+                  setOpenDropdownId(null);
+                }}
+                onCancel={e => {
+                  e?.stopPropagation();
+                }}
+                placement="topLeft"
+                onPopupClick={e => e.stopPropagation()}
+              >
+                <Space onClick={e => e.stopPropagation()}>
+                  {record?.status === 'inactive' ? (
+                    <>
+                      {getIcon('PlayOutlined')}
+                      <span>Activate User</span>
+                    </>
+                  ) : (
+                    <>
+                      {getIcon('PauseOutlined')}
+                      <span>Deactivate User</span>
+                    </>
+                  )}
+                </Space>
+              </Popconfirm>
+            ),
+          },
+        ];
+
+        return (
+          <Dropdown
+            open={openDropdownId === record._id}
+            onOpenChange={open => {
+              if (!open) {
+                setOpenDropdownId(null);
+              }
+            }}
+            menu={{ items: menuItems }}
+            trigger={['click']}
+            arrow
+            placement="bottomRight"
+          >
             <Button
               type="text"
               shape="circle"
-              disabled={isGeneratingTokenForLogin}
-              onClick={() => {
-                handleExportReportClick(record);
+              icon={<MoreOutlined />}
+              onClick={e => {
+                e.stopPropagation();
+                setOpenDropdownId(record._id);
               }}
-            >
-              {isGeneratingToken && generateTokenID === record._id ? (
-                <LoadingOutlined />
-              ) : (
-                getIcon('Export')
-              )}
-            </Button>
-          </Tooltip>
-          <Tooltip title={'View User Tasklist'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => {
-                navigate(`/userChecklist/${record._id}`);
-              }}
-            >
-              {getIcon('UserCheck')}
-            </Button>
-          </Tooltip>
-          <Tooltip title={'Agents Management'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => handleOpenAgentsDrawerWrapper(record)}
-            >
-              {getIcon('SettingOutlined')}
-            </Button>
-          </Tooltip>
-          <Tooltip title={'Login to Portal'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => {
-                handleMenuClick('portal', record);
-              }}
-            >
-              {isGeneratingTokenForLogin &&
-              generateTokenIDLogin &&
-              tokenType === 'portal' &&
-              generateTokenIDLogin === record._id ? (
-                <LoadingOutlined />
-              ) : (
-                getIcon('ComputerOutlined')
-              )}
-            </Button>
-          </Tooltip>
-          <Tooltip title={'Login to Plugin'}>
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => {
-                handleMenuClick('plugin', record);
-              }}
-            >
-              {isGeneratingTokenForLogin &&
-              generateTokenIDLogin &&
-              tokenType === 'plugin' &&
-              generateTokenIDLogin === record._id ? (
-                <LoadingOutlined />
-              ) : (
-                <ChromeOutlined style={{ fontSize: '16px' }} />
-              )}
-            </Button>
-          </Tooltip>
-        </Space>
-      ),
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -576,9 +692,9 @@ function DashboardWorkflow() {
 
                 <Select
                   options={[
-                    { label: 'All', value: 'all' },
-                    { label: 'Active', value: 'active' },
-                    { label: 'Inactive', value: 'inactive' },
+                    { label: 'All users', value: 'all' },
+                    { label: 'Active users', value: 'active' },
+                    { label: 'Inactive users', value: 'inactive' },
                   ]}
                   size="large"
                   style={{ width: 130, minWidth: 110 }}
@@ -675,20 +791,18 @@ function DashboardWorkflow() {
           >
             <Select
               ref={companySelectRef}
-              options={[
-                { label: 'All', value: 'all' },
-                ...(companies?.data?.data?.map(company => ({
+              options={
+                companies?.data?.data?.map(company => ({
                   label: company.name,
                   value: company.id,
-                })) || []),
-              ]}
+                })) || []
+              }
               loading={isLoadingCompanies}
               showSearch
               size="large"
               placeholder="Select Company"
               filterOption={false}
               onChange={() => {
-                // Remove focus after selection
                 setTimeout(() => {
                   companySelectRef.current?.blur();
                 }, 0);
@@ -697,6 +811,44 @@ function DashboardWorkflow() {
               onBlur={() => {
                 companySearchInputHandler('');
               }}
+              notFoundContent={
+                !isLoadingCompanies && !hasCompanies ? (
+                  <div
+                    style={{
+                      borderRadius: 8,
+                      padding: 24,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: 120,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 14,
+                        marginBottom: 20,
+                        textAlign: 'center',
+                      }}
+                    >
+                      No companies found.
+                    </div>
+
+                    <Button
+                      type="primary"
+                      size="middle"
+                      style={{ minWidth: 140 }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        openCreateDrawer(companySearchText);
+                      }}
+                    >
+                      Create "{companySearchText}"
+                    </Button>
+                  </div>
+                ) : null
+              }
             />
           </Form.Item>
 
@@ -1051,7 +1203,7 @@ function DashboardWorkflow() {
       </Drawer>
 
       {/* add company drawer */}
-      <CompaniesWorkflow isUsersDashboard={true} />
+      <CompaniesWorkflow isUsersDashboard={true} onCompanyCreated={handleCompanyCreated} />
     </>
   );
 }

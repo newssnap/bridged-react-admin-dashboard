@@ -94,6 +94,7 @@ export const bridgedApi = createApi({
           limit: limit || 10,
         },
       }),
+      providesTags: ['users'],
     }),
 
     addUser: builder.mutation({
@@ -368,6 +369,22 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: (result, error, { userId }) => [{ type: 'userConfiguration', id: userId }],
     }),
+
+    activateUser: builder.mutation({
+      query: id => ({
+        url: `user/admin/activate?userId=${id}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['users'],
+    }),
+
+    deactivateUser: builder.mutation({
+      query: id => ({
+        url: `user/admin/deactivate?userId=${id}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['users'],
+    }),
   }),
 });
 
@@ -410,4 +427,6 @@ export const {
   useDeleteCompanyMutation,
   useSetCompanyUsersMutation,
   useGetUserAdminPaginationMutation,
+  useActivateUserMutation,
+  useDeactivateUserMutation,
 } = bridgedApi;

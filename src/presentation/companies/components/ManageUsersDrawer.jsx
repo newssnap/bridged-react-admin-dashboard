@@ -7,6 +7,7 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId }) => {
     isUsersLoading,
     columns,
     dataSource,
+    userIds,
     rowSelection,
     handleSubmit,
     isSubmitting,
@@ -50,7 +51,7 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId }) => {
         </Space>
       }
     >
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={[16, 16]} justify="space-between" align="middle">
           <Col {...{ xs: 24, sm: 24, md: 12, lg: 16 }}>
             <Space size="middle" style={{ width: '100%' }}>
