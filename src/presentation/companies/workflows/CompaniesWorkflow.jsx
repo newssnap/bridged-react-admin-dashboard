@@ -6,7 +6,7 @@ import CompanyFormDrawer from '../components/CompanyFormDrawer';
 import useCompaniesHandler from '../controllers/useCompaniesHandler';
 import ManageUsersDrawer from '../components/ManageUsersDrawer';
 
-const CompaniesWorkflow = ({ isUsersDashboard = false, onCompanyCreated }) => {
+const CompaniesWorkflow = ({ isUsersDashboard = false }) => {
   const [searchValue, setSearchValue] = useState('');
 
   const {
@@ -45,12 +45,7 @@ const CompaniesWorkflow = ({ isUsersDashboard = false, onCompanyCreated }) => {
         mode={drawerState?.mode}
         initialValues={drawerState?.record}
         onClose={closeDrawer}
-        onSubmit={async values => {
-          const createdCompany = await handleSubmitCompany(values);
-          if (createdCompany && onCompanyCreated) {
-            onCompanyCreated(createdCompany);
-          }
-        }}
+        onSubmit={handleSubmitCompany}
         confirmLoading={submitting}
       />
 

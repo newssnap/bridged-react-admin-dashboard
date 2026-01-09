@@ -22,8 +22,15 @@ import {
   Tooltip,
   Popconfirm,
   Dropdown,
+  Modal,
 } from 'antd';
-import { UserOutlined, PlusOutlined, LoadingOutlined, MoreOutlined } from '@ant-design/icons';
+import {
+  UserOutlined,
+  PlusOutlined,
+  LoadingOutlined,
+  MoreOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Icon from '../../../utils/components/Icon';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
@@ -42,7 +49,7 @@ import {
   ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
 } from '../../../constants/agents';
-import { useGetCompaniesQuery } from '../../../services/api';
+import { useCreateCompanyMutation, useGetCompaniesQuery } from '../../../services/api';
 import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
 import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
 import { useDispatch } from 'react-redux';
@@ -63,6 +70,8 @@ function DashboardWorkflow() {
     debouncedValue: debouncedCompanySearchText,
     inputHandler: companySearchInputHandler,
   } = useDebouncedInput('');
+
+  const [_CREATE_COMPANY, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
   const [selectedCompanyId, setSelectedCompanyId] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('active');
@@ -351,6 +360,29 @@ function DashboardWorkflow() {
     );
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
+  const createCompany = async values => {
+    try {
+      const result = await _CREATE_COMPANY(values.name).unwrap();
+
+      notification.success({
+        message: 'Company created successfully',
+        placement: 'bottomRight',
+        showProgress: true,
+      });
+
+      // Call handleCompanyCreated to select the newly created company
+      await handleCompanyCreated(result);
+
+      return result;
+    } catch (error) {
+      notification.error({
+        message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
+        placement: 'bottomRight',
+        showProgress: true,
+      });
+    }
+  };
+
   const handleCompanyCreated = async createdCompany => {
     if (createdCompany) {
       // Get the company ID from the response
@@ -368,15 +400,37 @@ function DashboardWorkflow() {
         // Small delay to ensure the select options are updated
         setTimeout(() => {
           // If the "Add User" drawer is open, set the company in the form
+          // Use setFieldValue to update only the company field in the form, not the filter select
           if (isDrawerOpen) {
-            form.setFieldsValue({ company: companyId });
+            form.setFieldValue('company', companyId);
           }
-
-          // Set the selected company in the filter select
-          setSelectedCompanyId(companyId);
         }, 100);
       }
     }
+  };
+
+  const showStatusConfirmModal = record => {
+    Modal.confirm({
+      title: record?.status === 'inactive' ? 'Activate user?' : 'Deactivate user?',
+      content:
+        record?.status === 'inactive'
+          ? 'Are you sure you want to activate this user?'
+          : 'Are you sure you want to deactivate this user?',
+      okText: record?.status === 'inactive' ? 'Activate' : 'Deactivate',
+      okButtonProps: {
+        danger: record?.status !== 'inactive',
+      },
+      cancelText: 'Cancel',
+      centered: true,
+      type: 'warning',
+      onOk: () => {
+        handleUpdateUserStatus(
+          record._id,
+          record?.status === 'inactive' ? 'activate' : 'deactivate'
+        );
+        setOpenDropdownId(null);
+      },
+    });
   };
 
   const columns = [
@@ -554,39 +608,24 @@ function DashboardWorkflow() {
           {
             key: record?.status === 'inactive' ? 'activate' : 'deactivate',
             label: (
-              <Popconfirm
-                title={
-                  record?.status === 'inactive'
-                    ? 'Are you sure you want to activate this user?'
-                    : 'Are you sure you want to deactivate this user?'
-                }
-                onConfirm={() => {
-                  handleUpdateUserStatus(
-                    record._id,
-                    record?.status === 'inactive' ? 'activate' : 'deactivate'
-                  );
-                  setOpenDropdownId(null);
+              <Space
+                onClick={e => {
+                  e.stopPropagation();
+                  showStatusConfirmModal(record);
                 }}
-                onCancel={e => {
-                  e?.stopPropagation();
-                }}
-                placement="topLeft"
-                onPopupClick={e => e.stopPropagation()}
               >
-                <Space onClick={e => e.stopPropagation()}>
-                  {record?.status === 'inactive' ? (
-                    <>
-                      {getIcon('PlayOutlined')}
-                      <span>Activate User</span>
-                    </>
-                  ) : (
-                    <>
-                      {getIcon('PauseOutlined')}
-                      <span>Deactivate User</span>
-                    </>
-                  )}
-                </Space>
-              </Popconfirm>
+                {record?.status === 'inactive' ? (
+                  <>
+                    {getIcon('PlayOutlined')}
+                    <span>Activate User</span>
+                  </>
+                ) : (
+                  <>
+                    {getIcon('PauseOutlined')}
+                    <span>Deactivate User</span>
+                  </>
+                )}
+              </Space>
             ),
           },
         ];
@@ -840,9 +879,9 @@ function DashboardWorkflow() {
                       size="middle"
                       style={{ minWidth: 140 }}
                       onClick={e => {
-                        e.stopPropagation();
-                        openCreateDrawer(companySearchText);
+                        createCompany({ name: companySearchText });
                       }}
+                      loading={isCreatingCompany}
                     >
                       Create "{companySearchText}"
                     </Button>
@@ -1203,7 +1242,7 @@ function DashboardWorkflow() {
       </Drawer>
 
       {/* add company drawer */}
-      <CompaniesWorkflow isUsersDashboard={true} onCompanyCreated={handleCompanyCreated} />
+      <CompaniesWorkflow isUsersDashboard={true} />
     </>
   );
 }

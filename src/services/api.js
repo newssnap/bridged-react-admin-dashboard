@@ -186,6 +186,7 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
     getDefaultChecklist: builder.query({
       query: () => ({
         url: '/checklists/Admin/DefaultChecklists',
