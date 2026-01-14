@@ -30,7 +30,7 @@ const useCompaniesHandler = () => {
 
   const createCompany = async values => {
     try {
-      await _CREATE_COMPANY(values.name).unwrap();
+      const result = await _CREATE_COMPANY(values.name).unwrap();
 
       notification.success({
         message: 'Company created successfully',
@@ -39,12 +39,14 @@ const useCompaniesHandler = () => {
       });
 
       closeDrawer();
+      return result;
     } catch (error) {
       notification.error({
         message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
         placement: 'bottomRight',
         showProgress: true,
       });
+      throw error;
     }
   };
 
@@ -89,8 +91,10 @@ const useCompaniesHandler = () => {
   const handleSubmitCompany = async values => {
     if (drawerState.mode === 'edit' && drawerState.record) {
       await updateCompany({ ...values, id: drawerState.record.id });
+      return null;
     } else {
-      await createCompany(values);
+      const createdCompany = await createCompany(values);
+      return createdCompany;
     }
   };
 
