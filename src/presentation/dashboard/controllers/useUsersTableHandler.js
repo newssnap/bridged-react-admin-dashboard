@@ -117,11 +117,15 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
   };
 
   return {
+    // table data
     users,
     total,
     page,
     limit,
+    // table controls
     handlePageChange,
+    refetchUsers,
+    // loading and actions
     isLoading,
     handleUpdateUserStatus,
     isStatusLoading: isActivatingUser || isDeactivatingUser,

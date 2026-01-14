@@ -82,6 +82,7 @@ function DashboardWorkflow() {
     page,
     limit,
     handlePageChange,
+    refetchUsers,
     isLoading,
     isStatusLoading,
     handleUpdateUserStatus,
@@ -287,6 +288,8 @@ function DashboardWorkflow() {
     };
 
     await handleAddUser(userDataWithConfig, handleCloseDrawer);
+    // Refresh users list after adding a new user (same pattern as activate/deactivate)
+    refetchUsers();
   };
 
   const handleCloseDrawer = () => {
