@@ -1,6 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { notification } from 'antd';
-import { useGetUserAdminPaginationMutation } from '../../../services/api';
+import {
+  useGetUserAdminPaginationMutation,
+  useActivateUserMutation,
+  useDeactivateUserMutation,
+} from '../../../services/api';
 
 const PAGE_SIZE = 10;
 
@@ -10,6 +14,62 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
 
   const [_GET_USERS, { data: response, isLoading, isError, error }] =
     useGetUserAdminPaginationMutation();
+
+  const [_ACTIVATE_USER, { isLoading: isActivatingUser, error: activateError }] =
+    useActivateUserMutation();
+
+  const [_DEACTIVATE_USER, { isLoading: isDeactivatingUser, error: deactivateError }] =
+    useDeactivateUserMutation();
+
+  // Refetch users function
+  const refetchUsers = useCallback(() => {
+    _GET_USERS({
+      companyId: companyId === 'all' ? undefined : companyId,
+      status: status === 'all' ? undefined : status,
+      sort: sort === 'lastLogin_ASC' ? 'lastLogin_ASC' : 'lastLogin_DESC',
+      search: searchValue || '',
+      pageNumber: page,
+      limit,
+    });
+  }, [_GET_USERS, companyId, status, sort, searchValue, page, limit]);
+
+  const handleUpdateUserStatus = async (userId, status) => {
+    if (status === 'activate') {
+      const response = await _ACTIVATE_USER(userId).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'User activated successfully',
+          placement: 'bottomRight',
+          showProgress: true,
+        });
+        // Refetch users to update the status in UI
+        refetchUsers();
+      }
+    } else {
+      const response = await _DEACTIVATE_USER(userId).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'User deactivated successfully',
+          placement: 'bottomRight',
+          showProgress: true,
+        });
+        // Refetch users to update the status in UI
+        refetchUsers();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (deactivateError || activateError) {
+      notification.error({
+        message:
+          deactivateError?.data?.errorObject?.userErrorText ||
+          activateError?.data?.errorObject?.userErrorText,
+        placement: 'bottomRight',
+        showProgress: true,
+      });
+    }
+  }, [deactivateError, activateError]);
 
   useEffect(() => {
     _GET_USERS({
@@ -57,12 +117,18 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
   };
 
   return {
+    // table data
     users,
     total,
     page,
     limit,
+    // table controls
     handlePageChange,
+    refetchUsers,
+    // loading and actions
     isLoading,
+    handleUpdateUserStatus,
+    isStatusLoading: isActivatingUser || isDeactivatingUser,
   };
 };
 
