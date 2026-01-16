@@ -440,7 +440,7 @@ function DashboardWorkflow() {
     {
       title: 'Avatar',
       key: 'user',
-      width: '50px',
+      width: '75px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
@@ -517,7 +517,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '50px',
+      width: '75px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
