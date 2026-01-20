@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const useDebouncedInput = defaultValue => {
   // State for the current input value
@@ -17,9 +17,9 @@ const useDebouncedInput = defaultValue => {
   }, [inputQuery]);
 
   // Handler function to update the inputQuery
-  const inputHandler = e => {
+  const inputHandler = useCallback(e => {
     setInputQuery(e);
-  };
+  }, []);
 
   return {
     inputQuery,
