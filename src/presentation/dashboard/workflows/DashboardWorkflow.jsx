@@ -49,7 +49,12 @@ import {
   ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
 } from '../../../constants/agents';
-import { useCreateCompanyMutation, useGetCompaniesQuery } from '../../../services/api';
+import {
+  useCreateCompanyMutation,
+  useGetCompaniesQuery,
+  useLazyGetUserForUpdateByAdminQuery,
+  useUpdateUserByAdminMutation,
+} from '../../../services/api';
 import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
 import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
 import { useDispatch } from 'react-redux';
@@ -108,6 +113,8 @@ function DashboardWorkflow() {
   } = useDashboardHandler();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [userDrawerMode, setUserDrawerMode] = useState('create'); // 'create' | 'edit'
+  const [editingUserId, setEditingUserId] = useState(null);
   const selectRef = useRef(null);
   const companySelectRef = useRef(null);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
@@ -115,6 +122,9 @@ function DashboardWorkflow() {
   const [form] = Form.useForm();
   const [reportForm] = Form.useForm();
   const [agentsForm] = Form.useForm();
+  const [_GET_USER_FOR_UPDATE, { isFetching: isFetchingUserForUpdate }] =
+    useLazyGetUserForUpdateByAdminQuery();
+  const [_UPDATE_USER, { isLoading: isUpdatingUser }] = useUpdateUserByAdminMutation();
 
   const hasCompanies = Array.isArray(companies?.data?.data) && companies.data.data.length > 0;
 
@@ -292,9 +302,88 @@ function DashboardWorkflow() {
     refetchUsers();
   };
 
+  const handleUpdateUserSubmit = async () => {
+    if (!editingUserId) return;
+    const values = await form.validateFields();
+
+    try {
+      const payload = {
+        userId: editingUserId,
+        companyId: values.company,
+        userConfigurations: {},
+        ...(values.password ? { password: values.password } : {}),
+      };
+
+      const response = await _UPDATE_USER(payload).unwrap();
+
+      if (response?.success) {
+        notification.success({
+          message: 'User updated successfully',
+          placement: 'bottomRight',
+        });
+        handleCloseDrawer();
+        refetchUsers();
+      } else {
+        notification.error({
+          message: response?.errorObject?.userErrorText || 'Failed to update user',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: error?.data?.errorObject?.userErrorText || 'Failed to update user',
+        placement: 'bottomRight',
+      });
+    }
+  };
+
+  const handleOpenCreateUserDrawer = () => {
+    setUserDrawerMode('create');
+    setEditingUserId(null);
+    form.resetFields();
+    setIsDrawerOpen(true);
+  };
+
+  const handleOpenEditUserDrawer = async record => {
+    setUserDrawerMode('edit');
+    setEditingUserId(record?._id);
+    setIsDrawerOpen(true);
+
+    // Populate immediately with what we have, then overwrite after fetch.
+    form.setFieldsValue({
+      username: record?.email || '',
+      password: '',
+      company: record?.company?._id || record?.company?.id || undefined,
+    });
+
+    try {
+      const response = await _GET_USER_FOR_UPDATE(record?._id).unwrap();
+      if (response?.success) {
+        const user = response?.data;
+        form.setFieldsValue({
+          username: user?.email || record?.email || '',
+          password: '',
+          company: user?.company?._id || user?.company?.id || record?.company?._id,
+        });
+      } else {
+        notification.error({
+          message: response?.errorObject?.userErrorText || 'Failed to fetch user for update',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: error?.data?.errorObject?.userErrorText || 'Failed to fetch user for update',
+        placement: 'bottomRight',
+      });
+    }
+  };
+
   const handleCloseDrawer = () => {
     form.resetFields();
     setIsDrawerOpen(false);
+    setUserDrawerMode('create');
+    setEditingUserId(null);
     // Reset new user agent configuration states using the hook
     resetNewUserAgentStates();
   };
@@ -529,6 +618,22 @@ function DashboardWorkflow() {
       render: (_, record) => {
         const menuItems = [
           {
+            key: 'edit',
+            label: (
+              <Space>
+                <Icon name="EditOutlined" style={{ marginBottom: '-3px' }} />
+                <span>Edit User</span>
+              </Space>
+            ),
+            onClick: async () => {
+              setOpenDropdownId(null);
+              await handleOpenEditUserDrawer(record);
+            },
+          },
+          {
+            type: 'divider',
+          },
+          {
             key: 'export',
             label: (
               <Space align="center">
@@ -619,12 +724,12 @@ function DashboardWorkflow() {
               >
                 {record?.status === 'inactive' ? (
                   <>
-                    {getIcon('PlayOutlined')}
+                    <Icon name="PlayOutlined" style={{ marginBottom: '-2px' }} />
                     <span>Activate User</span>
                   </>
                 ) : (
                   <>
-                    {getIcon('PauseOutlined')}
+                    <Icon name="PauseOutlined" style={{ marginBottom: '-2px' }} />
                     <span>Deactivate User</span>
                   </>
                 )}
@@ -677,7 +782,7 @@ function DashboardWorkflow() {
                 <Button
                   size="large"
                   type="primary"
-                  onClick={() => setIsDrawerOpen(true)}
+                  onClick={handleOpenCreateUserDrawer}
                   icon={<PlusOutlined />}
                 >
                   Add User
@@ -788,7 +893,7 @@ function DashboardWorkflow() {
       </Row>
 
       <Drawer
-        title="Add User"
+        title={userDrawerMode === 'edit' ? 'Edit User' : 'Add User'}
         width={600}
         onClose={handleCloseDrawer}
         open={isDrawerOpen}
@@ -802,10 +907,10 @@ function DashboardWorkflow() {
               <Button
                 type="primary"
                 size="large"
-                onClick={handleAddUserSubmit}
-                loading={isAddingUser}
+                onClick={userDrawerMode === 'edit' ? handleUpdateUserSubmit : handleAddUserSubmit}
+                loading={isAddingUser || isUpdatingUser}
               >
-                Add User
+                {userDrawerMode === 'edit' ? 'Update User' : 'Add User'}
               </Button>
             </Space>
           </div>
@@ -817,12 +922,16 @@ function DashboardWorkflow() {
             label="Username"
             rules={[{ required: true, message: 'Please input the username!' }]}
           >
-            <Input size="large" />
+            <Input size="large" disabled={userDrawerMode === 'edit'} />
           </Form.Item>
           <Form.Item
             name="password"
-            label="Password"
-            rules={[{ required: true, message: 'Please input the password!' }]}
+            label={userDrawerMode === 'edit' ? 'New Password (optional)' : 'Password'}
+            rules={
+              userDrawerMode === 'edit'
+                ? []
+                : [{ required: true, message: 'Please input the password!' }]
+            }
           >
             <Input.Password size="large" />
           </Form.Item>
@@ -840,6 +949,7 @@ function DashboardWorkflow() {
                 })) || []
               }
               loading={isLoadingCompanies}
+              disabled={isFetchingUserForUpdate}
               showSearch
               size="large"
               placeholder="Select Company"

@@ -150,6 +150,21 @@ const useManageUsersDrawerHandler = companyId => {
     }
   }, [companyId]);
 
+  // Reset all local state when drawer closes (companyId cleared) or company changes
+  useEffect(() => {
+    if (!companyId) {
+      hasInitializedSelection.current = false;
+      previousCompanyId.current = null;
+      userHasManuallyChangedSelection.current = false;
+
+      setUsers([]);
+      setUserIds([]);
+      setFilters({ status: 'all', sort: 'lastLogin_DESC' });
+      setPagination({ pageNumber: 1, limit: 10, total: 0 });
+      onSearchChange('');
+    }
+  }, [companyId, onSearchChange]);
+
   // Preselect users that match the companyId
   // This runs on initial load and when navigating pages during initialization
   // Stops auto-preselecting after user manually changes selections

@@ -106,6 +106,23 @@ export const bridgedApi = createApi({
       invalidatesTags: ['users'],
     }),
 
+    getUserForUpdateByAdmin: builder.query({
+      query: userId => ({
+        url: `/User/Admin/GetUserForUpdate?userId=${userId}`,
+        method: 'GET',
+      }),
+      providesTags: (result, error, userId) => [{ type: 'users', id: userId }],
+    }),
+
+    updateUserByAdmin: builder.mutation({
+      query: data => ({
+        url: '/User/Admin/UpdateByAdmin',
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['users'],
+    }),
+
     generateUserToken: builder.mutation({
       query: data => ({
         url: '/User/Admin/GenerateTokenForUserByAdmin',
@@ -395,6 +412,8 @@ export const {
   useUserInfoQuery,
   useFindAllUsersQuery,
   useAddUserMutation,
+  useLazyGetUserForUpdateByAdminQuery,
+  useUpdateUserByAdminMutation,
   useGenerateUserTokenMutation,
   useGetAllUserDomainsMutation,
   useGetCustomerReportMutation,

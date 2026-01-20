@@ -31,7 +31,8 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId }) => {
     <Drawer
       title="Manage Users"
       open={open}
-      onClose={() => setManageUsersDrawer({ open: false, companyId: companyId })}
+      destroyOnClose
+      onClose={() => setManageUsersDrawer({ open: false, companyId: null })}
       width={900}
       footer={
         <Space
