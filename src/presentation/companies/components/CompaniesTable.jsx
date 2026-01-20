@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Popconfirm, Space, Table, Tooltip, Typography } from 'antd';
+import { Button, Dropdown, Modal, Table, Tooltip, Typography } from 'antd';
+import { MoreOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Icon from '../../../utils/components/Icon';
 import useCompaniesTableHandler from '../controllers/useCompaniesTableHandler';
@@ -34,45 +35,66 @@ const CompaniesTable = ({ onEdit, onDelete, searchValue, setManageUsersDrawer })
     {
       title: 'Actions',
       key: 'actions',
-      width: 160,
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Edit company name">
-            <Button
-              type="text"
-              shape="circle"
-              icon={<Icon name="EditOutlined" />}
-              onClick={() => onEdit(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Delete company"
-            description={`Are you sure you want to delete ${record.name}?`}
-            onConfirm={() => onDelete(record)}
-            okButtonProps={{ danger: true }}
-            okText="Yes"
-            cancelText="No"
-            placement="topRight"
+      width: '50px',
+      align: 'center',
+      render: (_, record) => {
+        const items = [
+          {
+            key: 'edit',
+            label: <span>Edit company name</span>,
+            icon: <Icon name="EditOutlined" />,
+          },
+          {
+            key: 'manageUsers',
+            label: <span>Manage users</span>,
+            icon: (
+              <Icon
+                name="UsersLeft"
+                style={{ marginBottom: '-3px', width: '17px', height: '17px' }}
+              />
+            ),
+          },
+          {
+            key: 'delete',
+            label: <span>Delete company</span>,
+            icon: <Icon name="DeleteOutlined" />,
+          },
+        ];
+
+        const handleMenuClick = ({ key }) => {
+          if (key === 'edit') {
+            onEdit(record);
+          }
+          if (key === 'manageUsers') {
+            setManageUsersDrawer({ open: true, companyId: record?.id });
+          }
+          if (key === 'delete') {
+            Modal.confirm({
+              title: 'Delete company',
+              content: `Are you sure you want to delete ${record.name}?`,
+              okText: 'Yes',
+              centered: true,
+              cancelText: 'No',
+              okButtonProps: { danger: true },
+              onOk: () => onDelete(record),
+            });
+          }
+        };
+
+        return (
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items,
+              onClick: handleMenuClick,
+            }}
           >
-            <Tooltip title="Delete company">
-              <Button type="text" shape="circle" icon={<Icon name="DeleteOutlined" />} />
+            <Tooltip title="Actions">
+              <Button type="text" shape="circle" icon={<MoreOutlined />} />
             </Tooltip>
-          </Popconfirm>
-          <Tooltip title="Manage users">
-            <Button
-              type="text"
-              shape="circle"
-              onClick={() => setManageUsersDrawer({ open: true, companyId: record?.id })}
-              icon={
-                <Icon
-                  name="UsersLeft"
-                  style={{ marginBottom: '-3px', width: '18px', height: '18px' }}
-                />
-              }
-            />
-          </Tooltip>
-        </Space>
-      ),
+          </Dropdown>
+        );
+      },
     },
   ];
 

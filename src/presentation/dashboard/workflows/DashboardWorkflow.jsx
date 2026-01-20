@@ -60,7 +60,6 @@ import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
 import { useDispatch } from 'react-redux';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
-const getIcon = name => <Icon name={name} />;
 
 function DashboardWorkflow() {
   const dispatch = useDispatch();
@@ -610,9 +609,6 @@ function DashboardWorkflow() {
               setOpenDropdownId(null);
               await handleOpenEditUserDrawer(record);
             },
-          },
-          {
-            type: 'divider',
           },
           {
             key: 'export',
