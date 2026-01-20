@@ -115,8 +115,8 @@ export const bridgedApi = createApi({
     }),
 
     updateUserByAdmin: builder.mutation({
-      query: data => ({
-        url: '/User/Admin/UpdateByAdmin',
+      query: ({ userId, data }) => ({
+        url: `/User/Admin/UpdateByAdmin?userId=${userId}`,
         method: 'PUT',
         body: data,
       }),
@@ -370,24 +370,6 @@ export const bridgedApi = createApi({
       invalidatesTags: ['companies', 'users'],
     }),
 
-    // User Configuration (Agents Lock/Unlock)
-    getUserConfiguration: builder.query({
-      query: userId => ({
-        url: `/UserConfiguration/Admin?userId=${userId}`,
-        method: 'GET',
-      }),
-      providesTags: (result, error, userId) => [{ type: 'userConfiguration', id: userId }],
-    }),
-
-    updateUserConfiguration: builder.mutation({
-      query: data => ({
-        url: `/UserConfiguration/Admin`,
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: (result, error, { userId }) => [{ type: 'userConfiguration', id: userId }],
-    }),
-
     activateUser: builder.mutation({
       query: id => ({
         url: `user/admin/activate?userId=${id}`,
@@ -437,8 +419,6 @@ export const {
   useUpdateUserChecklistMutation,
   useGetUserChecklistTaskCommentsQuery,
   useAddTaskCommentMutation,
-  useLazyGetUserConfigurationQuery,
-  useUpdateUserConfigurationMutation,
 
   // * Companies related
   useGetCompaniesQuery,
