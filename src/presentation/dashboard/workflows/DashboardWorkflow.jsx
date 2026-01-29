@@ -49,13 +49,17 @@ import {
   ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
 } from '../../../constants/agents';
-import { useCreateCompanyMutation, useGetCompaniesQuery } from '../../../services/api';
+import {
+  useCreateCompanyMutation,
+  useGetCompaniesQuery,
+  useLazyGetUserForUpdateByAdminQuery,
+  useUpdateUserByAdminMutation,
+} from '../../../services/api';
 import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
 import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
 import { useDispatch } from 'react-redux';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
-const getIcon = name => <Icon name={name} />;
 
 function DashboardWorkflow() {
   const dispatch = useDispatch();
@@ -108,13 +112,16 @@ function DashboardWorkflow() {
   } = useDashboardHandler();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [userDrawerMode, setUserDrawerMode] = useState('create'); // 'create' | 'edit'
+  const [editingUserId, setEditingUserId] = useState(null);
   const selectRef = useRef(null);
   const companySelectRef = useRef(null);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
-  const [isAgentsDrawerOpen, setIsAgentsDrawerOpen] = useState(false);
   const [form] = Form.useForm();
   const [reportForm] = Form.useForm();
-  const [agentsForm] = Form.useForm();
+  const [_GET_USER_FOR_UPDATE, { isFetching: isFetchingUserForUpdate }] =
+    useLazyGetUserForUpdateByAdminQuery();
+  const [_UPDATE_USER, { isLoading: isUpdatingUser }] = useUpdateUserByAdminMutation();
 
   const hasCompanies = Array.isArray(companies?.data?.data) && companies.data.data.length > 0;
 
@@ -133,13 +140,15 @@ function DashboardWorkflow() {
   // Agent management hook
   const {
     // Existing user states
-    selectedUserForAgents,
     allowedCampaigns,
     allowedMonetizePack,
     allowedAIAgents,
     setAllowedCampaigns,
     setAllowedMonetizePack,
     setAllowedAIAgents,
+    resetExistingUserAgentStates,
+    initializeExistingUserAgentStates,
+    generateExistingUserConfigurations,
 
     // New user states
     newUserAllowedCampaigns,
@@ -149,10 +158,6 @@ function DashboardWorkflow() {
     setNewUserAllowedMonetizePack,
     setNewUserAllowedAIAgents,
 
-    // Loading states
-    isFetchingUserConfig,
-    isSavingUserConfig,
-
     // Existing user handlers
     handleSelectAllCampaigns,
     handleClearCampaigns,
@@ -160,9 +165,6 @@ function DashboardWorkflow() {
     handleClearMonetizePack,
     handleSelectAllAIAgents,
     handleClearAIAgents,
-    handleOpenAgentsDrawer,
-    handleCloseAgentsDrawer,
-    handleSaveAgentsConfig,
 
     // New user handlers
     handleSelectAllNewUserCampaigns,
@@ -178,23 +180,6 @@ function DashboardWorkflow() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // sync form fields when allowed lists change (pre-check on load)
-    if (isAgentsDrawerOpen && selectedUserForAgents) {
-      agentsForm.setFieldsValue({
-        allowedCampaigns,
-        allowedMonetizePack,
-        allowedAIAgents,
-      });
-    }
-  }, [
-    allowedCampaigns,
-    allowedMonetizePack,
-    allowedAIAgents,
-    isAgentsDrawerOpen,
-    selectedUserForAgents,
-  ]);
-
-  useEffect(() => {
     if (isDrawerOpen) {
       form.setFieldsValue({
         newUserAllowedCampaigns,
@@ -203,6 +188,18 @@ function DashboardWorkflow() {
       });
     }
   }, [newUserAllowedCampaigns, newUserAllowedMonetizePack, newUserAllowedAIAgents, isDrawerOpen]);
+
+  // Keep Edit User agent selections in sync with AntD Form values.
+  // Without this, Form.Item may override Checkbox.Group value with undefined and nothing appears selected.
+  useEffect(() => {
+    if (isDrawerOpen && userDrawerMode === 'edit') {
+      form.setFieldsValue({
+        allowedCampaigns,
+        allowedMonetizePack,
+        allowedAIAgents,
+      });
+    }
+  }, [allowedCampaigns, allowedMonetizePack, allowedAIAgents, isDrawerOpen, userDrawerMode, form]);
 
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
@@ -263,17 +260,6 @@ function DashboardWorkflow() {
     }
   };
 
-  const handleOpenAgentsDrawerWrapper = async record => {
-    await handleOpenAgentsDrawer(record);
-    setIsAgentsDrawerOpen(true);
-  };
-
-  const handleCloseAgentsDrawerWrapper = () => {
-    setIsAgentsDrawerOpen(false);
-    agentsForm.resetFields();
-    handleCloseAgentsDrawer();
-  };
-
   const handleAddUserSubmit = async () => {
     const values = await form.validateFields();
     // Generate user configurations using the hook
@@ -292,11 +278,94 @@ function DashboardWorkflow() {
     refetchUsers();
   };
 
+  const handleUpdateUserSubmit = async () => {
+    if (!editingUserId) return;
+    const values = await form.validateFields();
+
+    try {
+      const data = {
+        companyId: values.company,
+        userConfigurations: generateExistingUserConfigurations(),
+        ...(values.password ? { password: values.password } : {}),
+      };
+
+      const response = await _UPDATE_USER({ userId: editingUserId, data }).unwrap();
+
+      if (response?.success) {
+        notification.success({
+          message: 'User updated successfully',
+          placement: 'bottomRight',
+        });
+        handleCloseDrawer();
+        refetchUsers();
+      } else {
+        notification.error({
+          message: response?.errorObject?.userErrorText || 'Failed to update user',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: error?.data?.errorObject?.userErrorText || 'Failed to update user',
+        placement: 'bottomRight',
+      });
+    }
+  };
+
+  const handleOpenCreateUserDrawer = () => {
+    setUserDrawerMode('create');
+    setEditingUserId(null);
+    form.resetFields();
+    setIsDrawerOpen(true);
+  };
+
+  const handleOpenEditUserDrawer = async record => {
+    setUserDrawerMode('edit');
+    setEditingUserId(record?._id);
+    setIsDrawerOpen(true);
+    // Keep prior Agents Management behavior: default to full access until API data arrives.
+    // This avoids showing an empty selection while the drawer is loading.
+    initializeExistingUserAgentStates();
+
+    // Populate immediately with what we have, then overwrite after fetch.
+    form.setFieldsValue({
+      username: record?.email || '',
+      password: '',
+      company: record?.company?._id || record?.company?.id || undefined,
+    });
+
+    try {
+      const response = await _GET_USER_FOR_UPDATE(record?._id).unwrap();
+      if (response?.success) {
+        const user = response?.data;
+        initializeExistingUserAgentStates(user?.userConfigurations);
+        form.setFieldsValue({
+          username: user?.email || record?.email || '',
+          password: '',
+          company: user?.company?._id || user?.company?.id || record?.company?._id,
+        });
+      } else {
+        notification.error({
+          message: response?.errorObject?.userErrorText || 'Failed to fetch user for update',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: error?.data?.errorObject?.userErrorText || 'Failed to fetch user for update',
+        placement: 'bottomRight',
+      });
+    }
+  };
+
   const handleCloseDrawer = () => {
     form.resetFields();
     setIsDrawerOpen(false);
+    setUserDrawerMode('create');
+    setEditingUserId(null);
     // Reset new user agent configuration states using the hook
     resetNewUserAgentStates();
+    resetExistingUserAgentStates();
   };
 
   const handleCloseReportDrawer = () => {
@@ -529,6 +598,19 @@ function DashboardWorkflow() {
       render: (_, record) => {
         const menuItems = [
           {
+            key: 'edit',
+            label: (
+              <Space>
+                <Icon name="EditOutlined" style={{ marginBottom: '-3px' }} />
+                <span>Edit User</span>
+              </Space>
+            ),
+            onClick: async () => {
+              setOpenDropdownId(null);
+              await handleOpenEditUserDrawer(record);
+            },
+          },
+          {
             key: 'export',
             label: (
               <Space align="center">
@@ -556,16 +638,6 @@ function DashboardWorkflow() {
             onClick: () => {
               navigate(`/userChecklist/${record._id}`);
             },
-          },
-          {
-            key: 'agents',
-            label: (
-              <Space>
-                <Icon name="SettingOutlined" style={{ marginBottom: '-3px' }} />
-                <span>Agents Management</span>
-              </Space>
-            ),
-            onClick: () => handleOpenAgentsDrawerWrapper(record),
           },
           {
             key: 'portal',
@@ -619,12 +691,12 @@ function DashboardWorkflow() {
               >
                 {record?.status === 'inactive' ? (
                   <>
-                    {getIcon('PlayOutlined')}
+                    <Icon name="PlayOutlined" style={{ marginBottom: '-2px' }} />
                     <span>Activate User</span>
                   </>
                 ) : (
                   <>
-                    {getIcon('PauseOutlined')}
+                    <Icon name="PauseOutlined" style={{ marginBottom: '-2px' }} />
                     <span>Deactivate User</span>
                   </>
                 )}
@@ -677,7 +749,7 @@ function DashboardWorkflow() {
                 <Button
                   size="large"
                   type="primary"
-                  onClick={() => setIsDrawerOpen(true)}
+                  onClick={handleOpenCreateUserDrawer}
                   icon={<PlusOutlined />}
                 >
                   Add User
@@ -788,7 +860,7 @@ function DashboardWorkflow() {
       </Row>
 
       <Drawer
-        title="Add User"
+        title={userDrawerMode === 'edit' ? 'Edit User' : 'Add User'}
         width={600}
         onClose={handleCloseDrawer}
         open={isDrawerOpen}
@@ -802,10 +874,10 @@ function DashboardWorkflow() {
               <Button
                 type="primary"
                 size="large"
-                onClick={handleAddUserSubmit}
-                loading={isAddingUser}
+                onClick={userDrawerMode === 'edit' ? handleUpdateUserSubmit : handleAddUserSubmit}
+                loading={isAddingUser || isUpdatingUser}
               >
-                Add User
+                {userDrawerMode === 'edit' ? 'Update User' : 'Add User'}
               </Button>
             </Space>
           </div>
@@ -817,12 +889,16 @@ function DashboardWorkflow() {
             label="Username"
             rules={[{ required: true, message: 'Please input the username!' }]}
           >
-            <Input size="large" />
+            <Input size="large" disabled={userDrawerMode === 'edit'} />
           </Form.Item>
           <Form.Item
             name="password"
-            label="Password"
-            rules={[{ required: true, message: 'Please input the password!' }]}
+            label={userDrawerMode === 'edit' ? 'New Password (optional)' : 'Password'}
+            rules={
+              userDrawerMode === 'edit'
+                ? []
+                : [{ required: true, message: 'Please input the password!' }]
+            }
           >
             <Input.Password size="large" />
           </Form.Item>
@@ -840,6 +916,7 @@ function DashboardWorkflow() {
                 })) || []
               }
               loading={isLoadingCompanies}
+              disabled={isFetchingUserForUpdate}
               showSearch
               size="large"
               placeholder="Select Company"
@@ -897,267 +974,179 @@ function DashboardWorkflow() {
           {/* Agent Management Section */}
           <Divider style={{ margin: '24px 0 16px' }} />
 
-          <Alert
-            type="info"
-            showIcon
-            message="Agent Access Control"
-            description="Select agents you want to give access to this new user."
-            style={{ marginBottom: 16 }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={5} style={{ margin: 0 }}>
-              Automate Pack
-            </Title>
-            <Space size={8}>
-              <Badge
-                count={`${newUserAllowedAIAgents.length}/${AUTOMATE_PACK_OPTIONS.length}`}
-                style={{ backgroundColor: PRIMARY_COLOR }}
-              />
-              <Button size="small" onClick={handleSelectAllNewUserAIAgents} disabled={isAddingUser}>
-                Select All
-              </Button>
-              <Button size="small" onClick={handleClearNewUserAIAgents} disabled={isAddingUser}>
-                Clear
-              </Button>
-            </Space>
-          </div>
-          <Form.Item name="newUserAllowedAIAgents" style={{ marginTop: 12 }}>
-            <Checkbox.Group
-              options={AUTOMATE_PACK_OPTIONS}
-              value={newUserAllowedAIAgents}
-              onChange={setNewUserAllowedAIAgents}
-              disabled={isAddingUser}
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
+          <Spin
+            spinning={userDrawerMode === 'edit' && isFetchingUserForUpdate}
+            tip="Loading configuration..."
+          >
+            <Alert
+              type="info"
+              showIcon
+              message="Agent Access Control"
+              description={
+                userDrawerMode === 'edit'
+                  ? 'Select agents you want to give access to this user.'
+                  : 'Select agents you want to give access to this new user.'
+              }
+              style={{ marginBottom: 16 }}
             />
-          </Form.Item>
-          <Divider style={{ margin: '8px 0 16px' }} />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={5} style={{ margin: 0 }}>
-              Engage Pack
-            </Title>
-            <Space size={8}>
-              <Badge
-                count={`${newUserAllowedCampaigns.length}/${ENGAGE_PACK_OPTIONS.length}`}
-                style={{ backgroundColor: PRIMARY_COLOR }}
-              />
-              <Button
-                size="small"
-                onClick={handleSelectAllNewUserCampaigns}
-                disabled={isAddingUser}
-              >
-                Select All
-              </Button>
-              <Button size="small" onClick={handleClearNewUserCampaigns} disabled={isAddingUser}>
-                Clear
-              </Button>
-            </Space>
-          </div>
-          <Form.Item name="newUserAllowedCampaigns" style={{ marginTop: 12 }}>
-            <Checkbox.Group
-              options={ENGAGE_PACK_OPTIONS}
-              value={newUserAllowedCampaigns}
-              onChange={setNewUserAllowedCampaigns}
-              disabled={isAddingUser}
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
-            />
-          </Form.Item>
-
-          <Divider style={{ margin: '8px 0 16px' }} />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={5} style={{ margin: 0 }}>
-              Monetize Pack
-            </Title>
-            <Space size={8}>
-              <Badge
-                count={`${newUserAllowedMonetizePack.length}/${MONETIZE_PACK_OPTIONS.length}`}
-                style={{ backgroundColor: PRIMARY_COLOR }}
-              />
-              <Button
-                size="small"
-                onClick={handleSelectAllNewUserMonetizePack}
-                disabled={isAddingUser}
-              >
-                Select All
-              </Button>
-              <Button size="small" onClick={handleClearNewUserMonetizePack} disabled={isAddingUser}>
-                Clear
-              </Button>
-            </Space>
-          </div>
-          <Form.Item name="newUserAllowedMonetizePack" style={{ marginTop: 12 }}>
-            <Checkbox.Group
-              options={MONETIZE_PACK_OPTIONS}
-              value={newUserAllowedMonetizePack}
-              onChange={setNewUserAllowedMonetizePack}
-              disabled={isAddingUser}
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
-            />
-          </Form.Item>
-        </Form>
-      </Drawer>
-
-      {/* Agents Management Drawer */}
-      <Drawer
-        title={
-          <Space direction="vertical" size={2}>
-            <span style={{ fontSize: 16, fontWeight: 600 }}>
-              This user will have access to the selected agents
-            </span>
-            {selectedUserForAgents ? (
-              <span style={{ color: '#888', fontSize: 12 }}>
-                {selectedUserForAgents.fullname || ''}{' '}
-                {selectedUserForAgents.email ? `(${selectedUserForAgents.email})` : ''}
-              </span>
-            ) : null}
-          </Space>
-        }
-        width={500}
-        onClose={handleCloseAgentsDrawerWrapper}
-        open={isAgentsDrawerOpen}
-        bodyStyle={{ paddingBottom: 80 }}
-        footer={
-          <div style={{ textAlign: 'right' }}>
-            <Space>
-              <Button
-                size="large"
-                onClick={handleCloseAgentsDrawerWrapper}
-                style={{ color: PRIMARY_COLOR }}
-              >
-                Close
-              </Button>
-              <Button
-                size="large"
-                type="primary"
-                onClick={handleSaveAgentsConfig}
-                loading={isSavingUserConfig}
-                disabled={isFetchingUserConfig}
-                style={{ backgroundColor: PRIMARY_COLOR, borderColor: PRIMARY_COLOR }}
-              >
-                Save
-              </Button>
-            </Space>
-          </div>
-        }
-      >
-        <Spin spinning={isFetchingUserConfig} tip="Loading configuration...">
-          <Alert
-            type="info"
-            showIcon
-            message="Agent Access Control"
-            description="Select agents you want to give access to this user."
-            style={{ marginBottom: 16 }}
-          />
-          <Form form={agentsForm} layout="vertical">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Title level={5} style={{ margin: 0 }}>
                 Automate Pack
               </Title>
               <Space size={8}>
                 <Badge
-                  count={`${allowedAIAgents.length}/${AUTOMATE_PACK_OPTIONS.length}`}
+                  count={`${
+                    userDrawerMode === 'edit'
+                      ? allowedAIAgents.length
+                      : newUserAllowedAIAgents.length
+                  }/${AUTOMATE_PACK_OPTIONS.length}`}
                   style={{ backgroundColor: PRIMARY_COLOR }}
                 />
                 <Button
                   size="small"
-                  onClick={handleSelectAllAIAgents}
-                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                  onClick={
+                    userDrawerMode === 'edit'
+                      ? handleSelectAllAIAgents
+                      : handleSelectAllNewUserAIAgents
+                  }
+                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 >
                   Select All
                 </Button>
                 <Button
                   size="small"
-                  onClick={handleClearAIAgents}
-                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                  onClick={
+                    userDrawerMode === 'edit' ? handleClearAIAgents : handleClearNewUserAIAgents
+                  }
+                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 >
                   Clear
                 </Button>
               </Space>
             </div>
-            <Form.Item name="allowedAIAgents" style={{ marginTop: 12 }}>
+            <Form.Item
+              name={userDrawerMode === 'edit' ? 'allowedAIAgents' : 'newUserAllowedAIAgents'}
+              style={{ marginTop: 12 }}
+            >
               <Checkbox.Group
                 options={AUTOMATE_PACK_OPTIONS}
-                value={allowedAIAgents}
-                onChange={setAllowedAIAgents}
-                disabled={isFetchingUserConfig}
+                value={userDrawerMode === 'edit' ? allowedAIAgents : newUserAllowedAIAgents}
+                onChange={
+                  userDrawerMode === 'edit' ? setAllowedAIAgents : setNewUserAllowedAIAgents
+                }
+                disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
               />
             </Form.Item>
-
             <Divider style={{ margin: '8px 0 16px' }} />
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Title level={5} style={{ margin: 0 }}>
                 Engage Pack
               </Title>
               <Space size={8}>
                 <Badge
-                  count={`${allowedCampaigns.length}/${ENGAGE_PACK_OPTIONS.length}`}
+                  count={`${
+                    userDrawerMode === 'edit'
+                      ? allowedCampaigns.length
+                      : newUserAllowedCampaigns.length
+                  }/${ENGAGE_PACK_OPTIONS.length}`}
                   style={{ backgroundColor: PRIMARY_COLOR }}
                 />
                 <Button
                   size="small"
-                  onClick={handleSelectAllCampaigns}
-                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                  onClick={
+                    userDrawerMode === 'edit'
+                      ? handleSelectAllCampaigns
+                      : handleSelectAllNewUserCampaigns
+                  }
+                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 >
                   Select All
                 </Button>
                 <Button
                   size="small"
-                  onClick={handleClearCampaigns}
-                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                  onClick={
+                    userDrawerMode === 'edit' ? handleClearCampaigns : handleClearNewUserCampaigns
+                  }
+                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 >
                   Clear
                 </Button>
               </Space>
             </div>
-            <Form.Item name="allowedCampaigns" style={{ marginTop: 12 }}>
+            <Form.Item
+              name={userDrawerMode === 'edit' ? 'allowedCampaigns' : 'newUserAllowedCampaigns'}
+              style={{ marginTop: 12 }}
+            >
               <Checkbox.Group
                 options={ENGAGE_PACK_OPTIONS}
-                value={allowedCampaigns}
-                onChange={setAllowedCampaigns}
-                disabled={isFetchingUserConfig}
+                value={userDrawerMode === 'edit' ? allowedCampaigns : newUserAllowedCampaigns}
+                onChange={
+                  userDrawerMode === 'edit' ? setAllowedCampaigns : setNewUserAllowedCampaigns
+                }
+                disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
               />
             </Form.Item>
 
             <Divider style={{ margin: '8px 0 16px' }} />
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Title level={5} style={{ margin: 0 }}>
                 Monetize Pack
               </Title>
               <Space size={8}>
                 <Badge
-                  count={`${allowedMonetizePack.length}/${MONETIZE_PACK_OPTIONS.length}`}
+                  count={`${
+                    userDrawerMode === 'edit'
+                      ? allowedMonetizePack.length
+                      : newUserAllowedMonetizePack.length
+                  }/${MONETIZE_PACK_OPTIONS.length}`}
                   style={{ backgroundColor: PRIMARY_COLOR }}
                 />
                 <Button
                   size="small"
-                  onClick={handleSelectAllMonetizePack}
-                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                  onClick={
+                    userDrawerMode === 'edit'
+                      ? handleSelectAllMonetizePack
+                      : handleSelectAllNewUserMonetizePack
+                  }
+                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 >
                   Select All
                 </Button>
                 <Button
                   size="small"
-                  onClick={handleClearMonetizePack}
-                  disabled={isFetchingUserConfig || isSavingUserConfig}
+                  onClick={
+                    userDrawerMode === 'edit'
+                      ? handleClearMonetizePack
+                      : handleClearNewUserMonetizePack
+                  }
+                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 >
                   Clear
                 </Button>
               </Space>
             </div>
-            <Form.Item name="allowedMonetizePack" style={{ marginTop: 12 }}>
+            <Form.Item
+              name={
+                userDrawerMode === 'edit' ? 'allowedMonetizePack' : 'newUserAllowedMonetizePack'
+              }
+              style={{ marginTop: 12 }}
+            >
               <Checkbox.Group
                 options={MONETIZE_PACK_OPTIONS}
-                value={allowedMonetizePack}
-                onChange={setAllowedMonetizePack}
-                disabled={isFetchingUserConfig}
+                value={userDrawerMode === 'edit' ? allowedMonetizePack : newUserAllowedMonetizePack}
+                onChange={
+                  userDrawerMode === 'edit' ? setAllowedMonetizePack : setNewUserAllowedMonetizePack
+                }
+                disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
               />
             </Form.Item>
-          </Form>
-        </Spin>
+          </Spin>
+        </Form>
       </Drawer>
 
       {/* Report Generation Drawer */}
