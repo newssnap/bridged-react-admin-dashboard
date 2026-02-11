@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Menu, Modal } from 'antd';
 import Icon from '../../utils/components/Icon';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,27 +9,60 @@ const getIcon = name => <Icon name={name} />;
 const SidebarMenu = ({ secondary }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [filteredNavItems, setFilteredNavItems] = useState([]);
+  const [openKeys, setOpenKeys] = useState([]);
+  const handleOpenChange = keys => {
+    const latestOpenKey = keys.find(key => !openKeys.includes(key));
+
+    if (latestOpenKey) {
+      setOpenKeys([latestOpenKey]);
+
+      const parentItem = navItems.find(item => item.key === latestOpenKey);
+
+      if (parentItem?.children?.length) {
+        const firstChild = parentItem.children[0];
+
+        navigate(firstChild.key);
+      }
+    } else {
+      setOpenKeys([]);
+    }
+  };
   const navItems = [
     {
-      key: '',
+      key: '/',
       label: 'Dashboard',
       icon: getIcon('AppStoreOutlined'),
       onClick: () => navigate('/'),
-      path: '/',
     },
     {
-      key: 'companies',
+      key: '/companies',
       label: 'Companies',
       icon: getIcon('UsersOutlined'),
       onClick: () => navigate('/companies'),
-      path: '/companies',
     },
     {
-      key: 'defaultChecklist',
+      key: '/defaultChecklist',
       label: 'Default Tasklist',
       icon: getIcon('BarChartOutlined'),
       onClick: () => navigate('/defaultChecklist'),
-      path: '/defaultChecklist',
+    },
+    {
+      key: 'teams',
+      label: 'Billing Credits',
+      icon: getIcon('SettingOutlined'),
+      children: [
+        {
+          key: '/teams/credits',
+          label: 'Team Credits',
+          onClick: () => navigate('/teams/credits'),
+        },
+        {
+          key: '/teams/custom-work',
+          label: 'Custom Work',
+          onClick: () => navigate('/teams/custom-work'),
+        },
+      ],
     },
   ];
 
@@ -45,7 +78,9 @@ const SidebarMenu = ({ secondary }) => {
     <Menu
       defaultSelectedKeys={['1']}
       mode="inline"
-      selectedKeys={[location.pathname.split('/')[1]]}
+      selectedKeys={[location.pathname]}
+      onOpenChange={handleOpenChange}
+      openKeys={openKeys}
       items={items}
       style={{
         border: 'none',
