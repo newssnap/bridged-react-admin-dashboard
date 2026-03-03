@@ -51,6 +51,8 @@ export const bridgedApi = createApi({
     'taskComments',
     'userConfiguration',
     'companies',
+    'teams',
+    'teamCredits',
   ],
   endpoints: builder => ({
     // User login mutation
@@ -385,6 +387,118 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['users'],
     }),
+
+    getTeams: builder.query({
+      query: () => ({
+        url: `/Team/Admin`,
+        method: 'GET',
+      }),
+      providesTags: ['teams'],
+    }),
+
+    getAdminTeamMembers: builder.query({
+      query: id => ({
+        url: `/Team/Admin/TeamMember?teamId=${id}`,
+        method: 'GET',
+      }),
+      providesTags: ['teamMembers'],
+    }),
+
+    createTeam: builder.mutation({
+      query: body => ({
+        url: '/Team/Admin',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['teams'],
+    }),
+    updateTeam: builder.mutation({
+      query: body => ({
+        url: `/Team/Admin`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['teams'],
+    }),
+
+    getTeamCredits: builder.query({
+      query: () => ({
+        url: '/credits/admin/teams',
+        method: 'GET',
+      }),
+      providesTags: ['teamCredits'],
+    }),
+
+    getTeamCreditsHistory: builder.query({
+      query: id => ({
+        url: `/credits/admin/team/history?team_id=${id}`,
+        method: 'GET',
+      }),
+      providesTags: ['teamCreditsHistory'],
+    }),
+
+    adjustTeamCredits: builder.mutation({
+      query: data => ({
+        url: '/credits/admin/teams',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+
+    getCustomWork: builder.query({
+      query: () => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'GET',
+      }),
+      transformResponse: response => response?.data ?? [],
+      providesTags: ['teamCredits'],
+    }),
+
+    addCustomWork: builder.mutation({
+      query: data => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+
+    editCustomWork: builder.mutation({
+      query: data => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+
+    deleteCustomWork: builder.mutation({
+      queryFn: async data => {
+        // Mock data response
+        const mockData = {
+          success: true,
+          data: {
+            team: {
+              teamId: '12345',
+              teamName: 'Terrapinn Team B',
+              companyName: 'Terrapinn',
+            },
+            creditUsageId: 'usage-009',
+            creditsUsed: 1200,
+            usageData: {
+              customWorkTitle: 'Terrapinn – Scheduler Build',
+              customWorkCategory: 'Custom Feature',
+              customWorkStatus: 'pending',
+              customWorkStartDate: '2026-01-12T09:30:00.000Z',
+              customWorkEndDate: '2026-01-28T16:45:00.000Z',
+              notes: 'Waiting for client approval before final deployment',
+            },
+          },
+        };
+        return { data: mockData };
+      },
+    }),
   }),
 });
 
@@ -429,4 +543,16 @@ export const {
   useGetUserAdminPaginationMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
+  useGetTeamCreditsQuery,
+  useGetTeamCreditsHistoryQuery,
+  useAdjustTeamCreditsMutation,
+  useGetCustomWorkQuery,
+  useAddCustomWorkMutation,
+  useDeleteCustomWorkMutation,
+  useEditCustomWorkMutation,
+  useGetTeamsQuery,
+  useCreateTeamMutation,
+  useUpdateTeamMutation,
+  useFindAllUsersPaginationMutation,
+  useGetAdminTeamMembersQuery,
 } = bridgedApi;
