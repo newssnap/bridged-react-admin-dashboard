@@ -78,12 +78,25 @@ export const useCustomWorkHandler = searchValue => {
 
   const handleSubmitAddForm = async payload => {
     try {
-      await addCustomWork(payload).unwrap();
-      message.success('Custom work entry added successfully');
-      refetch();
-      handleCloseAddDrawer();
+      const response = await addCustomWork(payload).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Custom work entry added successfully',
+          placement: 'bottomRight',
+        });
+        refetch();
+        handleCloseAddDrawer();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update team credits',
+          placement: 'bottomRight',
+        });
+      }
     } catch (err) {
-      message.error(err?.data?.message || 'Failed to add custom work entry');
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
     }
   };
 
@@ -116,12 +129,25 @@ export const useCustomWorkHandler = searchValue => {
 
   const handleSubmitEditForm = async payload => {
     try {
-      await editCustomWork(payload).unwrap();
-      message.success('Custom work entry updated successfully');
-      refetch();
-      handleClosePreviewEditDrawer();
+      const response = await editCustomWork(payload).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Custom work entry updated successfully',
+          placement: 'bottomRight',
+        });
+        refetch();
+        handleClosePreviewEditDrawer();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update team credits',
+          placement: 'bottomRight',
+        });
+      }
     } catch (err) {
-      message.error(err?.data?.message || 'Failed to update custom work entry');
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
     }
   };
 

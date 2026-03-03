@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { message } from 'antd';
+import { message, notification } from 'antd';
 import {
   useGetCompaniesQuery,
   useGetUserAdminPaginationMutation,
@@ -88,11 +88,24 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
         payload.logo = values.logoUrl?.trim() ?? '';
       }
 
-      await createTeam(payload).unwrap();
-      message.success('Team created successfully');
-      closeDrawer();
+      const response = await createTeam(payload).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Team added successfully',
+          placement: 'bottomRight',
+        });
+        closeDrawer();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update team credits',
+          placement: 'bottomRight',
+        });
+      }
     } catch (err) {
-      message.error(err?.data?.message || 'Failed to create team');
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
     }
   };
 

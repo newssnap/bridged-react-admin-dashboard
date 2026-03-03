@@ -1,4 +1,4 @@
-import { message } from 'antd';
+import { message, notification } from 'antd';
 import { useUpdateTeamMutation } from '../../../services/api';
 
 export const useEditTeamDrawerHandler = onSuccess => {
@@ -23,12 +23,24 @@ export const useEditTeamDrawerHandler = onSuccess => {
         teamMembers,
       };
 
-      await updateTeam(payload).unwrap();
-      message.success('Team updated successfully');
-      onSuccess?.();
+      const response = await updateTeam(payload).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Team updated successfully',
+          placement: 'bottomRight',
+        });
+        onSuccess?.();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update team credits',
+          placement: 'bottomRight',
+        });
+      }
     } catch (err) {
-      message.error(err?.data?.message || 'Failed to update team');
-      throw err;
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
     }
   };
 

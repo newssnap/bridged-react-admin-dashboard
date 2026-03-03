@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMemo } from 'react';
-import { message } from 'antd';
+import { message, notification } from 'antd';
 import {
   useGetTeamCreditsQuery,
   useGetTeamCreditsHistoryQuery,
@@ -87,27 +87,53 @@ export const useTeamCreditsHandler = searchValue => {
   };
 
   const handleSubmitForm = async submitData => {
-    console.log(submitData);
     try {
-      await adjustTeamCredits(submitData).unwrap();
-      message.success('Team credits updated successfully');
-      refetchTeamCredits();
-      refetchHistory();
-      handleCloseDrawer();
-    } catch (error) {
-      message.error(error?.data?.message || 'Failed to update team credits');
+      const response = await adjustTeamCredits(submitData).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Team credits updated successfully',
+          placement: 'bottomRight',
+        });
+
+        refetchTeamCredits();
+        refetchHistory();
+        handleCloseDrawer();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update team credits',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
     }
   };
 
   const handleSubmitAddForm = async submitData => {
     try {
-      await adjustTeamCredits(submitData).unwrap();
-      message.success('Team credits added successfully');
-      refetchTeamCredits();
-      refetchAddHistory();
-      handleCloseAddDrawer();
-    } catch (error) {
-      message.error(error?.data?.message || 'Failed to add team credits');
+      const response = await adjustTeamCredits(submitData).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Team credits added successfully',
+          placement: 'bottomRight',
+        });
+        refetchTeamCredits();
+        refetchAddHistory();
+        handleCloseAddDrawer();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update team credits',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
     }
   };
 
