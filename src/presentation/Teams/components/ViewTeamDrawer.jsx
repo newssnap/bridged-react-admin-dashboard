@@ -77,12 +77,12 @@ const ViewTeamDrawer = ({ open, onClose, team }) => {
         </Space>
       }
     >
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space direction="vertical" size="middle" style={{ width: '100%', gap: '24px' }}>
         {/* 1. Team Summary */}
         <Card
           size="small"
           styles={{
-            body: { padding: '20px 24px' },
+            body: { padding: '0px' },
           }}
           style={{
             background: 'var(--ant-color-fill-quaternary)',
@@ -106,18 +106,11 @@ const ViewTeamDrawer = ({ open, onClose, team }) => {
               <span>Credit Balance</span>
             </Space>
           }
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => {
-                onClose();
-                navigate('/teams/credits');
-              }}
-            >
-              Manage Credits
-            </Button>
-          }
+          // extra={
+          //   <Button type="primary" size="small" onClick={() => { onClose(); navigate('/teams/credits'); }}>
+          //     Manage Credits
+          //   </Button>
+          // }
           styles={{
             body: { padding: '16px 24px' },
           }}
@@ -136,18 +129,11 @@ const ViewTeamDrawer = ({ open, onClose, team }) => {
               <span>Custom Works</span>
             </Space>
           }
-          extra={
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => {
-                onClose();
-                navigate('/teams/custom-work');
-              }}
-            >
-              Manage Custom Work
-            </Button>
-          }
+          // extra={
+          //   <Button type="primary" size="small" onClick={() => { onClose(); navigate('/teams/custom-work'); }}>
+          //     Manage Custom Work
+          //   </Button>
+          // }
           styles={{
             body: { padding: '16px 24px' },
           }}
