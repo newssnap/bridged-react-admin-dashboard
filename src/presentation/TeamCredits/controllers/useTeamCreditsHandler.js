@@ -32,18 +32,18 @@ export const useTeamCreditsHandler = searchValue => {
 
   const [adjustTeamCredits, { isLoading: isSubmitting }] = useAdjustTeamCreditsMutation();
 
-  const tableData = useMemo(() => {
-    if (!data) return [];
+  const rawList = data?.data ?? [];
 
-    return data.map((item, index) => ({
-      key: item.team?.teamId || index,
-      teamId: item.team?.teamId,
-      teamName: item.team?.teamName || '--',
-      companyName: item.team?.companyName || '--',
+  const tableData = useMemo(() => {
+    return rawList.map((item, index) => ({
+      key: item.teams?.teamId || index,
+      teamId: item.teams?.teamId,
+      teamName: item.teams?.teamName || '--',
+      companyName: item.teams?.companyName || '--',
       creditBalance: item.creditBalance || 0,
-      lastUpdated: item.lastUpdated,
+      lastUpdated: item.lastUpdatedAt,
     }));
-  }, [data]);
+  }, [rawList]);
 
   const filteredData = useMemo(() => {
     if (!searchValue) return tableData;
@@ -53,14 +53,14 @@ export const useTeamCreditsHandler = searchValue => {
   }, [tableData, searchValue]);
 
   const selectedTeamData = useMemo(() => {
-    if (!selectedTeamId || !data) return null;
-    return data.find(item => item.team?.teamId === selectedTeamId);
-  }, [selectedTeamId, data]);
+    if (!selectedTeamId || !rawList.length) return null;
+    return rawList.find(item => item.teams?.teamId === selectedTeamId);
+  }, [selectedTeamId, rawList]);
 
   const selectedTeamDataForAdd = useMemo(() => {
-    if (!selectedTeamIdForAdd || !data) return null;
-    return data.find(item => item.team?.teamId === selectedTeamIdForAdd);
-  }, [selectedTeamIdForAdd, data]);
+    if (!selectedTeamIdForAdd || !rawList.length) return null;
+    return rawList.find(item => item.teams?.teamId === selectedTeamIdForAdd);
+  }, [selectedTeamIdForAdd, rawList]);
 
   const handleOpenDrawer = teamId => {
     setSelectedTeamId(teamId);
@@ -87,6 +87,7 @@ export const useTeamCreditsHandler = searchValue => {
   };
 
   const handleSubmitForm = async submitData => {
+    console.log(submitData);
     try {
       await adjustTeamCredits(submitData).unwrap();
       message.success('Team credits updated successfully');
@@ -118,9 +119,9 @@ export const useTeamCreditsHandler = searchValue => {
     selectedTeamId,
     selectedTeamData: selectedTeamData
       ? {
-          teamId: selectedTeamData.team?.teamId,
-          teamName: selectedTeamData.team?.teamName,
-          companyName: selectedTeamData.team?.companyName,
+          teamId: selectedTeamData.teams?.teamId,
+          teamName: selectedTeamData.teams?.teamName,
+          companyName: selectedTeamData.teams?.companyName,
           creditBalance: selectedTeamData.creditBalance,
         }
       : null,
@@ -135,9 +136,9 @@ export const useTeamCreditsHandler = searchValue => {
     selectedTeamIdForAdd,
     selectedTeamDataForAdd: selectedTeamDataForAdd
       ? {
-          teamId: selectedTeamDataForAdd.team?.teamId,
-          teamName: selectedTeamDataForAdd.team?.teamName,
-          companyName: selectedTeamDataForAdd.team?.companyName,
+          teamId: selectedTeamDataForAdd.teams?.teamId,
+          teamName: selectedTeamDataForAdd.teams?.teamName,
+          companyName: selectedTeamDataForAdd.teams?.companyName,
           creditBalance: selectedTeamDataForAdd.creditBalance,
         }
       : null,

@@ -51,6 +51,8 @@ export const bridgedApi = createApi({
     'taskComments',
     'userConfiguration',
     'companies',
+    'teams',
+    'teamCredits',
   ],
   endpoints: builder => ({
     // User login mutation
@@ -386,253 +388,89 @@ export const bridgedApi = createApi({
       invalidatesTags: ['users'],
     }),
 
+    getTeams: builder.query({
+      query: () => ({
+        url: `/Team/Admin`,
+        method: 'GET',
+      }),
+      providesTags: ['teams'],
+    }),
+
+    getAdminTeamMembers: builder.query({
+      query: id => ({
+        url: `/Team/Admin/TeamMember?teamId=${id}`,
+        method: 'GET',
+      }),
+      providesTags: ['teamMembers'],
+    }),
+
+    createTeam: builder.mutation({
+      query: body => ({
+        url: '/Team/Admin',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['teams'],
+    }),
+    updateTeam: builder.mutation({
+      query: body => ({
+        url: `/Team/Admin`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['teams'],
+    }),
+
     getTeamCredits: builder.query({
-      queryFn: async () => {
-        // Mock data response
-        const mockData = [
-          {
-            team: {
-              teamId: 'team-001',
-              teamName: 'Frontend Squad',
-              companyName: 'Bridged Media',
-            },
-            creditBalance: 1250,
-            lastUpdated: '2026-01-23T10:36:10.436Z',
-          },
-          {
-            team: {
-              teamId: 'team-002',
-              teamName: 'Backend Core',
-              companyName: 'Techify',
-            },
-            creditBalance: 980,
-            lastUpdated: '2026-01-20T08:15:42.112Z',
-          },
-          {
-            team: {
-              teamId: 'team-003',
-              teamName: 'Design Team',
-              companyName: 'Creative Labs',
-            },
-            creditBalance: 4300,
-            lastUpdated: '2026-01-18T14:52:03.907Z',
-          },
-          {
-            team: {
-              teamId: 'team-004',
-              teamName: 'DevOps Unit',
-              companyName: 'CloudOps',
-            },
-            creditBalance: 670,
-            lastUpdated: '2026-01-25T18:09:55.221Z',
-          },
-        ];
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        return { data: mockData };
-      },
+      query: () => ({
+        url: '/credits/admin/teams',
+        method: 'GET',
+      }),
+      providesTags: ['teamCredits'],
     }),
 
     getTeamCreditsHistory: builder.query({
-      queryFn: async teamId => {
-        // Mock data response
-        const mockData = {
-          team: {
-            teamId: teamId || 'xyz',
-            teamName: 'abcd',
-            companyName: 'xyz',
-          },
-          history: [
-            {
-              amount: 500,
-              purchaseData: {
-                purchaseType: 'assign',
-                reason: 'Purchase',
-                notes: 'Credit package purchased',
-                purchaseDate: new Date().toISOString(),
-              },
-            },
-            {
-              amount: 1000,
-              purchaseData: {
-                purchaseType: 'assign',
-                reason: 'Grant',
-                notes: 'Promotional credits',
-                purchaseDate: new Date().toISOString(),
-              },
-            },
-            {
-              amount: 350,
-              purchaseData: {
-                purchaseType: 'deduct',
-                reason: 'Adjustment',
-                notes: 'Usage correction',
-                purchaseDate: new Date().toISOString(),
-              },
-            },
-          ],
-          creditBalance: 1250,
-          lastUpdated: new Date().toISOString(),
-        };
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        return { data: mockData };
-      },
+      query: id => ({
+        url: `/credits/admin/team/history?team_id=${id}`,
+        method: 'GET',
+      }),
+      providesTags: ['teamCreditsHistory'],
     }),
 
     adjustTeamCredits: builder.mutation({
-      queryFn: async data => {
-        // Mock data response
-        const mockData = {
-          success: 'true',
-          data: {
-            team: { teamId: 'xyz', companyName: 'xyz' },
-            creditBalance: 1234 || -1234,
-            lastUpdated: '<Date()>',
-          },
-        };
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        return { data: mockData };
-      },
+      query: data => ({
+        url: '/credits/admin/teams',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
     }),
 
     getCustomWork: builder.query({
-      queryFn: async () => {
-        // Mock data response
-        const mockData = [
-          {
-            team: {
-              teamId: '12345',
-              teamName: 'Terrapinn Team B',
-              companyName: 'Terrapinn',
-            },
-            creditUsageId: 'usage-001',
-            creditsUsed: 1200,
-            usageData: {
-              customWorkTitle: 'Terrapinn – Scheduler Build',
-              customWorkCategory: 'Custom Feature',
-              customWorkStatus: 'pending',
-              customWorkStartDate: '2026-01-10T09:00:00.000Z',
-              customWorkEndDate: '2026-01-25T17:00:00.000Z',
-              notes: 'Initial development phase in progress',
-            },
-          },
-          {
-            team: {
-              teamId: '67890',
-              teamName: 'Enterprise Ops',
-              companyName: 'GlobalTech',
-            },
-            creditUsageId: 'usage-002',
-            creditsUsed: 850,
-            usageData: {
-              customWorkTitle: 'Dashboard Performance Optimization',
-              customWorkCategory: 'Improvement',
-              customWorkStatus: 'completed',
-              customWorkStartDate: '2025-12-01T08:30:00.000Z',
-              customWorkEndDate: '2025-12-18T16:45:00.000Z',
-              notes: 'Reduced API response time by 40%',
-            },
-          },
-          {
-            team: {
-              teamId: '24680',
-              teamName: 'Design Systems',
-              companyName: 'Creative Labs',
-            },
-            creditUsageId: 'usage-003',
-            creditsUsed: 400,
-            usageData: {
-              customWorkTitle: 'UI Component Library Expansion',
-              customWorkCategory: 'Design',
-              customWorkStatus: 'in-progress',
-              customWorkStartDate: '2026-01-15T10:15:00.000Z',
-              customWorkEndDate: '2026-02-05T18:00:00.000Z',
-              notes: 'Adding new accessibility-compliant components',
-            },
-          },
-          {
-            team: {
-              teamId: '13579',
-              teamName: 'Platform Core',
-              companyName: 'CloudOps',
-            },
-            creditUsageId: 'usage-004',
-            creditsUsed: 2000,
-            usageData: {
-              customWorkTitle: 'Infrastructure Migration to Kubernetes',
-              customWorkCategory: 'Infrastructure',
-              customWorkStatus: 'approved',
-              customWorkStartDate: '2026-02-01T07:00:00.000Z',
-              customWorkEndDate: '2026-03-01T19:00:00.000Z',
-              notes: 'High priority migration project',
-            },
-          },
-        ];
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return { data: mockData };
-      },
+      query: () => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'GET',
+      }),
+      transformResponse: response => response?.data ?? [],
+      providesTags: ['teamCredits'],
     }),
 
     addCustomWork: builder.mutation({
-      queryFn: async data => {
-        // Mock data response
-        const mockData = {
-          success: true,
-          data: {
-            team: {
-              teamId: '12345',
-              teamName: 'Terrapinn Team B',
-              companyName: 'Terrapinn',
-            },
-            creditUsageId: 'usage-009',
-            creditsUsed: 1200,
-            usageData: {
-              customWorkTitle: 'Terrapinn – Scheduler Build',
-              customWorkCategory: 'Custom Feature',
-              customWorkStatus: 'pending',
-              customWorkStartDate: '2026-01-12T09:30:00.000Z',
-              customWorkEndDate: '2026-01-28T16:45:00.000Z',
-              notes: 'Waiting for client approval before final deployment',
-            },
-          },
-        };
-        return { data: mockData };
-      },
+      query: data => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
     }),
 
     editCustomWork: builder.mutation({
-      queryFn: async data => {
-        // Mock data response
-        const mockData = {
-          success: true,
-          data: {
-            team: {
-              teamId: '12345',
-              teamName: 'Terrapinn Team B',
-              companyName: 'Terrapinn',
-            },
-            creditUsageId: 'usage-009',
-            creditsUsed: 1200,
-            usageData: {
-              customWorkTitle: 'Terrapinn – Scheduler Build',
-              customWorkCategory: 'Custom Feature',
-              customWorkStatus: 'pending',
-              customWorkStartDate: '2026-01-12T09:30:00.000Z',
-              customWorkEndDate: '2026-01-28T16:45:00.000Z',
-              notes: 'Waiting for client approval before final deployment',
-            },
-          },
-        };
-        return { data: mockData };
-      },
+      query: data => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
     }),
 
     deleteCustomWork: builder.mutation({
@@ -712,4 +550,9 @@ export const {
   useAddCustomWorkMutation,
   useDeleteCustomWorkMutation,
   useEditCustomWorkMutation,
+  useGetTeamsQuery,
+  useCreateTeamMutation,
+  useUpdateTeamMutation,
+  useFindAllUsersPaginationMutation,
+  useGetAdminTeamMembersQuery,
 } = bridgedApi;

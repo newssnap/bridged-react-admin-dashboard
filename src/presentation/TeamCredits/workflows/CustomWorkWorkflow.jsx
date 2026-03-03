@@ -122,6 +122,7 @@ function CustomWorkWorkflow() {
             key: 'delete',
             label: <span>Delete</span>,
             icon: <Icon name="DeleteOutlined" />,
+            disabled: true,
           },
         ];
 

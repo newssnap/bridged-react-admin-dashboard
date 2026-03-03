@@ -39,7 +39,7 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
         customWorkStatus: values.status,
         customWorkStartDate: values.dateFrom ? values.dateFrom.toISOString() : null,
         customWorkEndDate: values.dateTo ? values.dateTo.toISOString() : null,
-        notes: values.notes || null,
+        customWorkNotes: values.customWorkNotes || null,
       },
     };
     onSubmit(payload);
@@ -163,7 +163,7 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
           <DatePicker size="large" style={{ width: '100%' }} format="YYYY-MM-DD" />
         </Form.Item>
 
-        <Form.Item label="Notes" name="notes">
+        <Form.Item label="Notes" name="customWorkNotes">
           <TextArea rows={4} placeholder="Enter notes (optional)" size="large" />
         </Form.Item>
       </Form>

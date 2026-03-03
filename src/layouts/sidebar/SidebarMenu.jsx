@@ -48,7 +48,13 @@ const SidebarMenu = ({ secondary }) => {
       onClick: () => navigate('/defaultChecklist'),
     },
     {
-      key: 'teams',
+      key: '/teams',
+      label: 'Teams',
+      icon: getIcon('UsersOutlined'),
+      onClick: () => navigate('/teams'),
+    },
+    {
+      key: 'billing',
       label: 'Billing Credits',
       icon: getIcon('SettingOutlined'),
       children: [

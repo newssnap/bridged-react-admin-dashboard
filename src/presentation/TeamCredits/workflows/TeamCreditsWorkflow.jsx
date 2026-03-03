@@ -68,7 +68,7 @@ function TeamCreditsWorkflow() {
           {
             key: 'manageCredits',
             label: <span>Manage Credits</span>,
-            icon: <Icon name="EditOutlined" />,
+            icon: <Icon name="MoneyOutlined" />,
           },
         ];
 

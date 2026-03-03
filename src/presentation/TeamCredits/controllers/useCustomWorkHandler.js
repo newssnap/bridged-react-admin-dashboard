@@ -23,16 +23,16 @@ export const useCustomWorkHandler = searchValue => {
     return data.map((item, index) => ({
       key: item.creditUsageId || index,
       creditUsageId: item.creditUsageId,
-      teamId: item.team?.teamId,
+      teamId: item.team?.teamId ?? item.teamId,
       teamName: item.team?.teamName || '--',
       companyName: item.team?.companyName || '--',
       workProject: item.usageData?.customWorkTitle || '--',
       category: item.usageData?.customWorkCategory || '--',
-      creditsUsed: item.creditsUsed || 0,
+      creditsUsed: item.creditUsed ?? item.creditsUsed ?? 0,
       status: item.usageData?.customWorkStatus || '--',
       startDate: item.usageData?.customWorkStartDate,
       endDate: item.usageData?.customWorkEndDate,
-      notes: item.usageData?.notes,
+      notes: item.usageData?.customWorkNotes ?? item.usageData?.notes,
     }));
   }, [data]);
 
@@ -48,15 +48,16 @@ export const useCustomWorkHandler = searchValue => {
     );
   }, [tableData, searchValue]);
 
+  const teamsList = teamsData?.data ?? [];
+
   const teamsForSelect = useMemo(() => {
-    if (!teamsData) return [];
-    return teamsData.map((item, index) => ({
-      key: item.team?.teamId || index,
-      teamId: item.team?.teamId,
-      teamName: item.team?.teamName || '--',
-      companyName: item.team?.companyName || '--',
+    return teamsList.map((item, index) => ({
+      key: item.teams?.teamId || index,
+      teamId: item.teams?.teamId,
+      teamName: item.teams?.teamName || '--',
+      companyName: item.teams?.companyName || '--',
     }));
-  }, [teamsData]);
+  }, [teamsList]);
 
   const teamsForEditSelect = useMemo(() => {
     if (!selectedRecord || previewEditMode !== 'edit') return teamsForSelect;
