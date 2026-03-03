@@ -88,7 +88,6 @@ const PreviewEditCustomWorkDrawer = ({
       <>
         <div
           style={{
-            padding: '16px 20px',
             marginBottom: 24,
             borderRadius: 8,
             background: 'var(--ant-color-fill-quaternary)',
