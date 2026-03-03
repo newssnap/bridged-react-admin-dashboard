@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { notification } from 'antd';
 import { message } from 'antd';
 import {
   useGetTeamsQuery,
@@ -144,12 +145,27 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
   const handleManageCreditsSubmit = useCallback(
     async submitData => {
       try {
-        await adjustTeamCredits(submitData).unwrap();
-        message.success('Team credits updated successfully');
-        refetchTeams();
-        closeManageCreditsDrawer();
+        const response = await adjustTeamCredits(submitData).unwrap();
+
+        if (response?.success) {
+          notification.success({
+            message: 'Team credits updated successfully',
+            placement: 'bottomRight',
+          });
+
+          refetchTeams();
+          closeManageCreditsDrawer();
+        } else {
+          notification.error({
+            message: response?.errorObject?.message || 'Failed to update team credits',
+            placement: 'bottomRight',
+          });
+        }
       } catch (err) {
-        message.error(err?.data?.message || 'Failed to update team credits');
+        notification.error({
+          message: err?.data?.message || 'Something went wrong',
+          placement: 'bottomRight',
+        });
       }
     },
     [adjustTeamCredits, refetchTeams, closeManageCreditsDrawer]
@@ -173,20 +189,43 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     async payload => {
       try {
         if (payload.creditUsageId) {
-          await editCustomWork(payload).unwrap();
-          message.success('Custom work entry updated successfully');
+          const response = await editCustomWork(payload).unwrap();
+          if (response?.success) {
+            notification.success({
+              message: 'Custom work entry updated successfully',
+              placement: 'bottomRight',
+            });
+          } else {
+            notification.error({
+              message: response?.errorObject?.message || 'Failed to update team credits',
+              placement: 'bottomRight',
+            });
+          }
         } else {
-          await addCustomWork({
+          const response = await addCustomWork({
             teamId: payload.teamId,
             creditsUsed: payload.creditsUsed,
             usageData: payload.usageData,
           }).unwrap();
-          message.success('Custom work entry added successfully');
+          if (response?.success) {
+            notification.success({
+              message: 'Custom work entry added successfully',
+              placement: 'bottomRight',
+            });
+            refetchTeams();
+            closeCustomWorkEditDrawer();
+          } else {
+            notification.error({
+              message: response?.errorObject?.message || 'Failed to update team credits',
+              placement: 'bottomRight',
+            });
+          }
         }
-        refetchTeams();
-        closeCustomWorkEditDrawer();
       } catch (err) {
-        message.error(err?.data?.message || 'Failed to save custom work entry');
+        notification.error({
+          message: err?.data?.message || 'Something went wrong',
+          placement: 'bottomRight',
+        });
       }
     },
     [editCustomWork, addCustomWork, refetchTeams, closeCustomWorkEditDrawer]
