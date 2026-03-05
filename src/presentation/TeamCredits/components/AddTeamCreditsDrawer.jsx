@@ -74,7 +74,7 @@ const AddTeamCreditsDrawer = ({
   const historyColumns = [
     {
       title: 'Date',
-      dataIndex: ['purchaseData', 'purchaseDate'],
+      dataIndex: 'purchaseDate',
       key: 'date',
       render: value => <span>{value ? formatDate(value) : '--'}</span>,
     },
@@ -84,7 +84,7 @@ const AddTeamCreditsDrawer = ({
       key: 'change',
       align: 'center',
       render: (amount, record) => {
-        const isDeduct = record.purchaseData?.purchaseType === 'deduct';
+        const isDeduct = record.purchaseType === 'deduct';
         return (
           <Text style={{ color: isDeduct ? '#ff4d4f' : '#52c41a' }}>
             {isDeduct ? '-' : '+'}
@@ -95,13 +95,13 @@ const AddTeamCreditsDrawer = ({
     },
     {
       title: 'Reason',
-      dataIndex: ['purchaseData', 'reason'],
+      dataIndex: 'reason',
       key: 'reason',
       render: value => <span>{value || '--'}</span>,
     },
     {
       title: 'Notes',
-      dataIndex: ['purchaseData', 'notes'],
+      dataIndex: 'notes',
       key: 'notes',
       render: value => <span>{value || '--'}</span>,
     },

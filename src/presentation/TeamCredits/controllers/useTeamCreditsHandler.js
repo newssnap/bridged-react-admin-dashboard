@@ -151,7 +151,7 @@ export const useTeamCreditsHandler = searchValue => {
           creditBalance: selectedTeamData.creditBalance,
         }
       : null,
-    historyData,
+    historyData: historyData?.data ?? null,
     isLoadingHistory,
     isSubmitting,
     handleOpenDrawer,
@@ -168,7 +168,7 @@ export const useTeamCreditsHandler = searchValue => {
           creditBalance: selectedTeamDataForAdd.creditBalance,
         }
       : null,
-    addHistoryData,
+    addHistoryData: addHistoryData?.data ?? null,
     isLoadingAddHistory,
     handleOpenAddDrawer,
     handleCloseAddDrawer,
