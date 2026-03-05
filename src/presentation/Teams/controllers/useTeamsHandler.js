@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { notification } from 'antd';
 import { message } from 'antd';
 import {
@@ -29,7 +29,7 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     return rawTeams.map((item, index) => ({
       key: item._id || index,
       _id: item._id,
-      teamName: item.companyName || item.ownerEmail || '--',
+      teamName: item.title || '--',
       companyName: item.companyName || '--',
       ownerEmail: item.ownerEmail || '--',
       memberCount: item.memberCount ?? 0,
@@ -64,6 +64,9 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     }
     return result;
   }, [tableData, searchValue, selectedCompany]);
+  useEffect(() => {
+    console.log(filteredData);
+  }, [filteredData]);
 
   const {
     isDrawerOpen,
@@ -263,7 +266,7 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     manageCreditsDrawerOpen,
     selectedTeamForCredits,
     manageCreditsTeamData,
-    creditsHistoryData,
+    creditsHistoryData: creditsHistoryData?.data ?? null,
     isLoadingCreditsHistory,
     openManageCreditsDrawer,
     closeManageCreditsDrawer,
