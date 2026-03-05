@@ -4,6 +4,7 @@ import {
   useGetTeamCreditsQuery,
   useAddCustomWorkMutation,
   useEditCustomWorkMutation,
+  useDeleteCustomWorkMutation,
 } from '../../../services/api';
 import { message, notification } from 'antd';
 
@@ -12,6 +13,7 @@ export const useCustomWorkHandler = searchValue => {
   const { data: teamsData } = useGetTeamCreditsQuery();
   const [addCustomWork, { isLoading: isSubmitting }] = useAddCustomWorkMutation();
   const [editCustomWork, { isLoading: isEditSubmitting }] = useEditCustomWorkMutation();
+  const [deleteCustomWork, { isLoading: isDeleting }] = useDeleteCustomWorkMutation();
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isPreviewEditDrawerOpen, setIsPreviewEditDrawerOpen] = useState(false);
   const [previewEditMode, setPreviewEditMode] = useState('preview');
@@ -151,9 +153,27 @@ export const useCustomWorkHandler = searchValue => {
     }
   };
 
-  const handleDelete = record => {
-    // TODO: Implement delete functionality
-    console.log('Delete:', record);
+  const handleDelete = async record => {
+    try {
+      const response = await deleteCustomWork(record.creditUsageId).unwrap();
+      if (response?.success) {
+        notification.success({
+          message: 'Custom work entry deleted successfully',
+          placement: 'bottomRight',
+        });
+        refetch();
+      } else {
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to delete custom work entry',
+          placement: 'bottomRight',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
+    }
   };
 
   return {
@@ -177,5 +197,6 @@ export const useCustomWorkHandler = searchValue => {
     isEditSubmitting,
     handleClosePreviewEditDrawer,
     handleSubmitEditForm,
+    isDeleting,
   };
 };

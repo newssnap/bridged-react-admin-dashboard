@@ -474,30 +474,11 @@ export const bridgedApi = createApi({
     }),
 
     deleteCustomWork: builder.mutation({
-      queryFn: async data => {
-        // Mock data response
-        const mockData = {
-          success: true,
-          data: {
-            team: {
-              teamId: '12345',
-              teamName: 'Terrapinn Team B',
-              companyName: 'Terrapinn',
-            },
-            creditUsageId: 'usage-009',
-            creditsUsed: 1200,
-            usageData: {
-              customWorkTitle: 'Terrapinn – Scheduler Build',
-              customWorkCategory: 'Custom Feature',
-              customWorkStatus: 'pending',
-              customWorkStartDate: '2026-01-12T09:30:00.000Z',
-              customWorkEndDate: '2026-01-28T16:45:00.000Z',
-              notes: 'Waiting for client approval before final deployment',
-            },
-          },
-        };
-        return { data: mockData };
-      },
+      query: id => ({
+        url: `/credits/admin/team/custom-work?creditUsageId=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['teamCredits'],
     }),
   }),
 });
