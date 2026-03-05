@@ -29,6 +29,7 @@ function CustomWorkWorkflow() {
     isEditSubmitting,
     handleClosePreviewEditDrawer,
     handleSubmitEditForm,
+    isDeleting,
   } = useCustomWorkHandler(searchValue);
 
   const getStatusColor = status => {
@@ -122,7 +123,7 @@ function CustomWorkWorkflow() {
             key: 'delete',
             label: <span>Delete</span>,
             icon: <Icon name="DeleteOutlined" />,
-            disabled: true,
+            disabled: isDeleting,
           },
         ];
 
