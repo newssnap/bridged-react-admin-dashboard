@@ -43,14 +43,12 @@ const ManageCreditsDrawer = ({
     const submitData = {
       teamId: teamData?.teamId,
       amount: values.amount,
-      purchaseData: {
-        purchaseType: values.purchaseType,
-        reason: values.reason || null,
-        notes: values.notes || null,
-        purchaseDate: values.purchaseDate
-          ? values.purchaseDate.toISOString()
-          : new Date().toISOString(),
-      },
+      purchaseType: values.purchaseType,
+      reason: values.reason || null,
+      notes: values.notes || null,
+      purchaseDate: values.purchaseDate
+        ? values.purchaseDate.toISOString()
+        : new Date().toISOString(),
     };
     onSubmit(submitData);
   };

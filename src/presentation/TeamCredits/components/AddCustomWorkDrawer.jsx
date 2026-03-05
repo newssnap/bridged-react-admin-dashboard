@@ -32,8 +32,9 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
   const handleFinish = values => {
     const payload = {
       teamId: values.teamId,
-      creditsUsed: values.creditsUsed,
+      creditUsed: values.creditsUsed,
       usageData: {
+        type: 'customWork',
         customWorkTitle: values.workProject,
         customWorkCategory: values.category,
         customWorkStatus: values.status,

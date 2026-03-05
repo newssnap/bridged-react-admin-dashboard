@@ -65,8 +65,9 @@ const PreviewEditCustomWorkDrawer = ({
     const payload = {
       teamId: initialRecord.teamId,
       creditUsageId: initialRecord?.creditUsageId,
-      creditsUsed: values.creditsUsed,
+      creditUsed: values.creditsUsed,
       usageData: {
+        type: 'customWork',
         customWorkTitle: values.workProject,
         customWorkCategory: values.category,
         customWorkStatus: values.status,
