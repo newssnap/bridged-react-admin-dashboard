@@ -31,7 +31,7 @@ const SidebarMenu = ({ secondary }) => {
   const navItems = [
     {
       key: '/',
-      label: 'Dashboard',
+      label: 'Accounts',
       icon: getIcon('AppStoreOutlined'),
       onClick: () => navigate('/'),
     },

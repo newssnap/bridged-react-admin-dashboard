@@ -78,8 +78,6 @@ function DashboardWorkflow() {
   const [_CREATE_COMPANY, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
   const [selectedCompanyId, setSelectedCompanyId] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('active');
-  const [selectedSort, setSelectedSort] = useState('lastLogin_DESC');
   const {
     users,
     total,
@@ -90,7 +88,7 @@ function DashboardWorkflow() {
     isLoading,
     isStatusLoading,
     handleUpdateUserStatus,
-  } = useUsersTableHandler(debouncedSearchText, selectedCompanyId, selectedStatus, selectedSort);
+  } = useUsersTableHandler(debouncedSearchText, selectedCompanyId, 'all', 'lastLogin_DESC');
 
   const {
     data: companies,
@@ -507,9 +505,9 @@ function DashboardWorkflow() {
 
   const columns = [
     {
-      title: 'Avatar',
+      title: 'Image',
       key: 'user',
-      width: '75px',
+      width: '50px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
@@ -520,7 +518,7 @@ function DashboardWorkflow() {
       ),
     },
     {
-      title: 'User Email',
+      title: 'Email',
       dataIndex: 'email',
       key: 'email',
       width: '190px',
@@ -557,6 +555,17 @@ function DashboardWorkflow() {
       ),
     },
     {
+      title: 'Role',
+      key: 'role',
+      width: '100px',
+      align: 'center',
+      render: (_, record) => (
+        <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
+          {record.isTeamOwner ? 'Team Owner' : 'Member'}
+        </Tag>
+      ),
+    },
+    {
       title: 'Last Login',
       dataIndex: 'last_login_at',
       key: 'last_login_at',
@@ -572,17 +581,7 @@ function DashboardWorkflow() {
       align: 'center',
       render: company => <span style={{ fontSize: '14px' }}>{company ? company.name : '--'}</span>,
     },
-    {
-      title: 'Role',
-      key: 'role',
-      width: '100px',
-      align: 'center',
-      render: (_, record) => (
-        <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
-          {record.isTeamOwner ? 'Team Owner' : 'Member'}
-        </Tag>
-      ),
-    },
+
     {
       title: 'Actions',
       key: 'actions',
@@ -756,17 +755,6 @@ function DashboardWorkflow() {
                 </Button>
 
                 <Select
-                  options={[
-                    { label: 'Last login (From newest)', value: 'lastLogin_DESC' },
-                    { label: 'Last login (From oldest)', value: 'lastLogin_ASC' },
-                  ]}
-                  size="large"
-                  style={{ width: 200, minWidth: 150 }}
-                  value={selectedSort}
-                  onChange={value => setSelectedSort(value)}
-                />
-
-                <Select
                   ref={selectRef}
                   options={[
                     { label: 'All companies', value: 'all' },
@@ -802,18 +790,6 @@ function DashboardWorkflow() {
                       </Button>
                     </>
                   )}
-                />
-
-                <Select
-                  options={[
-                    { label: 'All users', value: 'all' },
-                    { label: 'Active users', value: 'active' },
-                    { label: 'Inactive users', value: 'inactive' },
-                  ]}
-                  size="large"
-                  style={{ width: 130, minWidth: 110 }}
-                  value={selectedStatus}
-                  onChange={value => setSelectedStatus(value)}
                 />
               </Space>
             </Col>
