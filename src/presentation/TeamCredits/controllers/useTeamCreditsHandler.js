@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMemo } from 'react';
-import { message, notification } from 'antd';
+import { message, notification, Form } from 'antd';
+import dayjs from 'dayjs';
 import {
   useGetTeamCreditsQuery,
   useGetTeamCreditsHistoryQuery,
@@ -13,6 +14,7 @@ export const useTeamCreditsHandler = searchValue => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTeamIdForAdd, setSelectedTeamIdForAdd] = useState(null);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [form] = Form.useForm();
 
   const {
     data: historyData,
@@ -97,7 +99,10 @@ export const useTeamCreditsHandler = searchValue => {
 
         refetchTeamCredits();
         refetchHistory();
-        handleCloseDrawer();
+        form.resetFields();
+        form.setFieldsValue({
+          purchaseDate: dayjs(),
+        });
       } else {
         notification.error({
           message: response?.errorObject?.message || 'Failed to update team credits',
@@ -138,6 +143,7 @@ export const useTeamCreditsHandler = searchValue => {
   };
 
   return {
+    form,
     tableData: filteredData,
     isLoading,
     error,

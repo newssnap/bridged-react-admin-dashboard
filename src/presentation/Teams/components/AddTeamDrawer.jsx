@@ -34,13 +34,21 @@ const AddTeamDrawer = ({
       typeof values.primaryColor === 'string'
         ? values.primaryColor
         : (values.primaryColor?.toHexString?.() ?? '');
+    const dashboardURL = values.dashboardURL?.trim()
+      ? `${values.dashboardURL.trim()}.bridged.media`
+      : undefined;
     onSubmit({
       ...values,
       primaryColor,
+      dashboardURL,
     });
   };
 
   const isWhitelabelingEnabled = Form.useWatch('isWhitelabelingEnabled', form);
+  const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
+  const memberOptions = (userOptions ?? []).map(opt =>
+    opt.value === selectedTeamOwnerId ? { ...opt, disabled: true } : opt
+  );
 
   return (
     <Drawer
@@ -110,7 +118,7 @@ const AddTeamDrawer = ({
             size="large"
             mode="multiple"
             placeholder="Select members"
-            options={userOptions}
+            options={memberOptions}
             showSearch
             optionFilterProp="label"
             loading={isUsersLoading}
@@ -124,8 +132,12 @@ const AddTeamDrawer = ({
 
         {isWhitelabelingEnabled && (
           <>
-            <Form.Item label="Dashboard URL" name="dashboardURL">
-              <Input size="large" placeholder="Enter dashboard URL" />
+            <Form.Item
+              label="Dashboard subdomain"
+              name="dashboardURL"
+              tooltip="Your team dashboard will be available at subdomain.bridged.media"
+            >
+              <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
             </Form.Item>
 
             <Form.Item

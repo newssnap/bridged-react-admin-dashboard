@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { notification } from 'antd';
-import { message } from 'antd';
+import { Form } from 'antd';
 import {
   useGetTeamsQuery,
   useGetTeamCreditsHistoryQuery,
@@ -10,14 +10,15 @@ import {
 } from '../../../services/api';
 import { useAddTeamDrawerHandler } from './useAddTeamDrawerHandler';
 import { useEditTeamDrawerHandler } from './useEditTeamDrawerHandler';
+import dayjs from 'dayjs';
 
 export const useTeamsHandler = (searchValue, selectedCompany) => {
+  const [form] = Form.useForm();
+
   const { data, isLoading, refetch: refetchTeams } = useGetTeamsQuery();
 
   const [viewTeamDrawerOpen, setViewTeamDrawerOpen] = useState(false);
   const [selectedTeamForView, setSelectedTeamForView] = useState(null);
-  const [editTeamDrawerOpen, setEditTeamDrawerOpen] = useState(false);
-  const [selectedTeamForEdit, setSelectedTeamForEdit] = useState(null);
   const [manageCreditsDrawerOpen, setManageCreditsDrawerOpen] = useState(false);
   const [selectedTeamForCredits, setSelectedTeamForCredits] = useState(null);
   const [customWorkEditDrawerOpen, setCustomWorkEditDrawerOpen] = useState(false);
@@ -69,6 +70,22 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
   }, [filteredData]);
 
   const {
+    editTeamDrawerOpen,
+    selectedTeamForEdit,
+    openEditDrawer,
+    closeEditDrawer,
+    form: editTeamForm,
+    companyOptions: editTeamCompanyOptions,
+    handleFinish: handleEditFinish,
+    handleClose: handleEditClose,
+    handleAfterOpenChange: handleEditAfterOpenChange,
+    memberTableData: editMemberTableData,
+    columns: editColumns,
+    isLoadingMembers: isLoadingEditMembers,
+    isSubmitting: isEditSubmitting,
+  } = useEditTeamDrawerHandler(refetchTeams);
+
+  const {
     isDrawerOpen,
     openDrawer,
     closeDrawer,
@@ -80,18 +97,13 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     isSubmitting,
   } = useAddTeamDrawerHandler(editTeamDrawerOpen);
 
-  const closeEditDrawer = useCallback(() => {
-    setEditTeamDrawerOpen(false);
-    setTimeout(() => setSelectedTeamForEdit(null), 300);
-  }, []);
-
-  const { handleSubmit: handleEditSubmit, isSubmitting: isEditSubmitting } =
-    useEditTeamDrawerHandler(closeEditDrawer);
-
-  const { data: creditsHistoryData, isLoading: isLoadingCreditsHistory } =
-    useGetTeamCreditsHistoryQuery(selectedTeamForCredits?._id, {
-      skip: !manageCreditsDrawerOpen || !selectedTeamForCredits?._id,
-    });
+  const {
+    data: creditsHistoryData,
+    isLoading: isLoadingCreditsHistory,
+    refetch: creditHistoryRefetch,
+  } = useGetTeamCreditsHistoryQuery(selectedTeamForCredits?._id, {
+    skip: !manageCreditsDrawerOpen || !selectedTeamForCredits?._id,
+  });
 
   const [adjustTeamCredits, { isLoading: isCreditsSubmitting }] = useAdjustTeamCreditsMutation();
   const [addCustomWork, { isLoading: isAddCustomWorkSubmitting }] = useAddCustomWorkMutation();
@@ -130,11 +142,6 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     setSelectedTeamForView(null);
   }, []);
 
-  const openEditDrawer = useCallback(record => {
-    setSelectedTeamForEdit(record);
-    setEditTeamDrawerOpen(true);
-  }, []);
-
   const openManageCreditsDrawer = useCallback(record => {
     setSelectedTeamForCredits(record);
     setManageCreditsDrawerOpen(true);
@@ -157,7 +164,11 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
           });
 
           refetchTeams();
-          closeManageCreditsDrawer();
+          creditHistoryRefetch();
+          form.resetFields();
+          form.setFieldsValue({
+            purchaseDate: dayjs(),
+          });
         } else {
           notification.error({
             message: response?.errorObject?.message || 'Failed to update team credits',
@@ -250,7 +261,14 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     selectedTeamForEdit,
     openEditDrawer,
     closeEditDrawer,
-    handleEditSubmit,
+    editTeamForm,
+    editTeamCompanyOptions,
+    handleEditFinish,
+    handleEditClose,
+    handleEditAfterOpenChange,
+    editMemberTableData,
+    editColumns,
+    isLoadingEditMembers,
     isEditSubmitting,
 
     isDrawerOpen,
@@ -280,5 +298,6 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     closeCustomWorkEditDrawer,
     handleCustomWorkSubmit,
     isCustomWorkSubmitting,
+    form,
   };
 };

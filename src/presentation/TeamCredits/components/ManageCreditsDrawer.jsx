@@ -27,9 +27,8 @@ const ManageCreditsDrawer = ({
   isLoadingHistory,
   onSubmit,
   isSubmitting,
+  form,
 }) => {
-  const [form] = Form.useForm();
-
   useEffect(() => {
     if (open) {
       form.resetFields();

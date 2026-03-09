@@ -36,26 +36,26 @@ const SidebarMenu = ({ secondary }) => {
       onClick: () => navigate('/'),
     },
     {
-      key: '/companies',
-      label: 'Companies',
-      icon: getIcon('UsersOutlined'),
-      onClick: () => navigate('/companies'),
-    },
-    {
-      key: '/defaultChecklist',
-      label: 'Default Tasklist',
-      icon: getIcon('BarChartOutlined'),
-      onClick: () => navigate('/defaultChecklist'),
-    },
-    {
       key: '/teams',
       label: 'Teams',
       icon: getIcon('UsersOutlined'),
       onClick: () => navigate('/teams'),
     },
     {
+      key: '/companies',
+      label: 'Companies',
+      icon: getIcon('UsersOutlined'),
+      onClick: () => navigate('/companies'),
+    },
+    // {
+    //   key: '/defaultChecklist',
+    //   label: 'Default Tasklist',
+    //   icon: getIcon('BarChartOutlined'),
+    //   onClick: () => navigate('/defaultChecklist'),
+    // },
+    {
       key: 'billing',
-      label: 'Billing Credits',
+      label: 'Billing & Credits',
       icon: getIcon('SettingOutlined'),
       children: [
         {

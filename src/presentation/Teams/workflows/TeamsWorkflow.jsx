@@ -26,7 +26,14 @@ function TeamsWorkflow() {
     selectedTeamForEdit,
     openEditDrawer,
     closeEditDrawer,
-    handleEditSubmit,
+    editTeamForm,
+    editTeamCompanyOptions,
+    handleEditFinish,
+    handleEditClose,
+    handleEditAfterOpenChange,
+    editMemberTableData,
+    editColumns,
+    isLoadingEditMembers,
     isEditSubmitting,
     isDrawerOpen,
     openDrawer,
@@ -52,6 +59,7 @@ function TeamsWorkflow() {
     closeCustomWorkEditDrawer,
     handleCustomWorkSubmit,
     isCustomWorkSubmitting,
+    form,
   } = useTeamsHandler(searchValue, selectedCompany);
 
   const columns = [
@@ -197,13 +205,18 @@ function TeamsWorkflow() {
 
       <EditTeamDrawer
         open={editTeamDrawerOpen}
-        onClose={closeEditDrawer}
         team={selectedTeamForEdit}
-        companyOptions={addTeamCompanyOptions}
         userOptions={userOptions}
         isUsersLoading={isUsersLoading}
         onCompanyChange={onCompanyChange}
-        onSubmit={handleEditSubmit}
+        form={editTeamForm}
+        companyOptions={editTeamCompanyOptions}
+        handleFinish={handleEditFinish}
+        handleClose={handleEditClose}
+        handleAfterOpenChange={handleEditAfterOpenChange}
+        memberTableData={editMemberTableData}
+        columns={editColumns}
+        isLoadingMembers={isLoadingEditMembers}
         isSubmitting={isEditSubmitting}
       />
 
@@ -215,6 +228,7 @@ function TeamsWorkflow() {
         isLoadingHistory={isLoadingCreditsHistory}
         onSubmit={handleManageCreditsSubmit}
         isSubmitting={isCreditsSubmitting}
+        form={form}
       />
 
       <PreviewEditCustomWorkDrawer
