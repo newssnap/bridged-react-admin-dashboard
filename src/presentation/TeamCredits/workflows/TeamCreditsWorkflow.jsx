@@ -30,6 +30,7 @@ function TeamCreditsWorkflow() {
     handleCloseAddDrawer,
     handleTeamSelectForAdd,
     handleSubmitAddForm,
+    form,
   } = useTeamCreditsHandler(searchValue);
 
   const columns = [
@@ -144,6 +145,7 @@ function TeamCreditsWorkflow() {
         isLoadingHistory={isLoadingHistory}
         onSubmit={handleSubmitForm}
         isSubmitting={isSubmitting}
+        form={form}
       />
 
       <AddTeamCreditsDrawer

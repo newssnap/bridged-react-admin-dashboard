@@ -626,18 +626,18 @@ function DashboardWorkflow() {
               handleExportReportClick(record);
             },
           },
-          {
-            key: 'tasklist',
-            label: (
-              <Space>
-                <Icon name="UserCheck" style={{ marginBottom: '-3px' }} />
-                <span>View User Tasklist</span>
-              </Space>
-            ),
-            onClick: () => {
-              navigate(`/userChecklist/${record._id}`);
-            },
-          },
+          // {
+          //   key: 'tasklist',
+          //   label: (
+          //     <Space>
+          //       <Icon name="UserCheck" style={{ marginBottom: '-3px' }} />
+          //       <span>View User Tasklist</span>
+          //     </Space>
+          //   ),
+          //   onClick: () => {
+          //     navigate(`/userChecklist/${record._id}`);
+          //   },
+          // },
           {
             key: 'portal',
             label: (

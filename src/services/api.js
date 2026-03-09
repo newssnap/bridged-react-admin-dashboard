@@ -434,7 +434,7 @@ export const bridgedApi = createApi({
         url: `/credits/admin/team/history?team_id=${id}`,
         method: 'GET',
       }),
-      providesTags: ['teamCreditsHistory'],
+      providesTags: ['teamMembers'],
     }),
 
     adjustTeamCredits: builder.mutation({

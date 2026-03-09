@@ -1,149 +1,32 @@
-import React, { useEffect } from 'react';
-import {
-  Drawer,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  Card,
-  Table,
-  Typography,
-  Dropdown,
-  Tooltip,
-} from 'antd';
-import { CreditCardOutlined, MoreOutlined } from '@ant-design/icons';
-import { useGetAdminTeamMembersQuery, useGetCompaniesQuery } from '../../../services/api';
+import React from 'react';
+import { Drawer, Form, Input, Select, Button, Space, Card, Table, Typography } from 'antd';
+import { CreditCardOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
+const getMemberOptionsWithOwnerDisabled = (userOptions, selectedTeamOwnerId) =>
+  (userOptions ?? []).map(opt =>
+    opt.value === selectedTeamOwnerId ? { ...opt, disabled: true } : opt
+  );
+
 const EditTeamDrawer = ({
   open,
-  onClose,
   team,
-  companyOptions: companyOptionsProp,
   userOptions,
   isUsersLoading,
   onCompanyChange,
-  onSubmit,
+  form,
+  companyOptions,
+  handleFinish,
+  handleClose,
+  handleAfterOpenChange,
+  memberTableData,
+  columns,
+  isLoadingMembers,
   isSubmitting,
 }) => {
-  const [form] = Form.useForm();
-  const teamId = team?._id;
-
-  const { data: companiesResponse } = useGetCompaniesQuery(
-    { page: 1, limit: 500 },
-    { skip: !open }
-  );
-
-  const companiesList = companiesResponse?.data?.data ?? [];
-  const companyOptions = open
-    ? companiesList.map(c => ({ value: c.id, label: c.name || '--' }))
-    : (companyOptionsProp ?? []);
-
-  const { data: membersData, isLoading: isLoadingMembers } = useGetAdminTeamMembersQuery(teamId, {
-    skip: !open || !teamId,
-  });
-
-  const members = membersData?.data ?? [];
-  const membersLoaded = !isLoadingMembers && open && teamId;
-  const userOptionsReady = !isUsersLoading && Array.isArray(userOptions);
-
-  useEffect(() => {
-    if (!open || !team) return;
-    const companyId = companyOptions?.find(o => o.label === team.companyName)?.value;
-    form.setFieldsValue({
-      teamName: team.teamName ?? undefined,
-      companyId: companyId ?? undefined,
-    });
-    if (companyId) {
-      onCompanyChange?.(companyId);
-    }
-  }, [open, team, companyOptions, form, onCompanyChange]);
-
-  useEffect(() => {
-    if (!open || !teamId) return;
-    form.setFieldsValue({ teamOwnerId: undefined, memberIds: [] });
-  }, [open, teamId, form]);
-
-  useEffect(() => {
-    if (!membersLoaded || !userOptionsReady || !members.length) return;
-    const owner = members.find(m => m.isOwner);
-    const teamOwnerId = owner?.userId ?? undefined;
-    const memberIds = members.filter(m => m.userId).map(m => m.userId);
-    form.setFieldsValue({
-      teamOwnerId,
-      memberIds,
-    });
-  }, [membersLoaded, userOptionsReady, members, form]);
-
-  const handleFinish = values => {
-    onSubmit?.({ ...values, teamId: team?._id });
-  };
-
-  const handleClose = () => {
-    onClose?.();
-  };
-
-  const handleAfterOpenChange = open => {
-    if (!open) {
-      form.resetFields();
-    }
-  };
-
-  const memberTableData = members.map((m, index) => ({
-    key: m._id || m.userId || index,
-    name: m.name?.trim() || m.email || '—',
-    email: m.email || '—',
-    role: m.isOwner ? 'Owner' : 'Member',
-    profilePicture: m.profilePicture,
-  }));
-
-  const columns = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: name => <Text>{name}</Text>,
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: value => <Text type="secondary">{value}</Text>,
-    },
-    {
-      title: 'Role',
-      dataIndex: 'role',
-      key: 'role',
-      render: role => (
-        <Text strong={role === 'Owner'} type={role === 'Owner' ? null : 'secondary'}>
-          {role}
-        </Text>
-      ),
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 50,
-      align: 'center',
-      render: (_, record) => {
-        const items = [
-          { key: 'makeOwner', label: <span>Make Owner</span>, disabled: record.role === 'Owner' },
-        ];
-        const handleMenuClick = ({ key }) => {
-          // API to be implemented later
-        };
-        return (
-          <Dropdown trigger={['click']} menu={{ items, onClick: handleMenuClick }}>
-            <Tooltip title="Actions">
-              <Button type="text" shape="circle" size="small" icon={<MoreOutlined />} />
-            </Tooltip>
-          </Dropdown>
-        );
-      },
-    },
-  ];
+  const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
+  const memberOptions = getMemberOptionsWithOwnerDisabled(userOptions, selectedTeamOwnerId);
 
   return (
     <Drawer
@@ -221,7 +104,7 @@ const EditTeamDrawer = ({
                 size="large"
                 mode="multiple"
                 placeholder="Select members"
-                options={userOptions}
+                options={memberOptions}
                 showSearch
                 optionFilterProp="label"
                 loading={isUsersLoading}
