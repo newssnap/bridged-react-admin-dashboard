@@ -37,6 +37,7 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
       creditBalance: item.creditBalance ?? 0,
       customWork: item.customWork ?? 0,
       companyId: item.companyId ?? undefined,
+      logo: item.logo ?? undefined,
     }));
   }, [rawTeams]);
 

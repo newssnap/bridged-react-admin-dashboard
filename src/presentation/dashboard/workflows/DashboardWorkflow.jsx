@@ -545,14 +545,6 @@ function DashboardWorkflow() {
       ),
     },
     {
-      title: 'Last Login',
-      dataIndex: 'last_login_at',
-      key: 'last_login_at',
-      align: 'center',
-      width: '120px',
-      render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
-    },
-    {
       title: 'Company',
       dataIndex: 'company',
       key: 'company',
@@ -570,7 +562,14 @@ function DashboardWorkflow() {
         <span style={{ fontSize: '14px' }}>{record?.teamTitle ? record?.teamTitle : '--'}</span>
       ),
     },
-
+    {
+      title: 'Last Login',
+      dataIndex: 'last_login_at',
+      key: 'last_login_at',
+      align: 'center',
+      width: '120px',
+      render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
+    },
     {
       title: 'Actions',
       key: 'actions',

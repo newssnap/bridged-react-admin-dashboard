@@ -1,6 +1,6 @@
 import React from 'react';
 import { Drawer, Typography, Button, Table, Space, Card, Avatar } from 'antd';
-import { CreditCardOutlined, FileTextOutlined } from '@ant-design/icons';
+import { CreditCardOutlined, FileTextOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useGetAdminTeamMembersQuery } from '../../../services/api';
 
@@ -9,7 +9,7 @@ const { Text } = Typography;
 const ViewTeamDrawer = ({ open, onClose, team }) => {
   const navigate = useNavigate();
   const teamId = team?._id;
-
+  console.log(team);
   const { data: membersData, isLoading: isLoadingMembers } = useGetAdminTeamMembersQuery(teamId, {
     skip: !open || !teamId,
   });
@@ -89,12 +89,18 @@ const ViewTeamDrawer = ({ open, onClose, team }) => {
             border: '1px solid var(--ant-color-border-secondary)',
           }}
         >
-          <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 4 }}>
-            {team.teamName || '—'}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 14 }}>
-            {team.companyName || '—'}
-          </Text>
+          <Space align="center" style={{ gap: 24 }}>
+            <Avatar size={64} src={team.logo ?? undefined} icon={<UserOutlined />} />
+
+            <Space direction="vertical" style={{ gap: 4 }}>
+              <Text strong style={{ fontSize: 18 }}>
+                {team.teamName || '—'}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                {team.companyName || '—'}
+              </Text>
+            </Space>
+          </Space>
         </Card>
 
         {/* 2. Credit Balance */}
