@@ -46,9 +46,7 @@ const AddTeamDrawer = ({
 
   const isWhitelabelingEnabled = Form.useWatch('isWhitelabelingEnabled', form);
   const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
-  const memberOptions = (userOptions ?? []).map(opt =>
-    opt.value === selectedTeamOwnerId ? { ...opt, disabled: true } : opt
-  );
+  const memberOptions = (userOptions ?? []).filter(opt => opt.value !== selectedTeamOwnerId);
 
   return (
     <Drawer

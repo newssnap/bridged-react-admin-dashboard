@@ -31,7 +31,11 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     [open, companiesList]
   );
 
-  const { data: membersData, isLoading: isLoadingMembers } = useGetAdminTeamMembersQuery(teamId, {
+  const {
+    data: membersData,
+    isLoading: isLoadingMembers,
+    refetch: refetchTeamMembers,
+  } = useGetAdminTeamMembersQuery(teamId, {
     skip: !open || !teamId,
   });
 
@@ -73,7 +77,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     if (!membersLoaded || !members.length) return;
     const owner = members.find(m => m.isOwner);
     const teamOwnerId = owner?.userId ?? undefined;
-    const memberIds = members.filter(m => m.userId).map(m => m.userId);
+    const memberIds = members.filter(m => m.userId && m.userId !== teamOwnerId).map(m => m.userId);
     form.setFieldsValue({
       teamOwnerId,
       memberIds,
@@ -87,10 +91,20 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         return;
       }
       try {
-        const teamMembers = (values.memberIds ?? []).map(userId => ({
+        console.log(values.memberIds);
+        let teamMembers = (values.memberIds ?? []).map(userId => ({
           userId,
           accessConfigs: [],
         }));
+        // Remove the teamOwnerId from teamMembers if present
+        if (values.teamOwnerId) {
+          // Remove any member with userId equal to teamOwnerId
+          for (let i = teamMembers.length - 1; i >= 0; i--) {
+            if (teamMembers[i].userId === values.teamOwnerId) {
+              teamMembers.splice(i, 1);
+            }
+          }
+        }
 
         const payload = {
           _id: values.teamId,
@@ -106,21 +120,23 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
             message: 'Team updated successfully',
             placement: 'bottomRight',
           });
+          await refetchTeamMembers?.();
           onSuccess?.();
         } else {
           notification.error({
-            message: response?.errorObject?.message || 'Failed to update team credits',
+            message: response?.data?.errorObject?.userErrorText || 'Failed to update team credits',
             placement: 'bottomRight',
           });
         }
       } catch (err) {
+        console.log(err);
         notification.error({
-          message: err?.data?.message || 'Something went wrong',
+          message: err?.data?.errorObject?.userErrorText || 'Something went wrong',
           placement: 'bottomRight',
         });
       }
     },
-    [updateTeam, onSuccess]
+    [updateTeam, onSuccess, refetchTeamMembers]
   );
 
   const handleFinish = useCallback(
@@ -179,27 +195,27 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           </Text>
         ),
       },
-      {
-        title: 'Action',
-        key: 'action',
-        width: 50,
-        align: 'center',
-        render: (_, record) => {
-          const items = [
-            { key: 'makeOwner', label: <span>Make Owner</span>, disabled: record.role === 'Owner' },
-          ];
-          const handleMenuClick = () => {
-            // API to be implemented later
-          };
-          return (
-            <Dropdown trigger={['click']} menu={{ items, onClick: handleMenuClick }}>
-              <Tooltip title="Actions">
-                <Button type="text" shape="circle" size="small" icon={<MoreOutlined />} />
-              </Tooltip>
-            </Dropdown>
-          );
-        },
-      },
+      // {
+      //   title: 'Action',
+      //   key: 'action',
+      //   width: 50,
+      //   align: 'center',
+      //   render: (_, record) => {
+      //     const items = [
+      //       { key: 'makeOwner', label: <span>Make Owner</span>, disabled: record.role === 'Owner' },
+      //     ];
+      //     const handleMenuClick = () => {
+      //       // API to be implemented later
+      //     };
+      //     return (
+      //       <Dropdown trigger={['click']} menu={{ items, onClick: handleMenuClick }}>
+      //         <Tooltip title="Actions">
+      //           <Button type="text" shape="circle" size="small" icon={<MoreOutlined />} />
+      //         </Tooltip>
+      //       </Dropdown>
+      //     );
+      //   },
+      // },
     ],
     []
   );

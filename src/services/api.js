@@ -84,11 +84,12 @@ export const bridgedApi = createApi({
     }),
 
     getUserAdminPagination: builder.mutation({
-      query: ({ companyId, status, sort, search, pageNumber, limit }) => ({
+      query: ({ companyId, teamId, status, sort, search, pageNumber, limit }) => ({
         url: '/User/Admin/Pagination',
         method: 'POST',
         body: {
           ...(companyId && { companyId }),
+          ...(teamId && { teamId }),
           status: status || 'all',
           sort: sort || 'lastLogin_DESC',
           search: search || '',
@@ -396,6 +397,14 @@ export const bridgedApi = createApi({
       providesTags: ['teams'],
     }),
 
+    getTeamsByCompany: builder.query({
+      query: companyId => ({
+        url: `/Team/Admin/GetTeamsByCompanyId?companyId=${companyId}`,
+        method: 'GET',
+      }),
+      providesTags: ['teams'],
+    }),
+
     getAdminTeamMembers: builder.query({
       query: id => ({
         url: `/Team/Admin/TeamMember?teamId=${id}`,
@@ -536,4 +545,5 @@ export const {
   useUpdateTeamMutation,
   useFindAllUsersPaginationMutation,
   useGetAdminTeamMembersQuery,
+  useGetTeamsByCompanyQuery,
 } = bridgedApi;
