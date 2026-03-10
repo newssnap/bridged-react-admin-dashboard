@@ -97,13 +97,14 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
         closeDrawer();
       } else {
         notification.error({
-          message: response?.errorObject?.message || 'Failed to update team credits',
+          message: response?.data?.errorObject?.userErrorText || 'Failed to update team credits',
           placement: 'bottomRight',
         });
       }
     } catch (err) {
+      console.log(err);
       notification.error({
-        message: err?.data?.message || 'Something went wrong',
+        message: err?.data?.errorObject?.userErrorText || 'Something went wrong',
         placement: 'bottomRight',
       });
     }
