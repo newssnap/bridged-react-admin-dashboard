@@ -8,7 +8,7 @@ import {
 
 const PAGE_SIZE = 10;
 
-const useUsersTableHandler = (searchValue, companyId, status, sort) => {
+const useUsersTableHandler = (searchValue, companyId, teamId, status, sort) => {
   const [page, setPage] = useState(1);
   const [limit] = useState(PAGE_SIZE);
 
@@ -25,13 +25,14 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
   const refetchUsers = useCallback(() => {
     _GET_USERS({
       companyId: companyId === 'all' ? undefined : companyId,
+      teamId: teamId === 'all' ? undefined : teamId,
       status: status === 'all' ? undefined : status,
       sort: sort === 'lastLogin_ASC' ? 'lastLogin_ASC' : 'lastLogin_DESC',
       search: searchValue || '',
       pageNumber: page,
       limit,
     });
-  }, [_GET_USERS, companyId, status, sort, searchValue, page, limit]);
+  }, [_GET_USERS, companyId, teamId, status, sort, searchValue, page, limit]);
 
   const handleUpdateUserStatus = async (userId, status) => {
     if (status === 'activate') {
@@ -74,13 +75,14 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
   useEffect(() => {
     _GET_USERS({
       companyId: companyId === 'all' ? undefined : companyId,
+      teamId: teamId === 'all' ? undefined : teamId,
       status: status === 'all' ? undefined : status,
       sort: sort === 'lastLogin_ASC' ? 'lastLogin_ASC' : 'lastLogin_DESC',
       search: searchValue || '',
       pageNumber: page,
       limit,
     });
-  }, [_GET_USERS, page, limit, searchValue, companyId, status, sort]);
+  }, [_GET_USERS, page, limit, searchValue, companyId, teamId, status, sort]);
 
   const { users, total } = useMemo(() => {
     const usersData =
@@ -100,7 +102,7 @@ const useUsersTableHandler = (searchValue, companyId, status, sort) => {
 
   useEffect(() => {
     setPage(1);
-  }, [searchValue, sort]);
+  }, [searchValue, sort, companyId, teamId]);
 
   useEffect(() => {
     if (isError && error) {

@@ -4,10 +4,8 @@ import { CreditCardOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-const getMemberOptionsWithOwnerDisabled = (userOptions, selectedTeamOwnerId) =>
-  (userOptions ?? []).map(opt =>
-    opt.value === selectedTeamOwnerId ? { ...opt, disabled: true } : opt
-  );
+const getMemberOptionsExcludingOwner = (userOptions, selectedTeamOwnerId) =>
+  (userOptions ?? []).filter(opt => opt.value !== selectedTeamOwnerId);
 
 const EditTeamDrawer = ({
   open,
@@ -26,7 +24,7 @@ const EditTeamDrawer = ({
   isSubmitting,
 }) => {
   const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
-  const memberOptions = getMemberOptionsWithOwnerDisabled(userOptions, selectedTeamOwnerId);
+  const memberOptions = getMemberOptionsExcludingOwner(userOptions, selectedTeamOwnerId);
 
   return (
     <Drawer
