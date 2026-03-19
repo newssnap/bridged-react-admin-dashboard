@@ -486,7 +486,7 @@ function DashboardWorkflow() {
     {
       title: 'Image',
       key: 'user',
-      width: '50px',
+      width: '65px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">

@@ -202,13 +202,13 @@ const EditTeamDrawer = ({
 
             {isWhitelabelingEnabled && (
               <>
-                <Form.Item
+                {/* <Form.Item
                   label="Dashboard subdomain"
                   name="dashboardURL"
                   tooltip="Your team dashboard will be available at subdomain.bridged.media"
                 >
                   <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
-                </Form.Item>
+                </Form.Item> */}
 
                 <Form.Item
                   label="Primary Color"
