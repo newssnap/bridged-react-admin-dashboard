@@ -538,11 +538,23 @@ function DashboardWorkflow() {
       key: 'role',
       width: '100px',
       align: 'center',
-      render: (_, record) => (
-        <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
-          {record.isTeamOwner ? 'Team Owner' : 'Member'}
-        </Tag>
-      ),
+      render: (_, record) => {
+        if (record.teamId) {
+          return (
+            <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
+              {record.isTeamOwner ? 'Team Owner' : 'Member'}
+            </Tag>
+          );
+        } else {
+          return (
+            <Tooltip title="This user is not part of a team, if you login with this account, a team will be created for them.">
+              <Tag color="orange" style={{ textAlign: 'center' }}>
+                Not Set
+              </Tag>
+            </Tooltip>
+          );
+        }
+      },
     },
     {
       title: 'Company',
