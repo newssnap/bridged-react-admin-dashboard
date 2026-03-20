@@ -122,7 +122,7 @@ function TeamCreditsWorkflow() {
           />
         </Flex>
         <Table
-          dataSource={tableData}
+          // dataSource={tableData}
           loading={isLoading}
           columns={columns}
           bordered
@@ -132,7 +132,14 @@ function TeamCreditsWorkflow() {
             showQuickJumper: false,
           }}
           locale={{
-            emptyText: 'No teams found',
+            emptyText: (
+              <Space direction="vertical" align="center">
+                <span>No team credits has been added yet.</span>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddDrawer}>
+                  Add your First Team Credit
+                </Button>
+              </Space>
+            ),
           }}
         />
       </Space>

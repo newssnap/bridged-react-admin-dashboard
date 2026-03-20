@@ -188,7 +188,7 @@ const AddUserDrawer = ({
         <Form.Item
           name="company"
           label="Company"
-          rules={[{ required: true, message: 'Please select the company!' }]}
+          rules={[{ required: false, message: 'Please select the company!' }]}
         >
           <Select
             ref={companySelectRef}

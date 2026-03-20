@@ -1,6 +1,20 @@
-import React from 'react';
-import { Drawer, Form, Input, Select, Button, Space, Card, Table, Typography } from 'antd';
-import { CreditCardOutlined } from '@ant-design/icons';
+import React, { useRef, useState } from 'react';
+import {
+  Drawer,
+  Form,
+  Input,
+  Select,
+  Switch,
+  Button,
+  Space,
+  Card,
+  Table,
+  Typography,
+  ColorPicker,
+  notification,
+} from 'antd';
+import { CreditCardOutlined, PictureOutlined } from '@ant-design/icons';
+import { useUploadImageMutation } from '../../../services/api';
 
 const { Text } = Typography;
 
@@ -23,8 +37,80 @@ const EditTeamDrawer = ({
   isLoadingMembers,
   isSubmitting,
 }) => {
+  const fileInputRef = useRef(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadImage, { isLoading: isUploadingLogo }] = useUploadImageMutation();
   const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
+  const isWhitelabelingEnabled = Form.useWatch('isWhitelabelingEnabled', form);
+  const logoUrl = Form.useWatch('logoUrl', form);
   const memberOptions = getMemberOptionsExcludingOwner(userOptions, selectedTeamOwnerId);
+  const displayedLogoUrl = logoPreviewUrl || logoUrl || '';
+
+  const handleLogoUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const processLogoFile = async file => {
+    if (!file || !file.type?.startsWith('image/')) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await uploadImage(formData).unwrap();
+      if (response?.success && response?.data) {
+        const url = typeof response.data === 'string' ? response.data : response.data?.url;
+        if (url) {
+          form.setFieldValue('logoUrl', url);
+          setLogoPreviewUrl(url);
+        } else {
+          notification.error({
+            message: 'Upload failed',
+            description: 'Invalid response from server',
+          });
+        }
+      } else {
+        notification.error({
+          message: 'Error uploading image',
+          description: response?.message || 'Upload failed',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        message: 'Error uploading image',
+        description: error?.data?.message || 'Something went wrong',
+      });
+    }
+  };
+
+  const handleLogoFileChange = async e => {
+    const file = e.target.files?.[0];
+    if (file) await processLogoFile(file);
+    e.target.value = '';
+  };
+
+  const handleLogoDrop = e => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) processLogoFile(file);
+  };
+
+  const handleLogoDragOver = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleLogoDragLeave = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDeleteLogo = () => {
+    form.setFieldValue('logoUrl', undefined);
+    setLogoPreviewUrl('');
+  };
 
   return (
     <Drawer
@@ -109,6 +195,101 @@ const EditTeamDrawer = ({
                 allowClear
               />
             </Form.Item>
+
+            <Form.Item label="WhiteLabeling" name="isWhitelabelingEnabled" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+
+            {isWhitelabelingEnabled && (
+              <>
+                {/* <Form.Item
+                  label="Dashboard subdomain"
+                  name="dashboardURL"
+                  tooltip="Your team dashboard will be available at subdomain.bridged.media"
+                >
+                  <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
+                </Form.Item> */}
+
+                <Form.Item
+                  label="Primary Color"
+                  name="primaryColor"
+                  getValueFromEvent={color => color?.toHexString?.() ?? color}
+                >
+                  <ColorPicker format="hex" showText />
+                </Form.Item>
+
+                <Form.Item label="Logo" name="logoUrl">
+                  <div>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={handleLogoUploadClick}
+                      onKeyDown={e => e.key === 'Enter' && handleLogoUploadClick()}
+                      onDragOver={handleLogoDragOver}
+                      onDragLeave={handleLogoDragLeave}
+                      onDrop={handleLogoDrop}
+                      style={{
+                        border: `1px dashed ${isDragging ? '#1890ff' : '#d9d9d9'}`,
+                        borderRadius: 8,
+                        padding: 24,
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        background: displayedLogoUrl
+                          ? `center/contain no-repeat url(${displayedLogoUrl})`
+                          : isDragging
+                            ? '#e6f7ff'
+                            : '#fafafa',
+                        minHeight: 120,
+                      }}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleLogoFileChange}
+                        disabled={isUploadingLogo}
+                      />
+                      {!displayedLogoUrl ? (
+                        <>
+                          <PictureOutlined
+                            style={{ fontSize: 32, color: '#bfbfbf', marginBottom: 8 }}
+                          />
+                          <div style={{ color: '#8c8c8c' }}>
+                            Click or drag file here to upload logo
+                          </div>
+                          {isUploadingLogo && (
+                            <div style={{ marginTop: 8, color: '#1890ff' }}>Uploading...</div>
+                          )}
+                        </>
+                      ) : null}
+                    </div>
+                    {displayedLogoUrl && (
+                      <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                        <Button
+                          type="primary"
+                          size="middle"
+                          onClick={handleLogoUploadClick}
+                          loading={isUploadingLogo}
+                          style={{ flex: 1 }}
+                        >
+                          Change
+                        </Button>
+                        <Button
+                          type="default"
+                          size="middle"
+                          onClick={handleDeleteLogo}
+                          disabled={!displayedLogoUrl}
+                          style={{ flex: 1 }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Form.Item>
+              </>
+            )}
           </Form>
 
           {/* Current Credit */}

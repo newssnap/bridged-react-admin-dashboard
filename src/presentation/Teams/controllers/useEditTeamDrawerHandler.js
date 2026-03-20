@@ -59,9 +59,16 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   useEffect(() => {
     if (!open || !team) return;
     const companyId = companyOptions?.find(o => o.label === team.companyName)?.value;
+    const dashboardSubdomain = team.dashboardURL?.endsWith('.bridged.media')
+      ? team.dashboardURL.replace('.bridged.media', '')
+      : (team.dashboardURL ?? undefined);
     form.setFieldsValue({
       teamName: team.teamName ?? undefined,
       companyId: companyId ?? undefined,
+      isWhitelabelingEnabled: !!team.isWhitelabelingEnabled,
+      dashboardURL: dashboardSubdomain,
+      primaryColor: team.primaryColor ?? '#753fd0',
+      logoUrl: team.logo ?? undefined,
     });
     if (companyId) {
       onCompanyChange?.(companyId);
@@ -111,8 +118,21 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           title: values.teamName?.trim() ?? '',
           companyId: values.companyId ?? '',
           teamOwnerId: values.teamOwnerId ?? '',
+          isWhitelabelingEnabled: !!values.isWhitelabelingEnabled,
           teamMembers,
         };
+
+        if (payload.isWhitelabelingEnabled) {
+          payload.dashboardURL = values.dashboardURL?.trim()
+            ? `${values.dashboardURL.trim()}.bridged.media`
+            : '';
+          payload.primaryColor = values.primaryColor ?? '';
+          payload.logo = values.logoUrl?.trim() ?? '';
+        } else {
+          payload.dashboardURL = '';
+          payload.primaryColor = '';
+          payload.logo = '';
+        }
 
         const response = await updateTeam(payload).unwrap();
         if (response?.success) {

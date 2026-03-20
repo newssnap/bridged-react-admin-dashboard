@@ -182,7 +182,14 @@ function TeamsWorkflow() {
           showQuickJumper: false,
         }}
         locale={{
-          emptyText: 'No teams found',
+          emptyText: (
+            <Space direction="vertical" align="center">
+              <span>No teams has been added yet.</span>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openDrawer}>
+                Add your First Team
+              </Button>
+            </Space>
+          ),
         }}
       />
 
