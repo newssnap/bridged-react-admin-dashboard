@@ -122,7 +122,7 @@ function TeamCreditsWorkflow() {
           />
         </Flex>
         <Table
-          // dataSource={tableData}
+          dataSource={tableData}
           loading={isLoading}
           columns={columns}
           bordered
