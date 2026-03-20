@@ -200,7 +200,14 @@ function CustomWorkWorkflow() {
             showQuickJumper: false,
           }}
           locale={{
-            emptyText: 'No custom work entries found',
+            emptyText: (
+              <Space direction="vertical" align="center">
+                <span>No custom work entries has been added yet.</span>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddDrawer}>
+                  Add your First Custom Work Entry
+                </Button>
+              </Space>
+            ),
           }}
         />
       </Space>
