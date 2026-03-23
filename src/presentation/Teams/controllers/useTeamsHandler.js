@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { notification } from 'antd';
 import { Form } from 'antd';
+import { useLocation } from 'react-router-dom';
 import {
   useGetTeamsQuery,
   useGetTeamCreditsHistoryQuery,
@@ -14,6 +15,7 @@ import dayjs from 'dayjs';
 
 export const useTeamsHandler = (searchValue, selectedCompany) => {
   const [form] = Form.useForm();
+  const { pathname } = useLocation();
 
   const { data, isLoading, refetch: refetchTeams } = useGetTeamsQuery();
 
@@ -73,6 +75,10 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     console.log(filteredData);
   }, [filteredData]);
 
+  useEffect(() => {
+    refetchTeams();
+  }, [pathname, refetchTeams]);
+
   const {
     editTeamDrawerOpen,
     selectedTeamForEdit,
@@ -87,6 +93,11 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     columns: editColumns,
     isLoadingMembers: isLoadingEditMembers,
     isSubmitting: isEditSubmitting,
+    isLoadingCompanies: isLoadingEditCompanies,
+    companySearchText: editCompanySearchText,
+    handleCompanySearch: handleEditCompanySearch,
+    createCompany: createEditCompany,
+    isCreatingCompany: isCreatingEditCompany,
   } = useEditTeamDrawerHandler(refetchTeams);
 
   const {
@@ -96,7 +107,12 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     companyOptions: addTeamCompanyOptions,
     userOptions,
     isUsersLoading,
+    isLoadingCompanies: isLoadingAddCompanies,
     onCompanyChange,
+    companySearchText: addCompanySearchText,
+    handleCompanySearch: handleAddCompanySearch,
+    createCompany: createAddCompany,
+    isCreatingCompany: isCreatingAddCompany,
     handleSubmit,
     isSubmitting,
   } = useAddTeamDrawerHandler(editTeamDrawerOpen);
@@ -274,6 +290,11 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     editColumns,
     isLoadingEditMembers,
     isEditSubmitting,
+    isLoadingEditCompanies,
+    editCompanySearchText,
+    handleEditCompanySearch,
+    createEditCompany,
+    isCreatingEditCompany,
 
     isDrawerOpen,
     openDrawer,
@@ -281,7 +302,12 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     addTeamCompanyOptions,
     userOptions,
     isUsersLoading,
+    isLoadingAddCompanies,
     onCompanyChange,
+    addCompanySearchText,
+    handleAddCompanySearch,
+    createAddCompany,
+    isCreatingAddCompany,
     handleSubmit,
     isSubmitting,
 

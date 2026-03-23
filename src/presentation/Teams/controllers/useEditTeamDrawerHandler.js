@@ -5,6 +5,7 @@ import {
   useUpdateTeamMutation,
   useGetCompaniesQuery,
   useGetAdminTeamMembersQuery,
+  useCreateCompanyMutation,
 } from '../../../services/api';
 
 const { Text } = Typography;
@@ -13,6 +14,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   const [form] = Form.useForm();
   const [editTeamDrawerOpen, setEditTeamDrawerOpen] = useState(false);
   const [selectedTeamForEdit, setSelectedTeamForEdit] = useState(null);
+  const [companySearchText, setCompanySearchText] = useState('');
 
   const teamId = selectedTeamForEdit?._id;
   const open = editTeamDrawerOpen;
@@ -20,10 +22,15 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
   const [updateTeam, { isLoading: isSubmitting }] = useUpdateTeamMutation();
 
-  const { data: companiesResponse } = useGetCompaniesQuery(
-    { page: 1, limit: 500 },
+  const {
+    data: companiesResponse,
+    isLoading: isLoadingCompanies,
+    refetch: refetchCompanies,
+  } = useGetCompaniesQuery(
+    { page: 1, limit: 500, search: companySearchText || '' },
     { skip: !open }
   );
+  const [createCompanyMutation, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
   const companiesList = companiesResponse?.data?.data ?? [];
   const companyOptions = useMemo(
@@ -44,6 +51,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
   const closeEditDrawer = useCallback(() => {
     setEditTeamDrawerOpen(false);
+    setCompanySearchText('');
     setTimeout(() => setSelectedTeamForEdit(null), 300);
   }, []);
 
@@ -141,6 +149,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
             placement: 'bottomRight',
           });
           await refetchTeamMembers?.();
+          closeEditDrawer();
           onSuccess?.();
         } else {
           notification.error({
@@ -156,7 +165,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         });
       }
     },
-    [updateTeam, onSuccess, refetchTeamMembers]
+    [updateTeam, onSuccess, refetchTeamMembers, closeEditDrawer]
   );
 
   const handleFinish = useCallback(
@@ -174,9 +183,41 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     isOpen => {
       if (!isOpen) {
         form.resetFields();
+        setCompanySearchText('');
       }
     },
     [form]
+  );
+
+  const handleCompanySearch = useCallback(value => {
+    setCompanySearchText(value ?? '');
+  }, []);
+
+  const createCompany = useCallback(
+    async values => {
+      const companyName = values?.name?.trim();
+      if (!companyName) return null;
+
+      try {
+        const result = await createCompanyMutation(companyName).unwrap();
+        notification.success({
+          message: 'Company created successfully',
+          placement: 'bottomRight',
+        });
+
+        await refetchCompanies();
+        setCompanySearchText('');
+
+        return result?.id || result?.data?.id || result?.data?.data?.id || result?._id || null;
+      } catch (error) {
+        notification.error({
+          message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
+          placement: 'bottomRight',
+        });
+        return null;
+      }
+    },
+    [createCompanyMutation, refetchCompanies]
   );
 
   const memberTableData = useMemo(
@@ -255,5 +296,10 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     memberTableData,
     columns,
     isSubmitting,
+    isLoadingCompanies,
+    companySearchText,
+    handleCompanySearch,
+    createCompany,
+    isCreatingCompany,
   };
 };

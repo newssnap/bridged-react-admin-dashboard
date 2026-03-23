@@ -10,8 +10,10 @@ import {
   Card,
   Table,
   Typography,
+  Alert,
   ColorPicker,
   notification,
+  Divider,
 } from 'antd';
 import { CreditCardOutlined, PictureOutlined } from '@ant-design/icons';
 import { useUploadImageMutation } from '../../../services/api';
@@ -29,6 +31,11 @@ const EditTeamDrawer = ({
   onCompanyChange,
   form,
   companyOptions,
+  isLoadingCompanies,
+  companySearchText,
+  onCompanySearch,
+  onCreateCompany,
+  isCreatingCompany,
   handleFinish,
   handleClose,
   handleAfterOpenChange,
@@ -159,11 +166,58 @@ const EditTeamDrawer = ({
                 placeholder="Select company"
                 options={companyOptions}
                 showSearch
+                loading={isLoadingCompanies}
                 optionFilterProp="label"
+                filterOption={false}
                 allowClear
                 onChange={companyId => {
                   onCompanyChange?.(companyId);
                 }}
+                onSearch={onCompanySearch}
+                onBlur={() => onCompanySearch?.('')}
+                notFoundContent={
+                  !isLoadingCompanies && companySearchText?.trim() ? (
+                    <div
+                      style={{
+                        borderRadius: 8,
+                        padding: 24,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 120,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          fontSize: 14,
+                          marginBottom: 20,
+                          textAlign: 'center',
+                        }}
+                      >
+                        No companies found.
+                      </div>
+                      <Button
+                        type="primary"
+                        size="middle"
+                        style={{ minWidth: 140 }}
+                        onClick={async () => {
+                          const createdCompanyId = await onCreateCompany?.({
+                            name: companySearchText ?? '',
+                          });
+                          if (!createdCompanyId) return;
+
+                          form.setFieldValue('companyId', createdCompanyId);
+                          onCompanyChange?.(createdCompanyId);
+                        }}
+                        loading={isCreatingCompany}
+                      >
+                        Create "{companySearchText || 'company'}"
+                      </Button>
+                    </div>
+                  ) : null
+                }
               />
             </Form.Item>
 
@@ -209,6 +263,29 @@ const EditTeamDrawer = ({
                 >
                   <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
                 </Form.Item> */}
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Need a custom subdomain?"
+                  description={
+                    <Space direction="vertical" size={4}>
+                      <span>
+                        Custom subdomains are available via the tech team. Contact them to enable
+                        this feature for this team.
+                      </span>
+                      <Button
+                        type="link"
+                        size="small"
+                        color="primary"
+                        style={{ paddingInline: 0 }}
+                        className="linkTag"
+                      >
+                        Contact Tech Team
+                      </Button>
+                    </Space>
+                  }
+                  style={{ marginBottom: 16 }}
+                />
 
                 <Form.Item
                   label="Primary Color"
@@ -291,7 +368,7 @@ const EditTeamDrawer = ({
               </>
             )}
           </Form>
-
+          <Divider style={{ marginTop: '0px', marginBottom: '13px' }} />
           {/* Current Credit */}
           <Card
             size="small"
