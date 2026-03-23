@@ -7,6 +7,7 @@ import {
   Switch,
   Button,
   Space,
+  Alert,
   ColorPicker,
   notification,
 } from 'antd';
@@ -17,6 +18,11 @@ const AddTeamDrawer = ({
   open,
   onClose,
   companyOptions,
+  isLoadingCompanies,
+  companySearchText,
+  onCompanySearch,
+  onCreateCompany,
+  isCreatingCompany,
   userOptions,
   isUsersLoading,
   onCompanyChange,
@@ -167,13 +173,62 @@ const AddTeamDrawer = ({
             placeholder="Select company"
             options={companyOptions}
             showSearch
+            loading={isLoadingCompanies}
             optionFilterProp="label"
+            filterOption={false}
             allowClear
             onChange={companyId => {
               form.setFieldValue('teamOwnerId', undefined);
               form.setFieldValue('memberIds', undefined);
               onCompanyChange(companyId);
             }}
+            onSearch={onCompanySearch}
+            onBlur={() => onCompanySearch?.('')}
+            notFoundContent={
+              !isLoadingCompanies && companySearchText?.trim() ? (
+                <div
+                  style={{
+                    borderRadius: 8,
+                    padding: 24,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 120,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      marginBottom: 20,
+                      textAlign: 'center',
+                    }}
+                  >
+                    No companies found.
+                  </div>
+                  <Button
+                    type="primary"
+                    size="middle"
+                    style={{ minWidth: 140 }}
+                    onClick={async () => {
+                      const createdCompanyId = await onCreateCompany?.({
+                        name: companySearchText ?? '',
+                      });
+                      if (!createdCompanyId) return;
+
+                      form.setFieldValue('companyId', createdCompanyId);
+                      form.setFieldValue('teamOwnerId', undefined);
+                      form.setFieldValue('memberIds', undefined);
+                      onCompanyChange(createdCompanyId);
+                    }}
+                    loading={isCreatingCompany}
+                  >
+                    Create "{companySearchText || 'company'}"
+                  </Button>
+                </div>
+              ) : null
+            }
           />
         </Form.Item>
 
@@ -219,6 +274,23 @@ const AddTeamDrawer = ({
             >
               <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
             </Form.Item> */}
+            <Alert
+              type="info"
+              showIcon
+              message="Need a custom subdomain?"
+              description={
+                <Space direction="vertical" size={4}>
+                  <span>
+                    Custom subdomains are available via the tech team. Contact them to enable this
+                    feature for this team.
+                  </span>
+                  <Button type="link" size="small" style={{ paddingInline: 0 }} className="linkTag">
+                    Contact Tech Team
+                  </Button>
+                </Space>
+              }
+              style={{ marginBottom: 16 }}
+            />
 
             <Form.Item
               label="Primary Color"

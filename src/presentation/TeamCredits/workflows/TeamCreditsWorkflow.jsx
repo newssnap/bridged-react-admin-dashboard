@@ -80,17 +80,19 @@ function TeamCreditsWorkflow() {
         };
 
         return (
-          <Dropdown
-            trigger={['click']}
-            menu={{
-              items,
-              onClick: handleMenuClick,
-            }}
-          >
-            <Tooltip title="Actions">
-              <Button type="text" shape="circle" icon={<MoreOutlined />} />
-            </Tooltip>
-          </Dropdown>
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown
+              trigger={['click']}
+              menu={{
+                items,
+                onClick: handleMenuClick,
+              }}
+            >
+              <Tooltip title="Actions">
+                <Button type="text" shape="circle" icon={<MoreOutlined />} />
+              </Tooltip>
+            </Dropdown>
+          </div>
         );
       },
     },
@@ -125,6 +127,10 @@ function TeamCreditsWorkflow() {
           dataSource={tableData}
           loading={isLoading}
           columns={columns}
+          onRow={record => ({
+            onClick: () => handleOpenDrawer(record.teamId),
+            style: { cursor: 'pointer' },
+          })}
           bordered
           pagination={{
             position: ['bottomLeft'],

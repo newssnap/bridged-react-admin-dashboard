@@ -148,17 +148,19 @@ function CustomWorkWorkflow() {
         };
 
         return (
-          <Dropdown
-            trigger={['click']}
-            menu={{
-              items,
-              onClick: handleMenuClick,
-            }}
-          >
-            <Tooltip title="Actions">
-              <Button type="text" shape="circle" icon={<MoreOutlined />} />
-            </Tooltip>
-          </Dropdown>
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown
+              trigger={['click']}
+              menu={{
+                items,
+                onClick: handleMenuClick,
+              }}
+            >
+              <Tooltip title="Actions">
+                <Button type="text" shape="circle" icon={<MoreOutlined />} />
+              </Tooltip>
+            </Dropdown>
+          </div>
         );
       },
     },
@@ -194,6 +196,10 @@ function CustomWorkWorkflow() {
           loading={isLoading}
           columns={columns}
           bordered
+          onRow={record => ({
+            onClick: () => handlePreview(record),
+            style: { cursor: 'pointer' },
+          })}
           pagination={{
             position: ['bottomLeft'],
             showSizeChanger: false,

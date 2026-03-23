@@ -35,13 +35,23 @@ function TeamsWorkflow() {
     editColumns,
     isLoadingEditMembers,
     isEditSubmitting,
+    isLoadingEditCompanies,
+    editCompanySearchText,
+    handleEditCompanySearch,
+    createEditCompany,
+    isCreatingEditCompany,
     isDrawerOpen,
     openDrawer,
     closeDrawer,
     addTeamCompanyOptions,
     userOptions,
     isUsersLoading,
+    isLoadingAddCompanies,
     onCompanyChange,
+    addCompanySearchText,
+    handleAddCompanySearch,
+    createAddCompany,
+    isCreatingAddCompany,
     handleSubmit,
     isSubmitting,
     manageCreditsDrawerOpen,
@@ -131,11 +141,13 @@ function TeamsWorkflow() {
         };
 
         return (
-          <Dropdown trigger={['click']} menu={{ items, onClick: handleMenuClick }}>
-            <Tooltip title="Actions">
-              <Button type="text" shape="circle" icon={<MoreOutlined />} />
-            </Tooltip>
-          </Dropdown>
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown trigger={['click']} menu={{ items, onClick: handleMenuClick }}>
+              <Tooltip title="Actions">
+                <Button type="text" shape="circle" icon={<MoreOutlined />} />
+              </Tooltip>
+            </Dropdown>
+          </div>
         );
       },
     },
@@ -176,6 +188,10 @@ function TeamsWorkflow() {
         loading={isLoading}
         columns={columns}
         bordered
+        onRow={record => ({
+          onClick: () => openViewDrawer(record),
+          style: { cursor: 'pointer' },
+        })}
         pagination={{
           position: ['bottomLeft'],
           showSizeChanger: false,
@@ -197,6 +213,11 @@ function TeamsWorkflow() {
         open={isDrawerOpen}
         onClose={closeDrawer}
         companyOptions={addTeamCompanyOptions}
+        isLoadingCompanies={isLoadingAddCompanies}
+        companySearchText={addCompanySearchText}
+        onCompanySearch={handleAddCompanySearch}
+        onCreateCompany={createAddCompany}
+        isCreatingCompany={isCreatingAddCompany}
         userOptions={userOptions}
         isUsersLoading={isUsersLoading}
         onCompanyChange={onCompanyChange}
@@ -218,6 +239,11 @@ function TeamsWorkflow() {
         onCompanyChange={onCompanyChange}
         form={editTeamForm}
         companyOptions={editTeamCompanyOptions}
+        isLoadingCompanies={isLoadingEditCompanies}
+        companySearchText={editCompanySearchText}
+        onCompanySearch={handleEditCompanySearch}
+        onCreateCompany={createEditCompany}
+        isCreatingCompany={isCreatingEditCompany}
         handleFinish={handleEditFinish}
         handleClose={handleEditClose}
         handleAfterOpenChange={handleEditAfterOpenChange}

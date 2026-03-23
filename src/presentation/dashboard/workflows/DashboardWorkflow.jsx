@@ -255,6 +255,9 @@ function DashboardWorkflow() {
         ...(values.lastName != null && { lastName: values.lastName }),
         ...(values.profilePhoto != null &&
           values.profilePhoto !== '' && { profilePhoto: values.profilePhoto }),
+        ...(Object.prototype.hasOwnProperty.call(values, 'teamId') && {
+          teamId: values.teamId || '',
+        }),
       };
 
       const response = await _UPDATE_USER({ userId: editingUserId, data }).unwrap();
@@ -299,6 +302,8 @@ function DashboardWorkflow() {
       firstName: '',
       lastName: '',
       profilePhoto: '',
+      company: undefined,
+      teamId: undefined,
     });
 
     try {
@@ -317,6 +322,8 @@ function DashboardWorkflow() {
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           profilePhoto: user?.picture || user?.profilePhoto || undefined,
+          company: user?.company?.id || user?.company?._id || record?.company?.id || undefined,
+          teamId: user?.teamId || user?.team?._id || record?.teamId || undefined,
         });
       } else {
         notification.error({
@@ -580,6 +587,13 @@ function DashboardWorkflow() {
       key: 'last_login_at',
       align: 'center',
       width: '120px',
+      sorter: (a, b) => {
+        const aTime = a?.last_login_at ? dayjs(a.last_login_at).valueOf() : 0;
+        const bTime = b?.last_login_at ? dayjs(b.last_login_at).valueOf() : 0;
+        return aTime - bTime;
+      },
+      sortDirections: ['descend', 'ascend'],
+      defaultSortOrder: 'descend',
       render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
@@ -705,28 +719,30 @@ function DashboardWorkflow() {
         ];
 
         return (
-          <Dropdown
-            open={openDropdownId === record._id}
-            onOpenChange={open => {
-              if (!open) {
-                setOpenDropdownId(null);
-              }
-            }}
-            menu={{ items: menuItems }}
-            trigger={['click']}
-            arrow
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              shape="circle"
-              icon={<MoreOutlined />}
-              onClick={e => {
-                e.stopPropagation();
-                setOpenDropdownId(record._id);
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown
+              open={openDropdownId === record._id}
+              onOpenChange={open => {
+                if (!open) {
+                  setOpenDropdownId(null);
+                }
               }}
-            />
-          </Dropdown>
+              menu={{ items: menuItems }}
+              trigger={['click']}
+              arrow
+              placement="bottomRight"
+            >
+              <Button
+                type="text"
+                shape="circle"
+                icon={<MoreOutlined />}
+                onClick={e => {
+                  e.stopPropagation();
+                  setOpenDropdownId(record._id);
+                }}
+              />
+            </Dropdown>
+          </div>
         );
       },
     },
@@ -829,6 +845,10 @@ function DashboardWorkflow() {
             rowKey="_id"
             loading={isLoading}
             bordered
+            onRow={record => ({
+              onClick: () => handleOpenEditUserDrawer(record),
+              style: { cursor: 'pointer' },
+            })}
             pagination={{
               current: page,
               pageSize: limit,
@@ -878,6 +898,8 @@ function DashboardWorkflow() {
         allowedAgents={allowedAgents}
         setAllowedAgents={setAllowedAgents}
         resetExistingUserAgentStates={resetExistingUserAgentStates}
+        companies={companies}
+        isLoadingCompanies={isLoadingCompanies}
       />
 
       {/* Report Generation Drawer */}

@@ -13,7 +13,7 @@ import {
   notification,
 } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { useUploadImageMutation } from '../../../services/api';
+import { useGetTeamsByCompanyQuery, useUploadImageMutation } from '../../../services/api';
 import { AGENT_ACCESS_OPTIONS } from '../../../constants/agents';
 
 const EditUserDrawer = ({
@@ -27,9 +27,21 @@ const EditUserDrawer = ({
   setAllowedAgents,
   resetExistingUserAgentStates,
   userData,
+  companies,
+  isLoadingCompanies,
 }) => {
   const fileInputRef = useRef(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
+  const selectedCompanyId = Form.useWatch('company', form);
+  const { data: teamsResponse, isLoading: isLoadingTeams } = useGetTeamsByCompanyQuery(
+    selectedCompanyId,
+    { skip: !open || !selectedCompanyId }
+  );
+  const teamsList = teamsResponse?.data ?? [];
+  const teamOptions = teamsList.map(team => ({
+    label: team.title || team.companyName || team._id || '--',
+    value: team._id,
+  }));
 
   const [uploadImage, { isLoading: isUploadingImage }] = useUploadImageMutation();
 
@@ -99,6 +111,9 @@ const EditUserDrawer = ({
   };
 
   const displayPicture = profilePhotoUrl || userData?.picture || userData?.profilePhoto;
+  const handleCompanyChange = () => {
+    form.setFieldValue('teamId', undefined);
+  };
 
   return (
     <Drawer
@@ -168,6 +183,34 @@ const EditUserDrawer = ({
         </Form.Item>
         <Form.Item name="password" label="New Password (optional)">
           <Input.Password size="large" disabled={isFetchingUserForUpdate} />
+        </Form.Item>
+        <Form.Item name="company" label="Company">
+          <Select
+            options={
+              companies?.data?.data?.map(company => ({
+                label: company.name,
+                value: company.id,
+              })) || []
+            }
+            loading={isLoadingCompanies}
+            showSearch
+            size="large"
+            placeholder="Select Company"
+            optionFilterProp="label"
+            onChange={handleCompanyChange}
+            disabled={isFetchingUserForUpdate || isUpdatingUser}
+            allowClear
+          />
+        </Form.Item>
+        <Form.Item name="teamId" label="Team">
+          <Select
+            size="large"
+            placeholder="Select Team"
+            options={teamOptions}
+            loading={isLoadingTeams}
+            disabled={!selectedCompanyId || isFetchingUserForUpdate || isUpdatingUser}
+            allowClear
+          />
         </Form.Item>
 
         <Spin spinning={isFetchingUserForUpdate} tip="Loading configuration...">
