@@ -284,9 +284,6 @@ const AddTeamDrawer = ({
                     Custom subdomains are available via the tech team. Contact them to enable this
                     feature for this team.
                   </span>
-                  <Button type="link" size="small" style={{ paddingInline: 0 }} className="linkTag">
-                    Contact Tech Team
-                  </Button>
                 </Space>
               }
               style={{ marginBottom: 16 }}
