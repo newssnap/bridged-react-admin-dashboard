@@ -44,16 +44,16 @@ const CompaniesTable = ({ onEdit, onDelete, searchValue, setManageUsersDrawer })
             label: <span>Edit company name</span>,
             icon: <Icon name="EditOutlined" />,
           },
-          {
-            key: 'manageUsers',
-            label: <span>Manage users</span>,
-            icon: (
-              <Icon
-                name="UsersLeft"
-                style={{ marginBottom: '-3px', width: '17px', height: '17px' }}
-              />
-            ),
-          },
+          // {
+          //   key: 'manageUsers',
+          //   label: <span>Manage users</span>,
+          //   icon: (
+          //     <Icon
+          //       name="UsersLeft"
+          //       style={{ marginBottom: '-3px', width: '17px', height: '17px' }}
+          //     />
+          //   ),
+          // },
           {
             key: 'delete',
             label: <span>Delete company</span>,

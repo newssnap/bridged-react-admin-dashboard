@@ -39,25 +39,23 @@ import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
 import { useReportHandler } from '../controllers/useReportHandler';
 import { useAgentManagementHandler } from '../controllers/useAgentManagementHandler';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ACTIVE_COLOR, PRIMARY_COLOR } from '../../../constants/DashboardColors';
+import { ACTIVE_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
 import {
-  AUTOMATE_PACK_OPTIONS,
-  ENGAGE_PACK_OPTIONS,
-  MONETIZE_PACK_OPTIONS,
-} from '../../../constants/agents';
-import {
   useCreateCompanyMutation,
   useGetCompaniesQuery,
+  useGetTeamsQuery,
   useLazyGetUserForUpdateByAdminQuery,
   useUpdateUserByAdminMutation,
 } from '../../../services/api';
 import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
 import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
 import { useDispatch } from 'react-redux';
+import AddUserDrawer from '../components/AddUserDrawer';
+import EditUserDrawer from '../components/EditUserDrawer';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
@@ -78,8 +76,7 @@ function DashboardWorkflow() {
   const [_CREATE_COMPANY, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
   const [selectedCompanyId, setSelectedCompanyId] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('active');
-  const [selectedSort, setSelectedSort] = useState('lastLogin_DESC');
+  const [selectedTeamId, setSelectedTeamId] = useState('all');
   const {
     users,
     total,
@@ -90,7 +87,13 @@ function DashboardWorkflow() {
     isLoading,
     isStatusLoading,
     handleUpdateUserStatus,
-  } = useUsersTableHandler(debouncedSearchText, selectedCompanyId, selectedStatus, selectedSort);
+  } = useUsersTableHandler(
+    debouncedSearchText,
+    selectedCompanyId,
+    selectedTeamId,
+    'all',
+    'lastLogin_DESC'
+  );
 
   const {
     data: companies,
@@ -102,6 +105,16 @@ function DashboardWorkflow() {
     search: debouncedCompanySearchText || '',
   });
 
+  const { data: teamsData, isLoading: isLoadingTeams } = useGetTeamsQuery();
+  const teamsList = teamsData?.data ?? [];
+  const teamOptions = [
+    { label: 'All teams', value: 'all' },
+    ...teamsList.map(team => ({
+      label: team.title || team.companyName || team._id || '--',
+      value: team._id,
+    })),
+  ];
+
   const {
     handleAddUser,
     isAddingUser,
@@ -111,13 +124,15 @@ function DashboardWorkflow() {
     tokenType,
   } = useDashboardHandler();
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [userDrawerMode, setUserDrawerMode] = useState('create'); // 'create' | 'edit'
+  const [isAddUserDrawerOpen, setIsAddUserDrawerOpen] = useState(false);
+  const [isEditUserDrawerOpen, setIsEditUserDrawerOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
+  const [editingUserData, setEditingUserData] = useState(null);
   const selectRef = useRef(null);
   const companySelectRef = useRef(null);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [addUserForm] = Form.useForm();
+  const [editUserForm] = Form.useForm();
   const [reportForm] = Form.useForm();
   const [_GET_USER_FOR_UPDATE, { isFetching: isFetchingUserForUpdate }] =
     useLazyGetUserForUpdateByAdminQuery();
@@ -139,67 +154,22 @@ function DashboardWorkflow() {
 
   // Agent management hook
   const {
-    // Existing user states
-    allowedCampaigns,
-    allowedMonetizePack,
-    allowedAIAgents,
-    setAllowedCampaigns,
-    setAllowedMonetizePack,
-    setAllowedAIAgents,
+    // Existing user states (edit drawer – simplified same as Add User)
+    allowedAgents,
+    setAllowedAgents,
     resetExistingUserAgentStates,
     initializeExistingUserAgentStates,
     generateExistingUserConfigurations,
 
-    // New user states
-    newUserAllowedCampaigns,
-    newUserAllowedMonetizePack,
-    newUserAllowedAIAgents,
-    setNewUserAllowedCampaigns,
-    setNewUserAllowedMonetizePack,
-    setNewUserAllowedAIAgents,
+    // New user states (simplified agent access)
+    newUserAllowedAgents,
+    setNewUserAllowedAgents,
 
-    // Existing user handlers
-    handleSelectAllCampaigns,
-    handleClearCampaigns,
-    handleSelectAllMonetizePack,
-    handleClearMonetizePack,
-    handleSelectAllAIAgents,
-    handleClearAIAgents,
-
-    // New user handlers
-    handleSelectAllNewUserCampaigns,
-    handleClearNewUserCampaigns,
-    handleSelectAllNewUserMonetizePack,
-    handleClearNewUserMonetizePack,
-    handleSelectAllNewUserAIAgents,
-    handleClearNewUserAIAgents,
     resetNewUserAgentStates,
     generateNewUserConfigurations,
   } = useAgentManagementHandler();
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isDrawerOpen) {
-      form.setFieldsValue({
-        newUserAllowedCampaigns,
-        newUserAllowedMonetizePack,
-        newUserAllowedAIAgents,
-      });
-    }
-  }, [newUserAllowedCampaigns, newUserAllowedMonetizePack, newUserAllowedAIAgents, isDrawerOpen]);
-
-  // Keep Edit User agent selections in sync with AntD Form values.
-  // Without this, Form.Item may override Checkbox.Group value with undefined and nothing appears selected.
-  useEffect(() => {
-    if (isDrawerOpen && userDrawerMode === 'edit') {
-      form.setFieldsValue({
-        allowedCampaigns,
-        allowedMonetizePack,
-        allowedAIAgents,
-      });
-    }
-  }, [allowedCampaigns, allowedMonetizePack, allowedAIAgents, isDrawerOpen, userDrawerMode, form]);
 
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
@@ -260,33 +230,34 @@ function DashboardWorkflow() {
     }
   };
 
-  const handleAddUserSubmit = async () => {
-    const values = await form.validateFields();
-    // Generate user configurations using the hook
+  const handleAddUserSubmit = async values => {
     const userConfigurations = generateNewUserConfigurations();
-
-    // Add userConfigurations to the payload
     const userDataWithConfig = {
       username: values.username,
       password: values.password,
-      companyId: values.company,
       userConfigurations,
+      firstName: values.firstName ?? '',
+      lastName: values.lastName ?? '',
+      profilePhoto: values.profilePhoto ?? '',
+      teamId: values.teamId ?? '',
     };
-
-    await handleAddUser(userDataWithConfig, handleCloseDrawer);
-    // Refresh users list after adding a new user (same pattern as activate/deactivate)
+    await handleAddUser(userDataWithConfig, handleCloseAddUserDrawer);
     refetchUsers();
   };
 
-  const handleUpdateUserSubmit = async () => {
+  const handleUpdateUserSubmit = async values => {
     if (!editingUserId) return;
-    const values = await form.validateFields();
-
     try {
       const data = {
-        companyId: values.company,
         userConfigurations: generateExistingUserConfigurations(),
         ...(values.password ? { password: values.password } : {}),
+        ...(values.firstName != null && { firstName: values.firstName }),
+        ...(values.lastName != null && { lastName: values.lastName }),
+        ...(values.profilePhoto != null &&
+          values.profilePhoto !== '' && { profilePhoto: values.profilePhoto }),
+        ...(Object.prototype.hasOwnProperty.call(values, 'teamId') && {
+          teamId: values.teamId || '',
+        }),
       };
 
       const response = await _UPDATE_USER({ userId: editingUserId, data }).unwrap();
@@ -296,7 +267,7 @@ function DashboardWorkflow() {
           message: 'User updated successfully',
           placement: 'bottomRight',
         });
-        handleCloseDrawer();
+        handleCloseEditUserDrawer();
         refetchUsers();
       } else {
         notification.error({
@@ -313,36 +284,46 @@ function DashboardWorkflow() {
   };
 
   const handleOpenCreateUserDrawer = () => {
-    setUserDrawerMode('create');
     setEditingUserId(null);
-    form.resetFields();
-    setIsDrawerOpen(true);
+    addUserForm.resetFields();
+    resetNewUserAgentStates();
+    setIsAddUserDrawerOpen(true);
   };
 
   const handleOpenEditUserDrawer = async record => {
-    setUserDrawerMode('edit');
     setEditingUserId(record?._id);
-    setIsDrawerOpen(true);
-    // Keep prior Agents Management behavior: default to full access until API data arrives.
-    // This avoids showing an empty selection while the drawer is loading.
-    initializeExistingUserAgentStates();
+    setIsEditUserDrawerOpen(true);
+    setEditingUserData(null);
+    resetExistingUserAgentStates();
 
-    // Populate immediately with what we have, then overwrite after fetch.
-    form.setFieldsValue({
+    editUserForm.setFieldsValue({
       username: record?.email || '',
       password: '',
-      company: record?.company?._id || record?.company?.id || undefined,
+      firstName: '',
+      lastName: '',
+      profilePhoto: '',
+      company: undefined,
+      teamId: undefined,
     });
 
     try {
       const response = await _GET_USER_FOR_UPDATE(record?._id).unwrap();
       if (response?.success) {
         const user = response?.data;
+        setEditingUserData(user);
         initializeExistingUserAgentStates(user?.userConfigurations);
-        form.setFieldsValue({
+        const fullname = (user?.fullname || '').trim();
+        const nameParts = fullname ? fullname.split(/\s+/) : [];
+        const firstName = nameParts[0] ?? '';
+        const lastName = nameParts.slice(1).join(' ') ?? '';
+        editUserForm.setFieldsValue({
           username: user?.email || record?.email || '',
           password: '',
-          company: user?.company?._id || user?.company?.id || record?.company?._id,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+          profilePhoto: user?.picture || user?.profilePhoto || undefined,
+          company: user?.company?.id || user?.company?._id || record?.company?.id || undefined,
+          teamId: user?.teamId || user?.team?._id || record?.teamId || undefined,
         });
       } else {
         notification.error({
@@ -358,13 +339,18 @@ function DashboardWorkflow() {
     }
   };
 
-  const handleCloseDrawer = () => {
-    form.resetFields();
-    setIsDrawerOpen(false);
-    setUserDrawerMode('create');
+  const handleCloseAddUserDrawer = () => {
+    addUserForm.resetFields();
+    setIsAddUserDrawerOpen(false);
     setEditingUserId(null);
-    // Reset new user agent configuration states using the hook
     resetNewUserAgentStates();
+  };
+
+  const handleCloseEditUserDrawer = () => {
+    editUserForm.resetFields();
+    setIsEditUserDrawerOpen(false);
+    setEditingUserId(null);
+    setEditingUserData(null);
     resetExistingUserAgentStates();
   };
 
@@ -471,10 +457,8 @@ function DashboardWorkflow() {
 
         // Small delay to ensure the select options are updated
         setTimeout(() => {
-          // If the "Add User" drawer is open, set the company in the form
-          // Use setFieldValue to update only the company field in the form, not the filter select
-          if (isDrawerOpen) {
-            form.setFieldValue('company', companyId);
+          if (isAddUserDrawerOpen) {
+            addUserForm.setFieldValue('company', companyId);
           }
         }, 100);
       }
@@ -507,9 +491,9 @@ function DashboardWorkflow() {
 
   const columns = [
     {
-      title: 'Avatar',
+      title: 'Image',
       key: 'user',
-      width: '75px',
+      width: '65px',
       align: 'center',
       render: (_, record) => (
         <Space align="center">
@@ -520,7 +504,7 @@ function DashboardWorkflow() {
       ),
     },
     {
-      title: 'User Email',
+      title: 'Email',
       dataIndex: 'email',
       key: 'email',
       width: '190px',
@@ -557,12 +541,27 @@ function DashboardWorkflow() {
       ),
     },
     {
-      title: 'Last Login',
-      dataIndex: 'last_login_at',
-      key: 'last_login_at',
+      title: 'Role',
+      key: 'role',
+      width: '100px',
       align: 'center',
-      width: '120px',
-      render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
+      render: (_, record) => {
+        if (record.teamId) {
+          return (
+            <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
+              {record.isTeamOwner ? 'Team Owner' : 'Member'}
+            </Tag>
+          );
+        } else {
+          return (
+            <Tooltip title="This user is not part of a team, if you login with this account, a team will be created for them.">
+              <Tag color="orange" style={{ textAlign: 'center' }}>
+                Not Set
+              </Tag>
+            </Tooltip>
+          );
+        }
+      },
     },
     {
       title: 'Company',
@@ -573,15 +572,29 @@ function DashboardWorkflow() {
       render: company => <span style={{ fontSize: '14px' }}>{company ? company.name : '--'}</span>,
     },
     {
-      title: 'Role',
-      key: 'role',
+      title: 'Team',
+      dataIndex: 'teamTitle',
+      key: 'teamTitle',
       width: '100px',
       align: 'center',
       render: (_, record) => (
-        <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
-          {record.isTeamOwner ? 'Team Owner' : 'Member'}
-        </Tag>
+        <span style={{ fontSize: '14px' }}>{record?.teamTitle ? record?.teamTitle : '--'}</span>
       ),
+    },
+    {
+      title: 'Last Login',
+      dataIndex: 'last_login_at',
+      key: 'last_login_at',
+      align: 'center',
+      width: '120px',
+      sorter: (a, b) => {
+        const aTime = a?.last_login_at ? dayjs(a.last_login_at).valueOf() : 0;
+        const bTime = b?.last_login_at ? dayjs(b.last_login_at).valueOf() : 0;
+        return aTime - bTime;
+      },
+      sortDirections: ['descend', 'ascend'],
+      defaultSortOrder: 'descend',
+      render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
     },
     {
       title: 'Actions',
@@ -627,18 +640,18 @@ function DashboardWorkflow() {
               handleExportReportClick(record);
             },
           },
-          {
-            key: 'tasklist',
-            label: (
-              <Space>
-                <Icon name="UserCheck" style={{ marginBottom: '-3px' }} />
-                <span>View User Tasklist</span>
-              </Space>
-            ),
-            onClick: () => {
-              navigate(`/userChecklist/${record._id}`);
-            },
-          },
+          // {
+          //   key: 'tasklist',
+          //   label: (
+          //     <Space>
+          //       <Icon name="UserCheck" style={{ marginBottom: '-3px' }} />
+          //       <span>View User Tasklist</span>
+          //     </Space>
+          //   ),
+          //   onClick: () => {
+          //     navigate(`/userChecklist/${record._id}`);
+          //   },
+          // },
           {
             key: 'portal',
             label: (
@@ -706,28 +719,30 @@ function DashboardWorkflow() {
         ];
 
         return (
-          <Dropdown
-            open={openDropdownId === record._id}
-            onOpenChange={open => {
-              if (!open) {
-                setOpenDropdownId(null);
-              }
-            }}
-            menu={{ items: menuItems }}
-            trigger={['click']}
-            arrow
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              shape="circle"
-              icon={<MoreOutlined />}
-              onClick={e => {
-                e.stopPropagation();
-                setOpenDropdownId(record._id);
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown
+              open={openDropdownId === record._id}
+              onOpenChange={open => {
+                if (!open) {
+                  setOpenDropdownId(null);
+                }
               }}
-            />
-          </Dropdown>
+              menu={{ items: menuItems }}
+              trigger={['click']}
+              arrow
+              placement="bottomRight"
+            >
+              <Button
+                type="text"
+                shape="circle"
+                icon={<MoreOutlined />}
+                onClick={e => {
+                  e.stopPropagation();
+                  setOpenDropdownId(record._id);
+                }}
+              />
+            </Dropdown>
+          </div>
         );
       },
     },
@@ -754,17 +769,6 @@ function DashboardWorkflow() {
                 >
                   Add User
                 </Button>
-
-                <Select
-                  options={[
-                    { label: 'Last login (From newest)', value: 'lastLogin_DESC' },
-                    { label: 'Last login (From oldest)', value: 'lastLogin_ASC' },
-                  ]}
-                  size="large"
-                  style={{ width: 200, minWidth: 150 }}
-                  value={selectedSort}
-                  onChange={value => setSelectedSort(value)}
-                />
 
                 <Select
                   ref={selectRef}
@@ -805,15 +809,16 @@ function DashboardWorkflow() {
                 />
 
                 <Select
-                  options={[
-                    { label: 'All users', value: 'all' },
-                    { label: 'Active users', value: 'active' },
-                    { label: 'Inactive users', value: 'inactive' },
-                  ]}
+                  options={teamOptions}
+                  loading={isLoadingTeams}
+                  showSearch
+                  optionFilterProp="label"
                   size="large"
-                  style={{ width: 130, minWidth: 110 }}
-                  value={selectedStatus}
-                  onChange={value => setSelectedStatus(value)}
+                  value={selectedTeamId}
+                  style={{ width: 170, minWidth: 140 }}
+                  placeholder="Select Team"
+                  allowClear
+                  onChange={value => setSelectedTeamId(value)}
                 />
               </Space>
             </Col>
@@ -840,6 +845,10 @@ function DashboardWorkflow() {
             rowKey="_id"
             loading={isLoading}
             bordered
+            onRow={record => ({
+              onClick: () => handleOpenEditUserDrawer(record),
+              style: { cursor: 'pointer' },
+            })}
             pagination={{
               current: page,
               pageSize: limit,
@@ -859,295 +868,39 @@ function DashboardWorkflow() {
         </Col>
       </Row>
 
-      <Drawer
-        title={userDrawerMode === 'edit' ? 'Edit User' : 'Add User'}
-        width={600}
-        onClose={handleCloseDrawer}
-        open={isDrawerOpen}
-        bodyStyle={{ paddingBottom: 80 }}
-        footer={
-          <div style={{ textAlign: 'right' }}>
-            <Space>
-              <Button size="large" onClick={handleCloseDrawer}>
-                Close
-              </Button>
-              <Button
-                type="primary"
-                size="large"
-                onClick={userDrawerMode === 'edit' ? handleUpdateUserSubmit : handleAddUserSubmit}
-                loading={isAddingUser || isUpdatingUser}
-              >
-                {userDrawerMode === 'edit' ? 'Update User' : 'Add User'}
-              </Button>
-            </Space>
-          </div>
-        }
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="username"
-            label="Username"
-            rules={[{ required: true, message: 'Please input the username!' }]}
-          >
-            <Input size="large" disabled={userDrawerMode === 'edit'} />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label={userDrawerMode === 'edit' ? 'New Password (optional)' : 'Password'}
-            rules={
-              userDrawerMode === 'edit'
-                ? []
-                : [{ required: true, message: 'Please input the password!' }]
-            }
-          >
-            <Input.Password size="large" />
-          </Form.Item>
-          <Form.Item
-            name="company"
-            label="Company"
-            rules={[{ required: true, message: 'Please select the company!' }]}
-          >
-            <Select
-              ref={companySelectRef}
-              options={
-                companies?.data?.data?.map(company => ({
-                  label: company.name,
-                  value: company.id,
-                })) || []
-              }
-              loading={isLoadingCompanies}
-              disabled={isFetchingUserForUpdate}
-              showSearch
-              size="large"
-              placeholder="Select Company"
-              filterOption={false}
-              onChange={() => {
-                setTimeout(() => {
-                  companySelectRef.current?.blur();
-                }, 0);
-              }}
-              onSearch={companySearchInputHandler}
-              onBlur={() => {
-                companySearchInputHandler('');
-              }}
-              notFoundContent={
-                !isLoadingCompanies && !hasCompanies ? (
-                  <div
-                    style={{
-                      borderRadius: 8,
-                      padding: 24,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minHeight: 120,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 14,
-                        marginBottom: 20,
-                        textAlign: 'center',
-                      }}
-                    >
-                      No companies found.
-                    </div>
+      <AddUserDrawer
+        open={isAddUserDrawerOpen}
+        onClose={handleCloseAddUserDrawer}
+        form={addUserForm}
+        onSubmit={handleAddUserSubmit}
+        companies={companies}
+        isLoadingCompanies={isLoadingCompanies}
+        companySearchText={companySearchText}
+        companySearchInputHandler={companySearchInputHandler}
+        hasCompanies={hasCompanies}
+        createCompany={createCompany}
+        isCreatingCompany={isCreatingCompany}
+        companySelectRef={companySelectRef}
+        isAddingUser={isAddingUser}
+        resetNewUserAgentStates={resetNewUserAgentStates}
+        newUserAllowedAgents={newUserAllowedAgents}
+        setNewUserAllowedAgents={setNewUserAllowedAgents}
+      />
 
-                    <Button
-                      type="primary"
-                      size="middle"
-                      style={{ minWidth: 140 }}
-                      onClick={e => {
-                        createCompany({ name: companySearchText });
-                      }}
-                      loading={isCreatingCompany}
-                    >
-                      Create "{companySearchText}"
-                    </Button>
-                  </div>
-                ) : null
-              }
-            />
-          </Form.Item>
-
-          {/* Agent Management Section */}
-          <Divider style={{ margin: '24px 0 16px' }} />
-
-          <Spin
-            spinning={userDrawerMode === 'edit' && isFetchingUserForUpdate}
-            tip="Loading configuration..."
-          >
-            <Alert
-              type="info"
-              showIcon
-              message="Agent Access Control"
-              description={
-                userDrawerMode === 'edit'
-                  ? 'Select agents you want to give access to this user.'
-                  : 'Select agents you want to give access to this new user.'
-              }
-              style={{ marginBottom: 16 }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Title level={5} style={{ margin: 0 }}>
-                Automate Pack
-              </Title>
-              <Space size={8}>
-                <Badge
-                  count={`${
-                    userDrawerMode === 'edit'
-                      ? allowedAIAgents.length
-                      : newUserAllowedAIAgents.length
-                  }/${AUTOMATE_PACK_OPTIONS.length}`}
-                  style={{ backgroundColor: PRIMARY_COLOR }}
-                />
-                <Button
-                  size="small"
-                  onClick={
-                    userDrawerMode === 'edit'
-                      ? handleSelectAllAIAgents
-                      : handleSelectAllNewUserAIAgents
-                  }
-                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                >
-                  Select All
-                </Button>
-                <Button
-                  size="small"
-                  onClick={
-                    userDrawerMode === 'edit' ? handleClearAIAgents : handleClearNewUserAIAgents
-                  }
-                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                >
-                  Clear
-                </Button>
-              </Space>
-            </div>
-            <Form.Item
-              name={userDrawerMode === 'edit' ? 'allowedAIAgents' : 'newUserAllowedAIAgents'}
-              style={{ marginTop: 12 }}
-            >
-              <Checkbox.Group
-                options={AUTOMATE_PACK_OPTIONS}
-                value={userDrawerMode === 'edit' ? allowedAIAgents : newUserAllowedAIAgents}
-                onChange={
-                  userDrawerMode === 'edit' ? setAllowedAIAgents : setNewUserAllowedAIAgents
-                }
-                disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
-              />
-            </Form.Item>
-            <Divider style={{ margin: '8px 0 16px' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Title level={5} style={{ margin: 0 }}>
-                Engage Pack
-              </Title>
-              <Space size={8}>
-                <Badge
-                  count={`${
-                    userDrawerMode === 'edit'
-                      ? allowedCampaigns.length
-                      : newUserAllowedCampaigns.length
-                  }/${ENGAGE_PACK_OPTIONS.length}`}
-                  style={{ backgroundColor: PRIMARY_COLOR }}
-                />
-                <Button
-                  size="small"
-                  onClick={
-                    userDrawerMode === 'edit'
-                      ? handleSelectAllCampaigns
-                      : handleSelectAllNewUserCampaigns
-                  }
-                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                >
-                  Select All
-                </Button>
-                <Button
-                  size="small"
-                  onClick={
-                    userDrawerMode === 'edit' ? handleClearCampaigns : handleClearNewUserCampaigns
-                  }
-                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                >
-                  Clear
-                </Button>
-              </Space>
-            </div>
-            <Form.Item
-              name={userDrawerMode === 'edit' ? 'allowedCampaigns' : 'newUserAllowedCampaigns'}
-              style={{ marginTop: 12 }}
-            >
-              <Checkbox.Group
-                options={ENGAGE_PACK_OPTIONS}
-                value={userDrawerMode === 'edit' ? allowedCampaigns : newUserAllowedCampaigns}
-                onChange={
-                  userDrawerMode === 'edit' ? setAllowedCampaigns : setNewUserAllowedCampaigns
-                }
-                disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
-              />
-            </Form.Item>
-
-            <Divider style={{ margin: '8px 0 16px' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Title level={5} style={{ margin: 0 }}>
-                Monetize Pack
-              </Title>
-              <Space size={8}>
-                <Badge
-                  count={`${
-                    userDrawerMode === 'edit'
-                      ? allowedMonetizePack.length
-                      : newUserAllowedMonetizePack.length
-                  }/${MONETIZE_PACK_OPTIONS.length}`}
-                  style={{ backgroundColor: PRIMARY_COLOR }}
-                />
-                <Button
-                  size="small"
-                  onClick={
-                    userDrawerMode === 'edit'
-                      ? handleSelectAllMonetizePack
-                      : handleSelectAllNewUserMonetizePack
-                  }
-                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                >
-                  Select All
-                </Button>
-                <Button
-                  size="small"
-                  onClick={
-                    userDrawerMode === 'edit'
-                      ? handleClearMonetizePack
-                      : handleClearNewUserMonetizePack
-                  }
-                  disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                >
-                  Clear
-                </Button>
-              </Space>
-            </div>
-            <Form.Item
-              name={
-                userDrawerMode === 'edit' ? 'allowedMonetizePack' : 'newUserAllowedMonetizePack'
-              }
-              style={{ marginTop: 12 }}
-            >
-              <Checkbox.Group
-                options={MONETIZE_PACK_OPTIONS}
-                value={userDrawerMode === 'edit' ? allowedMonetizePack : newUserAllowedMonetizePack}
-                onChange={
-                  userDrawerMode === 'edit' ? setAllowedMonetizePack : setNewUserAllowedMonetizePack
-                }
-                disabled={isAddingUser || isUpdatingUser || isFetchingUserForUpdate}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 8 }}
-              />
-            </Form.Item>
-          </Spin>
-        </Form>
-      </Drawer>
+      <EditUserDrawer
+        open={isEditUserDrawerOpen}
+        onClose={handleCloseEditUserDrawer}
+        form={editUserForm}
+        onSubmit={handleUpdateUserSubmit}
+        isFetchingUserForUpdate={isFetchingUserForUpdate}
+        isUpdatingUser={isUpdatingUser}
+        userData={editingUserData}
+        allowedAgents={allowedAgents}
+        setAllowedAgents={setAllowedAgents}
+        resetExistingUserAgentStates={resetExistingUserAgentStates}
+        companies={companies}
+        isLoadingCompanies={isLoadingCompanies}
+      />
 
       {/* Report Generation Drawer */}
       <Drawer
