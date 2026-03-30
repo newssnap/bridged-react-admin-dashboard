@@ -47,7 +47,7 @@ import { API_URL } from '../../../config/Config';
 import {
   useCreateCompanyMutation,
   useGetCompaniesQuery,
-  useGetTeamsQuery,
+  useGetTeamsByCompanyQuery,
   useLazyGetUserForUpdateByAdminQuery,
   useUpdateUserByAdminMutation,
 } from '../../../services/api';
@@ -105,14 +105,21 @@ function DashboardWorkflow() {
     search: debouncedCompanySearchText || '',
   });
 
-  const { data: teamsData, isLoading: isLoadingTeams } = useGetTeamsQuery();
-  const teamsList = teamsData?.data ?? [];
+  const isDashboardCompanySelected = selectedCompanyId && selectedCompanyId !== 'all';
+
+  const { data: teamsResponse, isLoading: isLoadingTeams } = useGetTeamsByCompanyQuery(
+    selectedCompanyId,
+    { skip: !isDashboardCompanySelected }
+  );
+  const teamsList = teamsResponse?.data ?? [];
   const teamOptions = [
     { label: 'All teams', value: 'all' },
-    ...teamsList.map(team => ({
-      label: team.title || team.companyName || team._id || '--',
-      value: team._id,
-    })),
+    ...(isDashboardCompanySelected
+      ? teamsList.map(team => ({
+          label: team.title || team.companyName || team._id || '--',
+          value: team._id,
+        }))
+      : []),
   ];
 
   const {
@@ -788,6 +795,7 @@ function DashboardWorkflow() {
                   filterOption={false}
                   onChange={value => {
                     setSelectedCompanyId(value);
+                    setSelectedTeamId('all');
                     setTimeout(() => selectRef.current?.blur(), 0);
                   }}
                   onSearch={companySearchInputHandler}
@@ -816,9 +824,10 @@ function DashboardWorkflow() {
                   size="large"
                   value={selectedTeamId}
                   style={{ width: 170, minWidth: 140 }}
-                  placeholder="Select Team"
-                  allowClear
-                  onChange={value => setSelectedTeamId(value)}
+                  placeholder={isDashboardCompanySelected ? 'Select Team' : 'Select company first'}
+                  allowClear={isDashboardCompanySelected}
+                  disabled={!isDashboardCompanySelected}
+                  onChange={value => setSelectedTeamId(value ?? 'all')}
                 />
               </Space>
             </Col>
