@@ -383,18 +383,9 @@ function DashboardWorkflow() {
         });
       }
 
-      // Add your report generation logic here
-      notification.success({
-        message: 'Report Generated',
-        description: 'Your report has been generated successfully.',
-      });
       handleCloseReportDrawer();
     } catch (error) {
       console.error('Report generation error:', error);
-      notification.error({
-        message: 'Report Generation Failed',
-        description: 'Failed to generate report. Please try again.',
-      });
     }
   };
 
