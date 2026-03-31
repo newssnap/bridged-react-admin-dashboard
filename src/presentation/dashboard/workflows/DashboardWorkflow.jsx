@@ -51,16 +51,12 @@ import {
   useLazyGetUserForUpdateByAdminQuery,
   useUpdateUserByAdminMutation,
 } from '../../../services/api';
-import CompaniesWorkflow from '../../companies/workflows/CompaniesWorkflow';
-import { setCompaniesDrawerState } from '../../../redux/slices/companiesSlice';
-import { useDispatch } from 'react-redux';
 import AddUserDrawer from '../components/AddUserDrawer';
 import EditUserDrawer from '../components/EditUserDrawer';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 function DashboardWorkflow() {
-  const dispatch = useDispatch();
   const {
     inputQuery: searchText,
     debouncedValue: debouncedSearchText,
@@ -135,6 +131,8 @@ function DashboardWorkflow() {
   const [isEditUserDrawerOpen, setIsEditUserDrawerOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [editingUserData, setEditingUserData] = useState(null);
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const companyInlineInputRef = useRef(null);
   const selectRef = useRef(null);
   const companySelectRef = useRef(null);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
@@ -419,11 +417,13 @@ function DashboardWorkflow() {
     }
   };
 
-  const openCreateDrawer = (companyName = null) =>
-    dispatch(
-      setCompaniesDrawerState({ open: true, mode: 'create', record: { name: companyName } })
-    );
   const [openDropdownId, setOpenDropdownId] = useState(null);
+
+  const getCreatedCompanyId = createdCompany =>
+    createdCompany?.id ||
+    createdCompany?.data?.id ||
+    createdCompany?.data?.data?.id ||
+    createdCompany?._id;
 
   const createCompany = async values => {
     try {
@@ -450,13 +450,7 @@ function DashboardWorkflow() {
 
   const handleCompanyCreated = async createdCompany => {
     if (createdCompany) {
-      // Get the company ID from the response
-      // The response structure may vary, so we'll check multiple possible fields
-      const companyId =
-        createdCompany?.id ||
-        createdCompany?.data?.id ||
-        createdCompany?.data?.data?.id ||
-        createdCompany?._id;
+      const companyId = getCreatedCompanyId(createdCompany);
 
       if (companyId) {
         // Refetch companies to ensure the new company appears in the list
@@ -469,6 +463,32 @@ function DashboardWorkflow() {
           }
         }, 100);
       }
+    }
+  };
+
+  const handleAddCompanyFromDashboardSelect = async event => {
+    event.preventDefault();
+    const companyName = newCompanyName.trim();
+
+    if (!companyName) {
+      notification.warning({
+        message: 'Company name is required',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+
+    const createdCompany = await createCompany({ name: companyName });
+    const createdCompanyId = getCreatedCompanyId(createdCompany);
+
+    setNewCompanyName('');
+
+    if (createdCompanyId) {
+      setSelectedCompanyId(createdCompanyId);
+      setSelectedTeamId('all');
+      setTimeout(() => {
+        companyInlineInputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -790,7 +810,7 @@ function DashboardWorkflow() {
                   showSearch
                   size="large"
                   value={selectedCompanyId}
-                  style={{ width: 170, minWidth: 140 }}
+                  style={{ width: 200, minWidth: 140 }}
                   placeholder="Select Company"
                   filterOption={false}
                   onChange={value => {
@@ -804,14 +824,40 @@ function DashboardWorkflow() {
                     <>
                       {menu}
                       <Divider style={{ margin: '8px 0' }} />
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        block
-                        onClick={() => openCreateDrawer()}
-                      >
-                        Add Company
-                      </Button>
+                      <Space.Compact block>
+                        <Input
+                          style={{ width: '100%' }}
+                          placeholder="Enter company name"
+                          ref={companyInlineInputRef}
+                          value={newCompanyName}
+                          onChange={e => setNewCompanyName(e.target.value)}
+                          onKeyDown={e => e.stopPropagation()}
+                        />
+                        <Button
+                          type="primary"
+                          onClick={handleAddCompanyFromDashboardSelect}
+                          disabled={isCreatingCompany}
+                        >
+                          Add
+                        </Button>
+                      </Space.Compact>
+                      {/* <Space style={{ padding: '0 8px 4px', width: '100%' }}>
+                        <Input
+                          placeholder="Enter company name"
+                          ref={companyInlineInputRef}
+                          value={newCompanyName}
+                          onChange={e => setNewCompanyName(e.target.value)}
+                          onKeyDown={e => e.stopPropagation()}
+                        />
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          loading={isCreatingCompany}
+                          onClick={handleAddCompanyFromDashboardSelect}
+                        >
+                          Add
+                        </Button>
+                      </Space> */}
                     </>
                   )}
                 />
@@ -994,9 +1040,6 @@ function DashboardWorkflow() {
           </Form.Item>
         </Form>
       </Drawer>
-
-      {/* add company drawer */}
-      <CompaniesWorkflow isUsersDashboard={true} />
     </>
   );
 }
