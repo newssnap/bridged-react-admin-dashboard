@@ -11,7 +11,7 @@ import {
   Avatar,
   notification,
 } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { useGetTeamsByCompanyQuery, useUploadImageMutation } from '../../../services/api';
 import { AGENT_ACCESS_OPTIONS } from '../../../constants/agents';
 
@@ -22,9 +22,7 @@ const AddUserDrawer = ({
   onSubmit,
   companies,
   isLoadingCompanies,
-  companySearchText,
   companySearchInputHandler,
-  hasCompanies,
   createCompany,
   isCreatingCompany,
   companySelectRef,
@@ -34,7 +32,9 @@ const AddUserDrawer = ({
   setNewUserAllowedAgents,
 }) => {
   const fileInputRef = useRef(null);
+  const companyInlineInputRef = useRef(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
+  const [newCompanyName, setNewCompanyName] = useState('');
 
   const selectedCompanyId = Form.useWatch('company', form);
   const { data: teamsResponse, isLoading: isLoadingTeams } = useGetTeamsByCompanyQuery(
@@ -112,6 +112,36 @@ const AddUserDrawer = ({
   const handleCompanyChange = value => {
     form.setFieldValue('teamId', undefined);
     setTimeout(() => companySelectRef.current?.blur(), 0);
+  };
+
+  const getCreatedCompanyId = createdCompany =>
+    createdCompany?.id ||
+    createdCompany?.data?.id ||
+    createdCompany?.data?.data?.id ||
+    createdCompany?._id;
+
+  const handleAddCompany = async event => {
+    event.preventDefault();
+    const companyName = newCompanyName.trim();
+
+    if (!companyName) {
+      notification.warning({
+        message: 'Company name is required',
+      });
+      return;
+    }
+
+    const createdCompany = await createCompany?.({ name: companyName });
+    const createdCompanyId = getCreatedCompanyId(createdCompany);
+    setNewCompanyName('');
+
+    if (createdCompanyId) {
+      form.setFieldValue('company', createdCompanyId);
+      form.setFieldValue('teamId', undefined);
+      setTimeout(() => {
+        companyInlineInputRef.current?.focus();
+      }, 0);
+    }
   };
 
   return (
@@ -206,41 +236,29 @@ const AddUserDrawer = ({
             onChange={handleCompanyChange}
             onSearch={companySearchInputHandler}
             onBlur={() => companySearchInputHandler?.('')}
-            notFoundContent={
-              !isLoadingCompanies && !hasCompanies ? (
-                <div
-                  style={{
-                    borderRadius: 8,
-                    padding: 24,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 120,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 14,
-                      marginBottom: 20,
-                      textAlign: 'center',
-                    }}
-                  >
-                    No companies found.
-                  </div>
+            dropdownRender={menu => (
+              <>
+                {menu}
+                <Divider style={{ margin: '8px 0' }} />
+                <Space.Compact block>
+                  <Input
+                    placeholder="Enter company name"
+                    ref={companyInlineInputRef}
+                    value={newCompanyName}
+                    onChange={e => setNewCompanyName(e.target.value)}
+                    onKeyDown={e => e.stopPropagation()}
+                  />
                   <Button
                     type="primary"
-                    size="middle"
-                    style={{ minWidth: 140 }}
-                    onClick={() => createCompany?.({ name: companySearchText ?? '' })}
+                    icon={<PlusOutlined />}
                     loading={isCreatingCompany}
+                    onClick={handleAddCompany}
                   >
-                    Create "{companySearchText || 'company'}"
+                    Add
                   </Button>
-                </div>
-              ) : null
-            }
+                </Space.Compact>
+              </>
+            )}
           />
         </Form.Item>
 
