@@ -489,6 +489,19 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['teamCredits'],
     }),
+
+    enablePlaybookForTeam: builder.mutation({
+      query: (teamId, playbookId) => ({
+        url: `/playbooks/admin/team/enable?teamId=${teamId}&playbookId=${playbookId}`,
+        method: 'POST',
+      }),
+    }),
+    disablePlaybookForTeam: builder.mutation({
+      query: (teamId, playbookId) => ({
+        url: `/playbooks/admin/team/disable?teamId=${teamId}&playbookId=${playbookId}`,
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -546,4 +559,6 @@ export const {
   useFindAllUsersPaginationMutation,
   useGetAdminTeamMembersQuery,
   useGetTeamsByCompanyQuery,
+  useEnablePlaybookForTeamMutation,
+  useDisablePlaybookForTeamMutation,
 } = bridgedApi;
