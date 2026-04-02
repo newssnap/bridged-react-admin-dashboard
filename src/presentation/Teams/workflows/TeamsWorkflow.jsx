@@ -190,7 +190,10 @@ function TeamsWorkflow() {
         bordered
         onRow={record => ({
           onClick: () => openViewDrawer(record),
-          style: { cursor: 'pointer' },
+          style: {
+            cursor: 'pointer',
+            backgroundColor: record?.companyId === '' ? '#f5f5f5' : undefined,
+          },
         })}
         pagination={{
           position: ['bottomLeft'],
