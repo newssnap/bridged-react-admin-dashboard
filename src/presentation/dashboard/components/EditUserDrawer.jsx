@@ -213,7 +213,7 @@ const EditUserDrawer = ({
           />
         </Form.Item>
 
-        <Spin spinning={isFetchingUserForUpdate} tip="Loading configuration...">
+        {/* <Spin spinning={isFetchingUserForUpdate} tip="Loading configuration...">
           <Form.Item name="allowedAgents" label="Agents">
             <Select
               mode="multiple"
@@ -226,7 +226,7 @@ const EditUserDrawer = ({
               allowClear
             />
           </Form.Item>
-        </Spin>
+        </Spin> */}
       </Form>
     </Drawer>
   );
