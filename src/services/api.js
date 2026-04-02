@@ -53,6 +53,7 @@ export const bridgedApi = createApi({
     'companies',
     'teams',
     'teamCredits',
+    'teamPlaybooks',
   ],
   endpoints: builder => ({
     // User login mutation
@@ -489,18 +490,34 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['teamCredits'],
     }),
-
+    getPlaybooks: builder.query({
+      query: () => ({
+        url: '/playbooks/admin',
+        method: 'GET',
+      }),
+      providesTags: ['playbooks'],
+    }),
     enablePlaybookForTeam: builder.mutation({
-      query: (teamId, playbookId) => ({
+      query: ({ teamId, playbookId }) => ({
         url: `/playbooks/admin/team/enable?teamId=${teamId}&playbookId=${playbookId}`,
         method: 'POST',
       }),
+      invalidatesTags: (result, error, { teamId }) => [{ type: 'teamPlaybooks', id: teamId }],
     }),
     disablePlaybookForTeam: builder.mutation({
-      query: (teamId, playbookId) => ({
+      query: ({ teamId, playbookId }) => ({
         url: `/playbooks/admin/team/disable?teamId=${teamId}&playbookId=${playbookId}`,
         method: 'POST',
       }),
+      invalidatesTags: (result, error, { teamId }) => [{ type: 'teamPlaybooks', id: teamId }],
+    }),
+    getTeamPlaybooks: builder.query({
+      query: teamId => ({
+        url: `/playbooks/admin/team?teamId=${teamId}`,
+        method: 'GET',
+      }),
+      keepUnusedDataFor: 0,
+      providesTags: (result, error, teamId) => [{ type: 'teamPlaybooks', id: teamId }],
     }),
   }),
 });
@@ -559,6 +576,9 @@ export const {
   useFindAllUsersPaginationMutation,
   useGetAdminTeamMembersQuery,
   useGetTeamsByCompanyQuery,
+  useGetPlaybooksQuery,
   useEnablePlaybookForTeamMutation,
   useDisablePlaybookForTeamMutation,
+  useGetTeamPlaybooksQuery,
+  useLazyGetTeamPlaybooksQuery,
 } = bridgedApi;

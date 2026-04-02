@@ -1,24 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Drawer,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  Divider,
-  Alert,
-  Avatar,
-  Card,
-  Checkbox,
-  Tag,
-  Typography,
-  notification,
-} from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Drawer, Form, Input, Select, Button, Space, Divider, Avatar, notification } from 'antd';
 import { PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { useGetTeamsByCompanyQuery, useUploadImageMutation } from '../../../services/api';
 import { AGENT_ACCESS_OPTIONS } from '../../../constants/agents';
-import { PlaybookType, agentTypesForPlaybooks } from '../../../constants/playbooks';
 
 const AddUserDrawer = ({
   open,
@@ -40,23 +24,6 @@ const AddUserDrawer = ({
   const companyInlineInputRef = useRef(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
   const [newCompanyName, setNewCompanyName] = useState('');
-  const [isPlaybookDrawerOpen, setIsPlaybookDrawerOpen] = useState(false);
-  const [selectedPlaybooks, setSelectedPlaybooks] = useState([]);
-  const [draftSelectedPlaybooks, setDraftSelectedPlaybooks] = useState([]);
-
-  const playbooks = useMemo(() => Object.values(PlaybookType ?? {}), []);
-  const playbookAgentLabelMap = useMemo(() => {
-    const labels = {};
-    agentTypesForPlaybooks?.forEach(agent => {
-      labels[agent.value] = agent.label;
-    });
-    AGENT_ACCESS_OPTIONS?.forEach(agent => {
-      if (!labels[agent.value]) {
-        labels[agent.value] = agent.label;
-      }
-    });
-    return labels;
-  }, []);
 
   const selectedCompanyId = Form.useWatch('company', form);
   const { data: teamsResponse, isLoading: isLoadingTeams } = useGetTeamsByCompanyQuery(
@@ -78,14 +45,6 @@ const AddUserDrawer = ({
   }, [newUserAllowedAgents, open, form]);
 
   useEffect(() => {
-    if (open) {
-      const formPlaybooks = form.getFieldValue('assignedPlaybooks') || [];
-      setSelectedPlaybooks(formPlaybooks);
-      setDraftSelectedPlaybooks(formPlaybooks);
-    }
-  }, [open, form]);
-
-  useEffect(() => {
     setProfilePhotoUrl(open ? form.getFieldValue('profilePhoto') || '' : '');
   }, [open, form]);
 
@@ -98,9 +57,6 @@ const AddUserDrawer = ({
     if (!isDrawerOpen) {
       form.resetFields();
       setProfilePhotoUrl('');
-      setSelectedPlaybooks([]);
-      setDraftSelectedPlaybooks([]);
-      setIsPlaybookDrawerOpen(false);
       resetNewUserAgentStates?.();
     }
   };
@@ -177,29 +133,6 @@ const AddUserDrawer = ({
     }
   };
 
-  const openPlaybooksDrawer = () => {
-    setDraftSelectedPlaybooks(selectedPlaybooks);
-    setIsPlaybookDrawerOpen(true);
-  };
-
-  const closePlaybooksDrawer = () => {
-    setIsPlaybookDrawerOpen(false);
-  };
-
-  const applyPlaybooksSelection = () => {
-    setSelectedPlaybooks(draftSelectedPlaybooks);
-    form.setFieldValue('assignedPlaybooks', draftSelectedPlaybooks);
-    setIsPlaybookDrawerOpen(false);
-  };
-
-  const handlePlaybookToggle = (playbookValue, checked) => {
-    setDraftSelectedPlaybooks(prev =>
-      checked
-        ? [...new Set([...prev, playbookValue])]
-        : prev.filter(value => value !== playbookValue)
-    );
-  };
-
   return (
     <Drawer
       title="Add User"
@@ -223,9 +156,6 @@ const AddUserDrawer = ({
     >
       <Form form={form} layout="vertical">
         <Form.Item name="profilePhoto" hidden>
-          <Input type="hidden" />
-        </Form.Item>
-        <Form.Item name="assignedPlaybooks" hidden>
           <Input type="hidden" />
         </Form.Item>
 
@@ -331,7 +261,7 @@ const AddUserDrawer = ({
             allowClear
           />
         </Form.Item>
-        <Form.Item name="newUserAllowedAgents" label="Agents Access Control">
+        {/* <Form.Item name="newUserAllowedAgents" label="Agents Access Control">
           <Select
             mode="multiple"
             size="large"
@@ -342,103 +272,8 @@ const AddUserDrawer = ({
             disabled={isAddingUser}
             allowClear
           />
-        </Form.Item>
-        <Form.Item label="Assign Playbooks">
-          <Space direction="vertical" style={{ width: '100%' }} size={8}>
-            <Button size="large" onClick={openPlaybooksDrawer}>
-              Assign Playbooks {selectedPlaybooks.length > 0 ? `(${selectedPlaybooks.length})` : ''}
-            </Button>
-            <Typography.Text type="secondary">
-              {selectedPlaybooks.length > 0
-                ? `${selectedPlaybooks.length} playbook(s) selected`
-                : 'No playbook selected'}
-            </Typography.Text>
-          </Space>
-        </Form.Item>
+        </Form.Item> */}
       </Form>
-
-      <Drawer
-        title="Assign Playbooks"
-        width={720}
-        onClose={closePlaybooksDrawer}
-        open={isPlaybookDrawerOpen}
-        destroyOnClose={false}
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography.Text type="secondary">
-              {draftSelectedPlaybooks.length} playbook(s) selected
-            </Typography.Text>
-            <Space>
-              <Button onClick={closePlaybooksDrawer}>Cancel</Button>
-              <Button type="primary" onClick={applyPlaybooksSelection}>
-                Apply
-              </Button>
-            </Space>
-          </div>
-        }
-      >
-        <Space direction="vertical" size={12} style={{ width: '100%' }}>
-          {playbooks.map(playbook => {
-            const IconComponent = playbook.icon;
-            const isChecked = draftSelectedPlaybooks.includes(playbook.value);
-            const playbookAgents = (playbook.agentTypes || []).map(agentType => ({
-              value: agentType,
-              label: playbookAgentLabelMap[agentType] || agentType,
-              description: playbook.agentDescriptions?.[agentType] || '',
-            }));
-
-            return (
-              <Card
-                key={playbook.value}
-                size="small"
-                hoverable
-                onClick={() => handlePlaybookToggle(playbook.value, !isChecked)}
-                style={{
-                  borderColor: isChecked ? '#1677ff' : undefined,
-                  backgroundColor: isChecked ? '#f0f7ff' : undefined,
-                  cursor: 'pointer',
-                }}
-              >
-                <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                  <Space align="start" style={{ width: '100%', justifyContent: 'space-between' }}>
-                    <Space>
-                      <Checkbox
-                        checked={isChecked}
-                        onChange={event =>
-                          handlePlaybookToggle(playbook.value, event.target.checked)
-                        }
-                        onClick={event => event.stopPropagation()}
-                      />
-                      <Space>
-                        {IconComponent ? <IconComponent style={{ color: '#1677ff' }} /> : null}
-                        <Typography.Text strong>{playbook.title}</Typography.Text>
-                      </Space>
-                    </Space>
-                  </Space>
-
-                  <Typography.Text type="secondary">{playbook.longDescription}</Typography.Text>
-
-                  <Space wrap>
-                    {playbookAgents.map(agent => (
-                      <Tag key={`${playbook.value}-${agent.value}`} color="blue">
-                        {agent.label}
-                      </Tag>
-                    ))}
-                  </Space>
-
-                  <Space direction="vertical" size={4}>
-                    {playbookAgents.map(agent => (
-                      <Typography.Text key={`${playbook.value}-${agent.value}-description`}>
-                        <strong>{agent.label}:</strong> {agent.description || 'No description'}
-                      </Typography.Text>
-                    ))}
-                  </Space>
-                </Space>
-              </Card>
-            );
-          })}
-        </Space>
-      </Drawer>
     </Drawer>
   );
 };

@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { Space, Typography, Table, Button, Input, Flex, Select, Dropdown, Tooltip } from 'antd';
+import {
+  Space,
+  Typography,
+  Table,
+  Button,
+  Input,
+  Flex,
+  Select,
+  Dropdown,
+  Tooltip,
+  Form,
+  notification,
+} from 'antd';
 import { PlusOutlined, MoreOutlined } from '@ant-design/icons';
 import { useTeamsHandler } from '../controllers/useTeamsHandler';
 import AddTeamDrawer from '../components/AddTeamDrawer';
@@ -8,11 +20,96 @@ import EditTeamDrawer from '../components/EditTeamDrawer';
 import ManageCreditsDrawer from '../../TeamCredits/components/ManageCreditsDrawer';
 import PreviewEditCustomWorkDrawer from '../../TeamCredits/components/PreviewEditCustomWorkDrawer';
 import Icon from '../../../utils/components/Icon';
+import AssignPlaybookDrawer from '../../dashboard/components/AssignPlaybookDrawer';
+import useAssignPlaybookDrawer from '../../dashboard/controllers/useAssignPlaybookDrawer';
+import {
+  useDisablePlaybookForTeamMutation,
+  useEnablePlaybookForTeamMutation,
+} from '../../../services/api';
 
 function TeamsWorkflow() {
   const { Title } = Typography;
   const [searchValue, setSearchValue] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
+  const [assignPlaybookForm] = Form.useForm();
+  const [selectedTeamForPlaybooks, setSelectedTeamForPlaybooks] = useState(null);
+  const [isApplyingPlaybookChanges, setIsApplyingPlaybookChanges] = useState(false);
+
+  const {
+    playbooks,
+    playbookAgentLabelMap,
+    isLoadingPlaybooks,
+    draftSelectedPlaybooks,
+    initialAssignedPlaybookTypes,
+    teamAssignedPlaybookIdsByType,
+    isPlaybookDrawerOpen,
+    openPlaybooksDrawer,
+    closePlaybooksDrawer,
+    applyPlaybooksSelection,
+    handlePlaybookToggle,
+    handleTeamPlaybooksLoaded,
+  } = useAssignPlaybookDrawer({ form: assignPlaybookForm });
+
+  const [enablePlaybookForTeam] = useEnablePlaybookForTeamMutation();
+  const [disablePlaybookForTeam] = useDisablePlaybookForTeamMutation();
+
+  const handleAssignPlaybooks = async () => {
+    const teamId = selectedTeamForPlaybooks?._id;
+    if (!teamId) {
+      notification.warning({
+        message: 'No team selected',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+
+    const initialSet = new Set(initialAssignedPlaybookTypes);
+    const draftSet = new Set(draftSelectedPlaybooks);
+
+    const toEnableTypes = draftSelectedPlaybooks.filter(t => !initialSet.has(t));
+    const toDisableTypes = initialAssignedPlaybookTypes.filter(t => !draftSet.has(t));
+
+    if (toEnableTypes.length === 0 && toDisableTypes.length === 0) {
+      applyPlaybooksSelection();
+      setSelectedTeamForPlaybooks(null);
+      return;
+    }
+
+    setIsApplyingPlaybookChanges(true);
+    try {
+      const enableTasks = toEnableTypes.map(playbookType => {
+        const playbook = playbooks.find(p => p.value === playbookType);
+        if (!playbook?.id) {
+          return Promise.reject(new Error(`Missing playbook id for "${playbookType}"`));
+        }
+        return enablePlaybookForTeam({ teamId, playbookId: playbook.id }).unwrap();
+      });
+
+      const disableTasks = toDisableTypes.map(playbookType => {
+        const playbookId = teamAssignedPlaybookIdsByType[playbookType];
+        if (!playbookId) {
+          return Promise.reject(new Error(`Missing team playbook id for "${playbookType}"`));
+        }
+        return disablePlaybookForTeam({ teamId, playbookId }).unwrap();
+      });
+
+      await Promise.all([...enableTasks, ...disableTasks]);
+
+      applyPlaybooksSelection();
+      notification.success({
+        message: 'Team playbooks updated',
+        placement: 'bottomRight',
+      });
+      setSelectedTeamForPlaybooks(null);
+    } catch (error) {
+      notification.error({
+        message: error?.data?.message || error?.message || 'Failed to update team playbooks',
+        placement: 'bottomRight',
+      });
+    } finally {
+      setIsApplyingPlaybookChanges(false);
+    }
+  };
 
   const {
     tableData,
@@ -131,6 +228,11 @@ function TeamsWorkflow() {
             label: <span>Manage Custom Work</span>,
             icon: <Icon name="SettingOutlined" />,
           },
+          {
+            key: 'assignPlaybooks',
+            label: <span>Playbooks Management</span>,
+            icon: <Icon name="ResumeFilled" />,
+          },
         ];
 
         const handleMenuClick = ({ key }) => {
@@ -138,6 +240,10 @@ function TeamsWorkflow() {
           if (key === 'editTeam') openEditDrawer(record);
           if (key === 'manageCredits') openManageCreditsDrawer(record);
           if (key === 'manageCustomWork') openCustomWorkDrawer(record);
+          if (key === 'assignPlaybooks') {
+            setSelectedTeamForPlaybooks(record);
+            openPlaybooksDrawer();
+          }
         };
 
         return (
@@ -275,6 +381,23 @@ function TeamsWorkflow() {
         teamsData={teamsDataForCustomWorkDrawer}
         onSubmit={handleCustomWorkSubmit}
         isSubmitting={isCustomWorkSubmitting}
+      />
+
+      <AssignPlaybookDrawer
+        open={isPlaybookDrawerOpen}
+        teamId={selectedTeamForPlaybooks?._id}
+        playbooks={playbooks}
+        playbookAgentLabelMap={playbookAgentLabelMap}
+        draftSelectedPlaybooks={draftSelectedPlaybooks}
+        isLoadingPlaybooks={isLoadingPlaybooks}
+        isApplyingPlaybooks={isApplyingPlaybookChanges}
+        onTeamPlaybooksLoaded={handleTeamPlaybooksLoaded}
+        onClose={() => {
+          closePlaybooksDrawer();
+          setSelectedTeamForPlaybooks(null);
+        }}
+        onApply={handleAssignPlaybooks}
+        onToggle={handlePlaybookToggle}
       />
     </Space>
   );
