@@ -163,9 +163,12 @@ const AssignPlaybookDrawer = ({
             {draftSelectedPlaybooks.length} playbook(s) selected
           </Typography.Text>
           <Space>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button size="large" onClick={onClose}>
+              Cancel
+            </Button>
             <Button
               type="primary"
+              size="large"
               onClick={onApply}
               loading={showListLoading || Boolean(isApplyingPlaybooks)}
               disabled={Boolean(teamId) && !teamPlaybooksInitialSyncDone}
