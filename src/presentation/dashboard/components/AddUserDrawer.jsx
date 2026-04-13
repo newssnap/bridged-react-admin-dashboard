@@ -1,16 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Drawer,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  Divider,
-  Alert,
-  Avatar,
-  notification,
-} from 'antd';
+import { Drawer, Form, Input, Select, Button, Space, Divider, Avatar, notification } from 'antd';
 import { PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { useGetTeamsByCompanyQuery, useUploadImageMutation } from '../../../services/api';
 import { AGENT_ACCESS_OPTIONS } from '../../../constants/agents';
@@ -272,7 +261,7 @@ const AddUserDrawer = ({
             allowClear
           />
         </Form.Item>
-        <Form.Item name="newUserAllowedAgents" label="Agents Access Control">
+        {/* <Form.Item name="newUserAllowedAgents" label="Agents Access Control">
           <Select
             mode="multiple"
             size="large"
@@ -283,7 +272,7 @@ const AddUserDrawer = ({
             disabled={isAddingUser}
             allowClear
           />
-        </Form.Item>
+        </Form.Item> */}
       </Form>
     </Drawer>
   );

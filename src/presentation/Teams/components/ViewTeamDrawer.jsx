@@ -9,7 +9,6 @@ const { Text } = Typography;
 const ViewTeamDrawer = ({ open, onClose, team }) => {
   const navigate = useNavigate();
   const teamId = team?._id;
-  console.log(team);
   const { data: membersData, isLoading: isLoadingMembers } = useGetAdminTeamMembersQuery(teamId, {
     skip: !open || !teamId,
   });
