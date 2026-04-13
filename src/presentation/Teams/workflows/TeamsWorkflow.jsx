@@ -231,7 +231,7 @@ function TeamsWorkflow() {
           {
             key: 'assignPlaybooks',
             label: <span>Playbooks Management</span>,
-            icon: <Icon name="ResumeFilled" />,
+            icon: <Icon name="PlayLinear" />,
           },
         ];
 
