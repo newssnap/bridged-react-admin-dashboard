@@ -47,6 +47,15 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   });
 
   const members = membersData?.data ?? [];
+  const memberAccessConfigsByUserId = useMemo(
+    () =>
+      members.reduce((acc, member) => {
+        if (!member?.userId) return acc;
+        acc[member.userId] = member.accessConfigs ?? [];
+        return acc;
+      }, {}),
+    [members]
+  );
   const membersLoaded = !isLoadingMembers && open && teamId;
 
   const closeEditDrawer = useCallback(() => {
@@ -106,10 +115,9 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         return;
       }
       try {
-        console.log(values.memberIds);
         let teamMembers = (values.memberIds ?? []).map(userId => ({
           userId,
-          accessConfigs: [],
+          accessConfigs: memberAccessConfigsByUserId[userId] ?? [],
         }));
         // Remove the teamOwnerId from teamMembers if present
         if (values.teamOwnerId) {
@@ -165,7 +173,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         });
       }
     },
-    [updateTeam, onSuccess, refetchTeamMembers, closeEditDrawer]
+    [updateTeam, onSuccess, refetchTeamMembers, closeEditDrawer, memberAccessConfigsByUserId]
   );
 
   const handleFinish = useCallback(
