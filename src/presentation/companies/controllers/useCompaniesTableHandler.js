@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { notification } from 'antd';
 import { useGetCompaniesQuery } from '../../../services/api';
+import { useLocation } from 'react-router-dom';
 
 const PAGE_SIZE = 10;
 
 const useCompaniesTableHandler = searchValue => {
+  const { pathname } = useLocation();
   const [page, setPage] = useState(1);
   const [limit] = useState(PAGE_SIZE);
 
@@ -15,6 +17,7 @@ const useCompaniesTableHandler = searchValue => {
     isFetching: isCompaniesFetchingQuery,
     isError,
     error,
+    refetch,
   } = useGetCompaniesQuery({
     page,
     limit,
@@ -53,6 +56,12 @@ const useCompaniesTableHandler = searchValue => {
       });
     }
   }, [isError, error]);
+
+  useEffect(() => {
+    if (pathname === '/companies') {
+      refetch();
+    }
+  }, [pathname, refetch]);
 
   const handlePageChange = newPage => {
     setPage(newPage);

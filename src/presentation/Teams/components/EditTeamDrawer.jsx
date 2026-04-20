@@ -53,7 +53,6 @@ const EditTeamDrawer = ({
   const logoUrl = Form.useWatch('logoUrl', form);
   const memberOptions = getMemberOptionsExcludingOwner(userOptions, selectedTeamOwnerId);
   const displayedLogoUrl = logoPreviewUrl || logoUrl || '';
-  console.log(team);
   const handleLogoUploadClick = () => {
     fileInputRef.current?.click();
   };

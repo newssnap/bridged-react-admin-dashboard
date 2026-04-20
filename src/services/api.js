@@ -51,6 +51,9 @@ export const bridgedApi = createApi({
     'taskComments',
     'userConfiguration',
     'companies',
+    'teams',
+    'teamCredits',
+    'teamPlaybooks',
   ],
   endpoints: builder => ({
     // User login mutation
@@ -82,11 +85,12 @@ export const bridgedApi = createApi({
     }),
 
     getUserAdminPagination: builder.mutation({
-      query: ({ companyId, status, sort, search, pageNumber, limit }) => ({
+      query: ({ companyId, teamId, status, sort, search, pageNumber, limit }) => ({
         url: '/User/Admin/Pagination',
         method: 'POST',
         body: {
           ...(companyId && { companyId }),
+          ...(teamId && { teamId }),
           status: status || 'all',
           sort: sort || 'lastLogin_DESC',
           search: search || '',
@@ -385,6 +389,136 @@ export const bridgedApi = createApi({
       }),
       invalidatesTags: ['users'],
     }),
+
+    getTeams: builder.query({
+      query: () => ({
+        url: `/Team/Admin`,
+        method: 'GET',
+      }),
+      providesTags: ['teams'],
+    }),
+
+    getTeamsByCompany: builder.query({
+      query: companyId => ({
+        url: `/Team/Admin/GetTeamsByCompanyId?companyId=${companyId}`,
+        method: 'GET',
+      }),
+      providesTags: ['teams'],
+    }),
+
+    getAdminTeamMembers: builder.query({
+      query: id => ({
+        url: `/Team/Admin/TeamMember?teamId=${id}`,
+        method: 'GET',
+      }),
+      providesTags: ['teamMembers'],
+    }),
+
+    createTeam: builder.mutation({
+      query: body => ({
+        url: '/Team/Admin',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['teams'],
+    }),
+    updateTeam: builder.mutation({
+      query: body => ({
+        url: `/Team/Admin`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['teams'],
+    }),
+
+    getTeamCredits: builder.query({
+      query: () => ({
+        url: '/credits/admin/teams',
+        method: 'GET',
+      }),
+      providesTags: ['teamCredits'],
+    }),
+
+    getTeamCreditsHistory: builder.query({
+      query: id => ({
+        url: `/credits/admin/team/history?team_id=${id}`,
+        method: 'GET',
+      }),
+      providesTags: ['teamMembers'],
+    }),
+
+    adjustTeamCredits: builder.mutation({
+      query: data => ({
+        url: '/credits/admin/teams',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+
+    getCustomWork: builder.query({
+      query: () => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'GET',
+      }),
+      transformResponse: response => response?.data ?? [],
+      providesTags: ['teamCredits'],
+    }),
+
+    addCustomWork: builder.mutation({
+      query: data => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+
+    editCustomWork: builder.mutation({
+      query: data => ({
+        url: '/credits/admin/team/custom-work',
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+
+    deleteCustomWork: builder.mutation({
+      query: id => ({
+        url: `/credits/admin/team/custom-work?creditUsageId=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['teamCredits'],
+    }),
+    getPlaybooks: builder.query({
+      query: () => ({
+        url: '/playbooks/admin',
+        method: 'GET',
+      }),
+      providesTags: ['playbooks'],
+    }),
+    enablePlaybookForTeam: builder.mutation({
+      query: ({ teamId, playbookId }) => ({
+        url: `/playbooks/admin/team/enable?teamId=${teamId}&playbookId=${playbookId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, { teamId }) => [{ type: 'teamPlaybooks', id: teamId }],
+    }),
+    disablePlaybookForTeam: builder.mutation({
+      query: ({ teamId, playbookId }) => ({
+        url: `/playbooks/admin/team/disable?teamId=${teamId}&playbookId=${playbookId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, { teamId }) => [{ type: 'teamPlaybooks', id: teamId }],
+    }),
+    getTeamPlaybooks: builder.query({
+      query: teamId => ({
+        url: `/playbooks/admin/team?teamId=${teamId}`,
+        method: 'GET',
+      }),
+      keepUnusedDataFor: 0,
+      providesTags: (result, error, teamId) => [{ type: 'teamPlaybooks', id: teamId }],
+    }),
   }),
 });
 
@@ -429,4 +563,22 @@ export const {
   useGetUserAdminPaginationMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
+  useGetTeamCreditsQuery,
+  useGetTeamCreditsHistoryQuery,
+  useAdjustTeamCreditsMutation,
+  useGetCustomWorkQuery,
+  useAddCustomWorkMutation,
+  useDeleteCustomWorkMutation,
+  useEditCustomWorkMutation,
+  useGetTeamsQuery,
+  useCreateTeamMutation,
+  useUpdateTeamMutation,
+  useFindAllUsersPaginationMutation,
+  useGetAdminTeamMembersQuery,
+  useGetTeamsByCompanyQuery,
+  useGetPlaybooksQuery,
+  useEnablePlaybookForTeamMutation,
+  useDisablePlaybookForTeamMutation,
+  useGetTeamPlaybooksQuery,
+  useLazyGetTeamPlaybooksQuery,
 } = bridgedApi;

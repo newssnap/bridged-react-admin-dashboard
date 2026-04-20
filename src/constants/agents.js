@@ -23,6 +23,15 @@ export const MONETIZE_PACK_OPTIONS = [
   { label: 'Smart Offerwal Agent', value: 'affiliateLink', type: AGENT_TYPES.CAMPAIGN },
 ];
 
+// Simplified agent access options for Add User (one multi-select; qualification is an option)
+export const AGENT_ACCESS_OPTIONS = [
+  { label: 'Data Explorer Agent', value: 'DEA' },
+  { label: 'Knowledge Agent', value: 'rag' },
+  { label: 'Polling Agent', value: 'pollingAgent' },
+  { label: 'Smart Offerwal Agent', value: 'affiliateLink' },
+  { label: 'Qualification Agent', value: 'qualification' },
+];
+
 export const CampaignType = {
   NewsLetterSignup: 'newsLetterSignup',
   AffiliateLink: 'affiliateLink',

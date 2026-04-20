@@ -11,6 +11,7 @@ import {
   useGetBacklinkUsageDataMutation,
 } from '../../../services/api';
 import { useState } from 'react';
+import { notification } from 'antd';
 export const useReportHandler = () => {
   const [generateTokenID, setGenerateTokenID] = useState(null);
   const [generateUserToken, { isLoading: isGeneratingToken }] = useGenerateUserTokenMutation();
@@ -76,8 +77,18 @@ export const useReportHandler = () => {
           filteredCampaigns: response.data.filteredCampaigns,
           allTimeAllCampaigns: response.data.allTimeAllCampaigns,
         };
+        notification.success({
+          message: 'Report Generated',
+          description: 'Your report has been generated successfully.',
+          placement: 'bottomRight',
+        });
         exportCustomerFacingExcel(formattedData, data);
       } else {
+        notification.error({
+          message: 'Report Generation Failed',
+          description: 'Failed to generate report. Please try again.',
+          placement: 'bottomRight',
+        });
         throw new Error(response.errorObject.userErrorText);
       }
     } catch (error) {
@@ -87,53 +98,126 @@ export const useReportHandler = () => {
 
   const handleUsageReport = async data => {
     try {
-      // Make all 6 API calls concurrently
-      const promises = [
-        getResearchPartnerDate({
-          startDate: data.startDate,
-          endDate: data.endDate,
-          hostnames: data.hostnames,
-        }).unwrap(),
-        getDiscoveryAgentData({
-          startDate: data.startDate,
-          endDate: data.endDate,
-          hostnames: data.hostnames,
-        }).unwrap(),
-        getSummaryUsageData({
-          startDate: data.startDate,
-          endDate: data.endDate,
-          hostnames: data.hostnames,
-        }).unwrap(),
-        getSEOV3Data({
-          startDate: data.startDate,
-          endDate: data.endDate,
-          hostnames: data.hostnames,
-        }).unwrap(),
-        getSEOV4Data({
-          startDate: data.startDate,
-          endDate: data.endDate,
-          hostnames: data.hostnames,
-        }).unwrap(),
-        getBacklinkUsageData({
-          startDate: data.startDate,
-          endDate: data.endDate,
-          hostnames: data.hostnames,
-        }).unwrap(),
+      const requestConfigs = [
+        {
+          name: 'Research Partner',
+          request: getResearchPartnerDate({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            hostnames: data.hostnames,
+          }).unwrap(),
+        },
+        {
+          name: 'Discovery Agent',
+          request: getDiscoveryAgentData({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            hostnames: data.hostnames,
+          }).unwrap(),
+        },
+        {
+          name: 'Summary Usage',
+          request: getSummaryUsageData({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            hostnames: data.hostnames,
+          }).unwrap(),
+        },
+        {
+          name: 'SEO V3',
+          request: getSEOV3Data({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            hostnames: data.hostnames,
+          }).unwrap(),
+        },
+        {
+          name: 'SEO V4',
+          request: getSEOV4Data({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            hostnames: data.hostnames,
+          }).unwrap(),
+        },
+        {
+          name: 'Backlink Usage',
+          request: getBacklinkUsageData({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            hostnames: data.hostnames,
+          }).unwrap(),
+        },
       ];
 
-      // Wait for all API calls to complete
-      const responses = await Promise.all(promises);
+      const settledResults = await Promise.allSettled(
+        requestConfigs.map(requestConfig => requestConfig.request)
+      );
 
-      // Extract data from all successful responses and combine into one array
-      const combinedData = responses
-        .filter(response => response.success)
-        .map(response => response.data)
-        .flat(); // Flatten all arrays into one
+      const successfulResponses = [];
+      const failedRequests = [];
 
-      // Call exportProductivityExcell with the combined data
+      settledResults.forEach((result, index) => {
+        const requestName = requestConfigs[index].name;
+
+        if (result.status === 'fulfilled' && result.value?.success) {
+          successfulResponses.push(result.value);
+          return;
+        }
+
+        const errorMessage =
+          result.status === 'fulfilled'
+            ? result.value?.errorObject?.userErrorText || 'Request returned unsuccessful response'
+            : result.reason?.data?.errorObject?.userErrorText ||
+              result.reason?.message ||
+              'Request failed';
+
+        failedRequests.push(`${requestName}: ${errorMessage}`);
+      });
+
+      if (successfulResponses.length === requestConfigs.length) {
+        notification.success({
+          message: 'Productivity report generated',
+          description: 'All report data sources were fetched successfully.',
+          placement: 'bottomRight',
+        });
+      } else if (successfulResponses.length > 0) {
+        notification.warning({
+          message: 'Productivity report generated with partial data',
+          description: `${successfulResponses.length}/${requestConfigs.length} data sources succeeded.`,
+          placement: 'bottomRight',
+        });
+        failedRequests.forEach(errorText => {
+          notification.error({
+            message: 'Some report sources failed',
+            description: errorText,
+            placement: 'bottomRight',
+          });
+        });
+      } else {
+        notification.error({
+          message: 'Report generation failed',
+          description: 'All report data sources failed.',
+          placement: 'bottomRight',
+        });
+        failedRequests.forEach(errorText => {
+          notification.error({
+            message: 'Report source failed',
+            description: errorText,
+            placement: 'bottomRight',
+          });
+        });
+        return;
+      }
+
+      const combinedData = successfulResponses.map(response => response.data).flat();
       exportProductivityExcell(combinedData, data);
     } catch (error) {
       console.log('Error in handleUsageReport:', error);
+      notification.error({
+        message: 'Report generation failed',
+        description: 'Unexpected error while generating productivity report.',
+        placement: 'bottomRight',
+      });
     }
   };
 

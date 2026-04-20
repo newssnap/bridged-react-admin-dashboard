@@ -10,7 +10,9 @@ const LazyDashboard = lazy(() => import('../pages/Dashboard'));
 const LazyDefaultChecklist = lazy(() => import('../pages/DefaultChecklist'));
 const LazyUserChecklist = lazy(() => import('../pages/UserChecklist'));
 const LazyCompanies = lazy(() => import('../pages/Companies'));
-
+const LazyTeams = lazy(() => import('../pages/Teams'));
+const LazyTeamCredits = lazy(() => import('../pages/TeamCredits'));
+const LazyCustomWork = lazy(() => import('../pages/CustomWork'));
 function AppRouter() {
   // Function to handle page type and layout
   const handlePageTypeAndLayout = (Children, isProtected) => {
@@ -49,6 +51,21 @@ function AppRouter() {
     {
       path: '/userChecklist/:id',
       component: LazyUserChecklist,
+      isProtected: true,
+    },
+    {
+      path: '/teams',
+      component: LazyTeams,
+      isProtected: true,
+    },
+    {
+      path: '/teams/credits',
+      component: LazyTeamCredits,
+      isProtected: true,
+    },
+    {
+      path: '/teams/custom-work',
+      component: LazyCustomWork,
       isProtected: true,
     },
   ];
