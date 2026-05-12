@@ -101,6 +101,13 @@ export const bridgedApi = createApi({
       providesTags: ['users'],
     }),
 
+    getUsersWithNoTeam: builder.query({
+      query: () => ({
+        url: '/User/Admin/NoTeam',
+        method: 'GET',
+      }),
+    }),
+
     addUser: builder.mutation({
       query: data => ({
         url: '/User/Admin/CreateByAdmin',
@@ -308,6 +315,23 @@ export const bridgedApi = createApi({
       providesTags: ['teamMembers'],
     }),
 
+    addTeamMember: builder.mutation({
+      query: data => ({
+        url: `/Team/Admin/TeamMember`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamMembers'],
+    }),
+
+    deleteTeamMember: builder.mutation({
+      query: id => ({
+        url: `/Team/Admin/TeamMember?_id=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['teamMembers'],
+    }),
+
     getUserChecklistTaskComments: builder.query({
       query: taskId => ({
         url: `/TaskComments/Admin/FindAllByTaskId/?_id=${taskId}`,
@@ -439,6 +463,15 @@ export const bridgedApi = createApi({
       providesTags: ['teamCredits'],
     }),
 
+    updateTeamCreditsHistory: builder.mutation({
+      query: ({ id, body }) => ({
+        url: `/credits/admin/teams/purchase-history?creditPurchaseId=${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['teamMembers'],
+    }),
+
     getTeamCreditsHistory: builder.query({
       query: id => ({
         url: `/credits/admin/team/history?team_id=${id}`,
@@ -549,6 +582,8 @@ export const {
   useUpdateTaskMutation,
   useGetUserChecklistQuery,
   useGetTeamMembersQuery,
+  useAddTeamMemberMutation,
+  useDeleteTeamMemberMutation,
   useDeleteUserChecklistMutation,
   useUpdateUserChecklistMutation,
   useGetUserChecklistTaskCommentsQuery,
@@ -561,10 +596,12 @@ export const {
   useDeleteCompanyMutation,
   useSetCompanyUsersMutation,
   useGetUserAdminPaginationMutation,
+  useGetUsersWithNoTeamQuery,
   useActivateUserMutation,
   useDeactivateUserMutation,
   useGetTeamCreditsQuery,
   useGetTeamCreditsHistoryQuery,
+  useUpdateTeamCreditsHistoryMutation,
   useAdjustTeamCreditsMutation,
   useGetCustomWorkQuery,
   useAddCustomWorkMutation,

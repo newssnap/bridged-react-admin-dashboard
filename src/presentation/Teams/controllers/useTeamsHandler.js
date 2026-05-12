@@ -6,11 +6,13 @@ import {
   useGetTeamsQuery,
   useGetTeamCreditsHistoryQuery,
   useAdjustTeamCreditsMutation,
+  useUpdateTeamCreditsHistoryMutation,
   useAddCustomWorkMutation,
   useEditCustomWorkMutation,
 } from '../../../services/api';
 import { useAddTeamDrawerHandler } from './useAddTeamDrawerHandler';
 import { useEditTeamDrawerHandler } from './useEditTeamDrawerHandler';
+import { useAddMembersDrawerHandler } from './useAddMembersDrawerHandler';
 import dayjs from 'dayjs';
 
 export const useTeamsHandler = (searchValue, selectedCompany) => {
@@ -72,10 +74,6 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     return result;
   }, [tableData, searchValue, selectedCompany]);
   useEffect(() => {
-    console.log(filteredData);
-  }, [filteredData]);
-
-  useEffect(() => {
     refetchTeams();
   }, [pathname, refetchTeams]);
 
@@ -86,6 +84,8 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     closeEditDrawer,
     form: editTeamForm,
     companyOptions: editTeamCompanyOptions,
+    members: editTeamMembers,
+    refetchTeamMembers: refetchEditTeamMembers,
     handleFinish: handleEditFinish,
     handleClose: handleEditClose,
     handleAfterOpenChange: handleEditAfterOpenChange,
@@ -117,6 +117,32 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     isSubmitting,
   } = useAddTeamDrawerHandler(editTeamDrawerOpen);
 
+  const existingMemberUserIds = useMemo(
+    () => (editTeamMembers ?? []).map(m => m?.userId).filter(Boolean),
+    [editTeamMembers]
+  );
+
+  const {
+    open: addMembersDrawerOpen,
+    openDrawer: openAddMembersDrawer,
+    closeDrawer: closeAddMembersDrawer,
+    form: addMembersForm,
+    availableUserOptions: addMembersUserOptions,
+    isUsersLoading: isAddMembersUsersLoading,
+    handleFinish: handleAddMembersFinish,
+    handleAfterOpenChange: handleAddMembersAfterOpenChange,
+    isSubmitting: isAddMembersSubmitting,
+  } = useAddMembersDrawerHandler({
+    userOptions,
+    isUsersLoading,
+    existingMemberUserIds,
+    teamId: selectedTeamForEdit?._id,
+    onSuccess: () => {
+      refetchEditTeamMembers?.();
+      refetchTeams?.();
+    },
+  });
+
   const {
     data: creditsHistoryData,
     isLoading: isLoadingCreditsHistory,
@@ -126,6 +152,8 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
   });
 
   const [adjustTeamCredits, { isLoading: isCreditsSubmitting }] = useAdjustTeamCreditsMutation();
+  const [updateTeamCreditsHistory, { isLoading: isEditingHistorySubmitting }] =
+    useUpdateTeamCreditsHistoryMutation();
   const [addCustomWork, { isLoading: isAddCustomWorkSubmitting }] = useAddCustomWorkMutation();
   const [editCustomWork, { isLoading: isEditCustomWorkSubmitting }] = useEditCustomWorkMutation();
 
@@ -203,6 +231,47 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
       }
     },
     [adjustTeamCredits, refetchTeams, closeManageCreditsDrawer]
+  );
+
+  const handleEditCreditsHistorySubmit = useCallback(
+    async ({ creditPurchaseId, amount, purchaseType, reason, notes, purchaseDate, teamId }) => {
+      try {
+        const response = await updateTeamCreditsHistory({
+          id: creditPurchaseId,
+          body: {
+            amount,
+            purchaseType,
+            reason,
+            notes,
+            purchaseDate,
+            teamId,
+          },
+        }).unwrap();
+
+        if (response?.success) {
+          notification.success({
+            message: 'Credits history updated successfully',
+            placement: 'bottomRight',
+          });
+          creditHistoryRefetch();
+          refetchTeams();
+          return true;
+        }
+
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update credits history',
+          placement: 'bottomRight',
+        });
+        return false;
+      } catch (err) {
+        notification.error({
+          message: err?.data?.message || 'Something went wrong',
+          placement: 'bottomRight',
+        });
+        return false;
+      }
+    },
+    [updateTeamCreditsHistory, creditHistoryRefetch, refetchTeams]
   );
 
   const openCustomWorkDrawer = useCallback(record => {
@@ -296,6 +365,16 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     createEditCompany,
     isCreatingEditCompany,
 
+    addMembersDrawerOpen,
+    openAddMembersDrawer,
+    closeAddMembersDrawer,
+    addMembersForm,
+    addMembersUserOptions,
+    isAddMembersUsersLoading,
+    handleAddMembersFinish,
+    handleAddMembersAfterOpenChange,
+    isAddMembersSubmitting,
+
     isDrawerOpen,
     openDrawer,
     closeDrawer,
@@ -320,6 +399,8 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     closeManageCreditsDrawer,
     handleManageCreditsSubmit,
     isCreditsSubmitting,
+    handleEditCreditsHistorySubmit,
+    isEditingHistorySubmitting,
 
     customWorkEditDrawerOpen,
     selectedCustomWorkEntry,

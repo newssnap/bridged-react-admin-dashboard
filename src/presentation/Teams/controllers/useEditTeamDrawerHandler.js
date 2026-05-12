@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Form, message, notification, Typography, Dropdown, Tooltip, Button } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
+import { Form, message, notification, Typography, Popconfirm, Tooltip, Button } from 'antd';
 import {
   useUpdateTeamMutation,
   useGetCompaniesQuery,
   useGetAdminTeamMembersQuery,
   useCreateCompanyMutation,
+  useDeleteTeamMemberMutation,
 } from '../../../services/api';
+import Icon from '../../../utils/components/Icon';
 
 const { Text } = Typography;
 
@@ -21,6 +22,8 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   const team = selectedTeamForEdit;
 
   const [updateTeam, { isLoading: isSubmitting }] = useUpdateTeamMutation();
+  const [deleteTeamMember] = useDeleteTeamMemberMutation();
+  const [deletingId, setDeletingId] = useState(null);
 
   const {
     data: companiesResponse,
@@ -47,16 +50,6 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   });
 
   const members = membersData?.data ?? [];
-  const memberAccessConfigsByUserId = useMemo(
-    () =>
-      members.reduce((acc, member) => {
-        if (!member?.userId) return acc;
-        acc[member.userId] = member.accessConfigs ?? [];
-        return acc;
-      }, {}),
-    [members]
-  );
-  const membersLoaded = !isLoadingMembers && open && teamId;
 
   const closeEditDrawer = useCallback(() => {
     setEditTeamDrawerOpen(false);
@@ -92,22 +85,6 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     }
   }, [open, team, companyOptions, form, onCompanyChange]);
 
-  useEffect(() => {
-    if (!open || !teamId) return;
-    form.setFieldsValue({ teamOwnerId: undefined, memberIds: [] });
-  }, [open, teamId, form]);
-
-  useEffect(() => {
-    if (!membersLoaded || !members.length) return;
-    const owner = members.find(m => m.isOwner);
-    const teamOwnerId = owner?.userId ?? undefined;
-    const memberIds = members.filter(m => m.userId && m.userId !== teamOwnerId).map(m => m.userId);
-    form.setFieldsValue({
-      teamOwnerId,
-      memberIds,
-    });
-  }, [membersLoaded, members, form]);
-
   const handleSubmit = useCallback(
     async values => {
       if (!values?.teamId) {
@@ -115,27 +92,11 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         return;
       }
       try {
-        let teamMembers = (values.memberIds ?? []).map(userId => ({
-          userId,
-          accessConfigs: memberAccessConfigsByUserId[userId] ?? [],
-        }));
-        // Remove the teamOwnerId from teamMembers if present
-        if (values.teamOwnerId) {
-          // Remove any member with userId equal to teamOwnerId
-          for (let i = teamMembers.length - 1; i >= 0; i--) {
-            if (teamMembers[i].userId === values.teamOwnerId) {
-              teamMembers.splice(i, 1);
-            }
-          }
-        }
-
         const payload = {
           _id: values.teamId,
           title: values.teamName?.trim() ?? '',
           companyId: values.companyId ?? '',
-          teamOwnerId: values.teamOwnerId ?? '',
           isWhitelabelingEnabled: !!values.isWhitelabelingEnabled,
-          teamMembers,
         };
 
         if (payload.isWhitelabelingEnabled) {
@@ -173,7 +134,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         });
       }
     },
-    [updateTeam, onSuccess, refetchTeamMembers, closeEditDrawer, memberAccessConfigsByUserId]
+    [updateTeam, onSuccess, refetchTeamMembers, closeEditDrawer]
   );
 
   const handleFinish = useCallback(
@@ -232,12 +193,50 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     () =>
       members.map((m, index) => ({
         key: m._id || m.userId || index,
+        _id: m._id,
         name: m.name?.trim() || m.email || '—',
         email: m.email || '—',
         role: m.isOwner ? 'Owner' : 'Member',
         profilePicture: m.profilePicture,
       })),
     [members]
+  );
+
+  const handleDeleteMember = useCallback(
+    async record => {
+      if (!record?._id) {
+        notification.error({
+          message: 'Member id is missing',
+          placement: 'bottomRight',
+        });
+        return;
+      }
+      setDeletingId(record._id);
+      try {
+        const response = await deleteTeamMember(record._id).unwrap();
+        if (response?.success) {
+          notification.success({
+            message: 'Member removed successfully',
+            placement: 'bottomRight',
+          });
+          await refetchTeamMembers?.();
+          refetchTeams?.();
+        } else {
+          notification.error({
+            message: response?.errorObject?.userErrorText || 'Failed to remove member',
+            placement: 'bottomRight',
+          });
+        }
+      } catch (err) {
+        notification.error({
+          message: err?.data?.errorObject?.userErrorText || 'Something went wrong',
+          placement: 'bottomRight',
+        });
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [deleteTeamMember, refetchTeamMembers, refetchTeams]
   );
 
   const columns = useMemo(
@@ -264,29 +263,34 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           </Text>
         ),
       },
-      // {
-      //   title: 'Action',
-      //   key: 'action',
-      //   width: 50,
-      //   align: 'center',
-      //   render: (_, record) => {
-      //     const items = [
-      //       { key: 'makeOwner', label: <span>Make Owner</span>, disabled: record.role === 'Owner' },
-      //     ];
-      //     const handleMenuClick = () => {
-      //       // API to be implemented later
-      //     };
-      //     return (
-      //       <Dropdown trigger={['click']} menu={{ items, onClick: handleMenuClick }}>
-      //         <Tooltip title="Actions">
-      //           <Button type="text" shape="circle" size="small" icon={<MoreOutlined />} />
-      //         </Tooltip>
-      //       </Dropdown>
-      //     );
-      //   },
-      // },
+      {
+        title: 'Action',
+        key: 'action',
+        width: 60,
+        align: 'center',
+        render: (_, record) => {
+          if (record.role === 'Owner') return null;
+          const isDeleting = deletingId === record._id;
+          return (
+            <Popconfirm
+              title="Remove member"
+              description="Remove this member from the team?"
+              okText="Remove"
+              okButtonProps={{ loading: isDeleting }}
+              cancelText="Cancel"
+              onConfirm={() => handleDeleteMember(record)}
+            >
+              <Tooltip title="Remove member">
+                <Button type="text" shape="circle" size="small" danger loading={isDeleting}>
+                  <Icon name="DeleteOutlined" />
+                </Button>
+              </Tooltip>
+            </Popconfirm>
+          );
+        },
+      },
     ],
-    []
+    [handleDeleteMember, deletingId]
   );
 
   return {
@@ -298,6 +302,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     companyOptions,
     members,
     isLoadingMembers,
+    refetchTeamMembers,
     handleFinish,
     handleClose,
     handleAfterOpenChange,
