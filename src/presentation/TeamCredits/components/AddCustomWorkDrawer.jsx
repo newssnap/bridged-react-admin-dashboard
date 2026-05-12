@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
-import { Drawer, Form, InputNumber, Select, Input, DatePicker, Button, Space } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Drawer, Form, InputNumber, Select, Input, DatePicker, Button, Space, Divider } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { resolveCustomWorkStatusForSubmit } from '../utils/resolveCustomWorkStatusForSubmit';
 
 const { TextArea } = Input;
 
-const CATEGORY_OPTIONS = [
+const DEFAULT_CATEGORY_OPTIONS = [
   { label: 'Custom Features', value: 'Custom Feature' },
   { label: 'Data Integration', value: 'Data Integration' },
   { label: 'Enablement & Support', value: 'Enablement & Support' },
@@ -18,6 +20,9 @@ const STATUS_OPTIONS = [
 
 const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting }) => {
   const [form] = Form.useForm();
+  const [categoryOptions, setCategoryOptions] = useState(() => [...DEFAULT_CATEGORY_OPTIONS]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const categoryInputRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -29,7 +34,22 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
     }
   }, [open, form]);
 
+  const handleAddCategory = e => {
+    e?.preventDefault?.();
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    setCategoryOptions(prev => {
+      const exists = prev.some(o => o.value.toLowerCase() === trimmed.toLowerCase());
+      if (exists) return prev;
+      return [...prev, { label: trimmed, value: trimmed }];
+    });
+    setNewCategoryName('');
+    setTimeout(() => categoryInputRef.current?.focus?.(), 0);
+  };
+
   const handleFinish = values => {
+    const resolvedStatus = resolveCustomWorkStatusForSubmit(values.status, values.dateTo);
+
     const payload = {
       teamId: values.teamId,
       creditUsed: values.creditsUsed,
@@ -37,7 +57,7 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
         type: 'customWork',
         customWorkTitle: values.workProject,
         customWorkCategory: values.category,
-        customWorkStatus: values.status,
+        customWorkStatus: resolvedStatus,
         customWorkStartDate: values.dateFrom ? values.dateFrom.toISOString() : null,
         customWorkEndDate: values.dateTo ? values.dateTo.toISOString() : null,
         customWorkNotes: values.customWorkNotes || null,
@@ -107,15 +127,43 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
         <Form.Item
           label="Category"
           name="category"
-          rules={[{ required: true, message: 'Please select a category' }]}
+          rules={[{ required: true, message: 'Please select or add a category' }]}
         >
-          <Select size="large" placeholder="Select category">
-            {CATEGORY_OPTIONS.map(opt => (
-              <Select.Option key={opt.value} value={opt.value}>
-                {opt.label}
-              </Select.Option>
-            ))}
-          </Select>
+          <Select
+            size="large"
+            placeholder="Select or add a category"
+            showSearch
+            optionFilterProp="label"
+            options={categoryOptions}
+            dropdownRender={menu => (
+              <>
+                {menu}
+                <Divider style={{ margin: '8px 0' }} />
+                <Space.Compact
+                  block
+                  style={{ padding: '0 8px 8px', width: '100%' }}
+                  align="start"
+                  wrap
+                >
+                  <Input
+                    placeholder="New category name"
+                    ref={categoryInputRef}
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    onKeyDown={e => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter') {
+                        handleAddCategory(e);
+                      }
+                    }}
+                  />
+                  <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCategory}>
+                    Add category
+                  </Button>
+                </Space.Compact>
+              </>
+            )}
+          />
         </Form.Item>
 
         <Form.Item
