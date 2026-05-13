@@ -165,7 +165,7 @@ const ManageCreditsDrawer = ({
       placement="right"
       onClose={onClose}
       open={open}
-      width={600}
+      width={800}
       footer={
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
           <Button onClick={onClose} size="large">
