@@ -133,8 +133,6 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     handleAfterOpenChange: handleAddMembersAfterOpenChange,
     isSubmitting: isAddMembersSubmitting,
   } = useAddMembersDrawerHandler({
-    userOptions,
-    isUsersLoading,
     existingMemberUserIds,
     teamId: selectedTeamForEdit?._id,
     onSuccess: () => {
