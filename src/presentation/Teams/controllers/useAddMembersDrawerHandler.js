@@ -1,26 +1,38 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Form, notification } from 'antd';
-import { useAddTeamMemberMutation } from '../../../services/api';
+import { useAddTeamMemberMutation, useLazyGetUsersWithNoTeamQuery } from '../../../services/api';
 
-export const useAddMembersDrawerHandler = ({
-  userOptions,
-  isUsersLoading,
-  existingMemberUserIds,
-  teamId,
-  onSuccess,
-}) => {
+export const useAddMembersDrawerHandler = ({ existingMemberUserIds, teamId, onSuccess }) => {
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [addTeamMember, { isLoading: isSubmitting }] = useAddTeamMemberMutation();
+
+  const [
+    fetchUsersWithNoTeam,
+    { data: usersResponse, isFetching: isUsersFetching, isLoading: isUsersLoadingQuery },
+  ] = useLazyGetUsersWithNoTeamQuery();
+
+  const userOptions = useMemo(() => {
+    const usersList = usersResponse?.data ?? [];
+    return usersList.map(u => ({
+      value: u._id,
+      label: u.fullname ? `${u.fullname} (${u.email})` : u.email || u._id,
+      fullname: u.fullname,
+      email: u.email,
+    }));
+  }, [usersResponse]);
 
   const availableUserOptions = useMemo(() => {
     const existing = new Set(existingMemberUserIds ?? []);
     return (userOptions ?? []).filter(o => !existing.has(o.value));
   }, [userOptions, existingMemberUserIds]);
 
+  const isUsersLoading = open && (isUsersFetching || isUsersLoadingQuery);
+
   const openDrawer = useCallback(() => {
     setOpen(true);
-  }, []);
+    fetchUsersWithNoTeam();
+  }, [fetchUsersWithNoTeam]);
 
   const closeDrawer = useCallback(() => {
     setOpen(false);
