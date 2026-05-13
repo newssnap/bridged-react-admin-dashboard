@@ -15,19 +15,14 @@ import {
   notification,
   Divider,
 } from 'antd';
-import { CreditCardOutlined, PictureOutlined } from '@ant-design/icons';
+import { CreditCardOutlined, PictureOutlined, PlusOutlined } from '@ant-design/icons';
 import { useUploadImageMutation } from '../../../services/api';
 
 const { Text } = Typography;
 
-const getMemberOptionsExcludingOwner = (userOptions, selectedTeamOwnerId) =>
-  (userOptions ?? []).filter(opt => opt.value !== selectedTeamOwnerId);
-
 const EditTeamDrawer = ({
   open,
   team,
-  userOptions,
-  isUsersLoading,
   onCompanyChange,
   form,
   companyOptions,
@@ -43,15 +38,14 @@ const EditTeamDrawer = ({
   columns,
   isLoadingMembers,
   isSubmitting,
+  onOpenAddMembers,
 }) => {
   const fileInputRef = useRef(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadImage, { isLoading: isUploadingLogo }] = useUploadImageMutation();
-  const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
   const isWhitelabelingEnabled = Form.useWatch('isWhitelabelingEnabled', form);
   const logoUrl = Form.useWatch('logoUrl', form);
-  const memberOptions = getMemberOptionsExcludingOwner(userOptions, selectedTeamOwnerId);
   const displayedLogoUrl = logoPreviewUrl || logoUrl || '';
   const handleLogoUploadClick = () => {
     fileInputRef.current?.click();
@@ -220,35 +214,6 @@ const EditTeamDrawer = ({
               />
             </Form.Item>
 
-            <Form.Item
-              label="Team Owner"
-              name="teamOwnerId"
-              rules={[{ required: true, message: 'Please select team owner' }]}
-            >
-              <Select
-                size="large"
-                placeholder="Select team owner"
-                options={userOptions}
-                showSearch
-                optionFilterProp="label"
-                loading={isUsersLoading}
-                allowClear
-              />
-            </Form.Item>
-
-            <Form.Item label="Members (Optional)" name="memberIds">
-              <Select
-                size="large"
-                mode="multiple"
-                placeholder="Select members"
-                options={memberOptions}
-                showSearch
-                optionFilterProp="label"
-                loading={isUsersLoading}
-                allowClear
-              />
-            </Form.Item>
-
             <Form.Item label="WhiteLabeling" name="isWhitelabelingEnabled" valuePropName="checked">
               <Switch />
             </Form.Item>
@@ -390,6 +355,15 @@ const EditTeamDrawer = ({
             }}
             locale={{ emptyText: 'No members' }}
           />
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            block
+            onClick={onOpenAddMembers}
+          >
+            Add Members
+          </Button>
         </Space>
       ) : null}
     </Drawer>

@@ -1,19 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
-import { message, notification } from 'antd';
+import { useState, useMemo } from 'react';
+import { notification } from 'antd';
 import {
   useGetCompaniesQuery,
-  useGetUserAdminPaginationMutation,
   useCreateCompanyMutation,
   useCreateTeamMutation,
+  useGetUsersWithNoTeamQuery,
 } from '../../../services/api';
-
-const DEFAULT_PAGINATION = {
-  pageNumber: 1,
-  limit: 500,
-  status: 'all',
-  sort: 'lastLogin_DESC',
-  search: '',
-};
 
 export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -28,8 +20,11 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
     { skip: !isDrawerOpen }
   );
 
-  const [findAllUsersPagination, { data: usersResponse, isLoading: isUsersLoading }] =
-    useGetUserAdminPaginationMutation();
+  const isAnyTeamDrawerOpen = isDrawerOpen || isEditTeamDrawerOpen;
+
+  const { data: usersResponse, isLoading: isUsersLoading } = useGetUsersWithNoTeamQuery(undefined, {
+    skip: !isAnyTeamDrawerOpen,
+  });
 
   const [createTeam, { isLoading: isSubmitting }] = useCreateTeamMutation();
   const [createCompanyMutation, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
@@ -40,7 +35,7 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
     [companiesList]
   );
 
-  const usersList = usersResponse?.data?.data ?? [];
+  const usersList = usersResponse?.data ?? [];
   const userOptions = useMemo(
     () =>
       usersList.map(u => ({
@@ -51,16 +46,6 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
       })),
     [usersList]
   );
-
-  const isAnyTeamDrawerOpen = isDrawerOpen || isEditTeamDrawerOpen;
-
-  useEffect(() => {
-    if (isAnyTeamDrawerOpen) {
-      findAllUsersPagination({
-        ...DEFAULT_PAGINATION,
-      });
-    }
-  }, [isAnyTeamDrawerOpen]);
 
   const openDrawer = () => {
     setIsDrawerOpen(true);

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Drawer,
   Form,
@@ -11,13 +11,16 @@ import {
   Descriptions,
   Typography,
   Tag,
+  Divider,
 } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { resolveCustomWorkStatusForSubmit } from '../utils/resolveCustomWorkStatusForSubmit';
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
-const CATEGORY_OPTIONS = [
+const DEFAULT_CATEGORY_OPTIONS = [
   { label: 'Custom Features', value: 'Custom Feature' },
   { label: 'Data Integration', value: 'Data Integration' },
   { label: 'Enablement & Support', value: 'Enablement & Support' },
@@ -30,7 +33,7 @@ const STATUS_OPTIONS = [
 ];
 
 const getCategoryLabel = value =>
-  CATEGORY_OPTIONS.find(o => o.value === value)?.label ?? value ?? '—';
+  DEFAULT_CATEGORY_OPTIONS.find(o => o.value === value)?.label ?? value ?? '—';
 const getStatusLabel = value => STATUS_OPTIONS.find(o => o.value === value)?.label ?? value ?? '—';
 const formatDate = d => (d ? dayjs(d).format('YYYY-MM-DD') : '—');
 
@@ -45,6 +48,9 @@ const PreviewEditCustomWorkDrawer = ({
 }) => {
   const [form] = Form.useForm();
   const isPreview = mode === 'preview';
+  const [categoryOptions, setCategoryOptions] = useState(() => [...DEFAULT_CATEGORY_OPTIONS]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const categoryInputRef = useRef(null);
 
   useEffect(() => {
     if (open && initialRecord) {
@@ -61,7 +67,33 @@ const PreviewEditCustomWorkDrawer = ({
     }
   }, [open, initialRecord, form]);
 
+  useEffect(() => {
+    if (!open || !initialRecord || isPreview) return;
+    const cat = initialRecord.category;
+    const next = [...DEFAULT_CATEGORY_OPTIONS];
+    if (cat && cat !== '--') {
+      const exists = next.some(o => o.value.toLowerCase() === String(cat).toLowerCase());
+      if (!exists) next.push({ label: cat, value: cat });
+    }
+    setCategoryOptions(next);
+  }, [open, initialRecord, isPreview]);
+
+  const handleAddCategory = e => {
+    e?.preventDefault?.();
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    setCategoryOptions(prev => {
+      const exists = prev.some(o => o.value.toLowerCase() === trimmed.toLowerCase());
+      if (exists) return prev;
+      return [...prev, { label: trimmed, value: trimmed }];
+    });
+    setNewCategoryName('');
+    setTimeout(() => categoryInputRef.current?.focus?.(), 0);
+  };
+
   const handleFinish = values => {
+    const resolvedStatus = resolveCustomWorkStatusForSubmit(values.status, values.dateTo);
+
     const payload = {
       teamId: initialRecord.teamId,
       creditUsageId: initialRecord?.creditUsageId,
@@ -70,7 +102,7 @@ const PreviewEditCustomWorkDrawer = ({
         type: 'customWork',
         customWorkTitle: values.workProject,
         customWorkCategory: values.category,
-        customWorkStatus: values.status,
+        customWorkStatus: resolvedStatus,
         customWorkStartDate: values.dateFrom ? values.dateFrom.toISOString() : null,
         customWorkEndDate: values.dateTo ? values.dateTo.toISOString() : null,
         customWorkNotes: values.notes || null,
@@ -213,15 +245,38 @@ const PreviewEditCustomWorkDrawer = ({
           <Form.Item
             label="Category"
             name="category"
-            rules={[{ required: true, message: 'Please select a category' }]}
+            rules={[{ required: true, message: 'Please select or add a category' }]}
           >
-            <Select size="large" placeholder="Select category">
-              {CATEGORY_OPTIONS.map(opt => (
-                <Select.Option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </Select.Option>
-              ))}
-            </Select>
+            <Select
+              size="large"
+              placeholder="Select or add a category"
+              showSearch
+              optionFilterProp="label"
+              options={categoryOptions}
+              popupRender={menu => (
+                <>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <Space style={{ padding: '0 8px 8px', width: '100%' }} align="start" wrap>
+                    <Input
+                      placeholder="New category name"
+                      ref={categoryInputRef}
+                      value={newCategoryName}
+                      onChange={e => setNewCategoryName(e.target.value)}
+                      onKeyDown={e => {
+                        e.stopPropagation();
+                        if (e.key === 'Enter') {
+                          handleAddCategory(e);
+                        }
+                      }}
+                    />
+                    <Button type="text" icon={<PlusOutlined />} onClick={handleAddCategory}>
+                      Add category
+                    </Button>
+                  </Space>
+                </>
+              )}
+            />
           </Form.Item>
 
           <Form.Item
