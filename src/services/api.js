@@ -597,6 +597,7 @@ export const {
   useSetCompanyUsersMutation,
   useGetUserAdminPaginationMutation,
   useGetUsersWithNoTeamQuery,
+  useLazyGetUsersWithNoTeamQuery,
   useActivateUserMutation,
   useDeactivateUserMutation,
   useGetTeamCreditsQuery,
