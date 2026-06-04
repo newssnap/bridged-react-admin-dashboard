@@ -32,6 +32,7 @@ function TeamsWorkflow() {
   const { Title } = Typography;
   const [searchValue, setSearchValue] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
+  const [selectedDomain, setSelectedDomain] = useState('');
   const [assignPlaybookForm] = Form.useForm();
   const [selectedTeamForPlaybooks, setSelectedTeamForPlaybooks] = useState(null);
   const [isApplyingPlaybookChanges, setIsApplyingPlaybookChanges] = useState(false);
@@ -116,6 +117,8 @@ function TeamsWorkflow() {
     tableData,
     isLoading,
     companyOptions,
+    domainOptions,
+    isDomainsLoading,
     viewTeamDrawerOpen,
     selectedTeamForView,
     openViewDrawer,
@@ -179,7 +182,7 @@ function TeamsWorkflow() {
     handleCustomWorkSubmit,
     isCustomWorkSubmitting,
     form,
-  } = useTeamsHandler(searchValue, selectedCompany);
+  } = useTeamsHandler(searchValue, selectedCompany, selectedDomain);
 
   const columns = [
     {
@@ -288,6 +291,18 @@ function TeamsWorkflow() {
             value={selectedCompany || undefined}
             onChange={value => setSelectedCompany(value ?? '')}
             options={companyOptions}
+            size="large"
+            style={{ minWidth: '200px', maxWidth: '400px' }}
+          />
+          <Select
+            placeholder="All Domains"
+            allowClear
+            value={selectedDomain || undefined}
+            onChange={value => setSelectedDomain(value ?? '')}
+            options={domainOptions}
+            loading={isDomainsLoading}
+            showSearch
+            optionFilterProp="label"
             size="large"
             style={{ minWidth: '200px', maxWidth: '400px' }}
           />
