@@ -18,9 +18,11 @@ function TeamCreditsWorkflow() {
     historyData,
     isLoadingHistory,
     isSubmitting,
+    isEditingHistorySubmitting,
     handleOpenDrawer,
     handleCloseDrawer,
     handleSubmitForm,
+    handleEditCreditsHistorySubmit,
     isAddDrawerOpen,
     selectedTeamIdForAdd,
     selectedTeamDataForAdd,
@@ -158,6 +160,8 @@ function TeamCreditsWorkflow() {
         isLoadingHistory={isLoadingHistory}
         onSubmit={handleSubmitForm}
         isSubmitting={isSubmitting}
+        onEditHistorySubmit={handleEditCreditsHistorySubmit}
+        isEditingHistorySubmitting={isEditingHistorySubmitting}
         form={form}
       />
 

@@ -101,6 +101,13 @@ export const bridgedApi = createApi({
       providesTags: ['users'],
     }),
 
+    getUsersWithNoTeam: builder.query({
+      query: () => ({
+        url: '/User/Admin/NoTeam',
+        method: 'GET',
+      }),
+    }),
+
     addUser: builder.mutation({
       query: data => ({
         url: '/User/Admin/CreateByAdmin',
@@ -308,6 +315,23 @@ export const bridgedApi = createApi({
       providesTags: ['teamMembers'],
     }),
 
+    addTeamMember: builder.mutation({
+      query: data => ({
+        url: `/Team/Admin/TeamMember`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['teamMembers'],
+    }),
+
+    deleteTeamMember: builder.mutation({
+      query: id => ({
+        url: `/Team/Admin/TeamMember?_id=${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['teamMembers'],
+    }),
+
     getUserChecklistTaskComments: builder.query({
       query: taskId => ({
         url: `/TaskComments/Admin/FindAllByTaskId/?_id=${taskId}`,
@@ -391,11 +415,21 @@ export const bridgedApi = createApi({
     }),
 
     getTeams: builder.query({
+      query: domainHost => {
+        const params = domainHost ? `?domainHost=${encodeURIComponent(domainHost)}` : '';
+        return {
+          url: `/Team/Admin${params}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['teams'],
+    }),
+
+    getAdminDomains: builder.query({
       query: () => ({
-        url: `/Team/Admin`,
+        url: '/Domain/Admin/FindAll',
         method: 'GET',
       }),
-      providesTags: ['teams'],
     }),
 
     getTeamsByCompany: builder.query({
@@ -437,6 +471,15 @@ export const bridgedApi = createApi({
         method: 'GET',
       }),
       providesTags: ['teamCredits'],
+    }),
+
+    updateTeamCreditsHistory: builder.mutation({
+      query: ({ id, body }) => ({
+        url: `/credits/admin/teams/purchase-history?creditPurchaseId=${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['teamMembers'],
     }),
 
     getTeamCreditsHistory: builder.query({
@@ -549,6 +592,8 @@ export const {
   useUpdateTaskMutation,
   useGetUserChecklistQuery,
   useGetTeamMembersQuery,
+  useAddTeamMemberMutation,
+  useDeleteTeamMemberMutation,
   useDeleteUserChecklistMutation,
   useUpdateUserChecklistMutation,
   useGetUserChecklistTaskCommentsQuery,
@@ -561,16 +606,20 @@ export const {
   useDeleteCompanyMutation,
   useSetCompanyUsersMutation,
   useGetUserAdminPaginationMutation,
+  useGetUsersWithNoTeamQuery,
+  useLazyGetUsersWithNoTeamQuery,
   useActivateUserMutation,
   useDeactivateUserMutation,
   useGetTeamCreditsQuery,
   useGetTeamCreditsHistoryQuery,
+  useUpdateTeamCreditsHistoryMutation,
   useAdjustTeamCreditsMutation,
   useGetCustomWorkQuery,
   useAddCustomWorkMutation,
   useDeleteCustomWorkMutation,
   useEditCustomWorkMutation,
   useGetTeamsQuery,
+  useGetAdminDomainsQuery,
   useCreateTeamMutation,
   useUpdateTeamMutation,
   useFindAllUsersPaginationMutation,

@@ -17,6 +17,7 @@ import { useTeamsHandler } from '../controllers/useTeamsHandler';
 import AddTeamDrawer from '../components/AddTeamDrawer';
 import ViewTeamDrawer from '../components/ViewTeamDrawer';
 import EditTeamDrawer from '../components/EditTeamDrawer';
+import AddMembersDrawer from '../components/AddMembersDrawer';
 import ManageCreditsDrawer from '../../TeamCredits/components/ManageCreditsDrawer';
 import PreviewEditCustomWorkDrawer from '../../TeamCredits/components/PreviewEditCustomWorkDrawer';
 import Icon from '../../../utils/components/Icon';
@@ -31,6 +32,7 @@ function TeamsWorkflow() {
   const { Title } = Typography;
   const [searchValue, setSearchValue] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
+  const [selectedDomain, setSelectedDomain] = useState('');
   const [assignPlaybookForm] = Form.useForm();
   const [selectedTeamForPlaybooks, setSelectedTeamForPlaybooks] = useState(null);
   const [isApplyingPlaybookChanges, setIsApplyingPlaybookChanges] = useState(false);
@@ -115,6 +117,8 @@ function TeamsWorkflow() {
     tableData,
     isLoading,
     companyOptions,
+    domainOptions,
+    isDomainsLoading,
     viewTeamDrawerOpen,
     selectedTeamForView,
     openViewDrawer,
@@ -137,6 +141,15 @@ function TeamsWorkflow() {
     handleEditCompanySearch,
     createEditCompany,
     isCreatingEditCompany,
+    addMembersDrawerOpen,
+    openAddMembersDrawer,
+    closeAddMembersDrawer,
+    addMembersForm,
+    addMembersUserOptions,
+    isAddMembersUsersLoading,
+    handleAddMembersFinish,
+    handleAddMembersAfterOpenChange,
+    isAddMembersSubmitting,
     isDrawerOpen,
     openDrawer,
     closeDrawer,
@@ -159,6 +172,8 @@ function TeamsWorkflow() {
     closeManageCreditsDrawer,
     handleManageCreditsSubmit,
     isCreditsSubmitting,
+    handleEditCreditsHistorySubmit,
+    isEditingHistorySubmitting,
     customWorkEditDrawerOpen,
     selectedCustomWorkEntry,
     teamsDataForCustomWorkDrawer,
@@ -167,7 +182,7 @@ function TeamsWorkflow() {
     handleCustomWorkSubmit,
     isCustomWorkSubmitting,
     form,
-  } = useTeamsHandler(searchValue, selectedCompany);
+  } = useTeamsHandler(searchValue, selectedCompany, selectedDomain);
 
   const columns = [
     {
@@ -279,6 +294,18 @@ function TeamsWorkflow() {
             size="large"
             style={{ minWidth: '200px', maxWidth: '400px' }}
           />
+          <Select
+            placeholder="All Domains"
+            allowClear
+            value={selectedDomain || undefined}
+            onChange={value => setSelectedDomain(value ?? '')}
+            options={domainOptions}
+            loading={isDomainsLoading}
+            showSearch
+            optionFilterProp="label"
+            size="large"
+            style={{ minWidth: '200px', maxWidth: '400px' }}
+          />
         </Space>
         <Input
           placeholder="Search teams"
@@ -343,8 +370,6 @@ function TeamsWorkflow() {
       <EditTeamDrawer
         open={editTeamDrawerOpen}
         team={selectedTeamForEdit}
-        userOptions={userOptions}
-        isUsersLoading={isUsersLoading}
         onCompanyChange={onCompanyChange}
         form={editTeamForm}
         companyOptions={editTeamCompanyOptions}
@@ -360,6 +385,18 @@ function TeamsWorkflow() {
         columns={editColumns}
         isLoadingMembers={isLoadingEditMembers}
         isSubmitting={isEditSubmitting}
+        onOpenAddMembers={openAddMembersDrawer}
+      />
+
+      <AddMembersDrawer
+        open={addMembersDrawerOpen}
+        form={addMembersForm}
+        availableUserOptions={addMembersUserOptions}
+        isUsersLoading={isAddMembersUsersLoading}
+        handleFinish={handleAddMembersFinish}
+        handleAfterOpenChange={handleAddMembersAfterOpenChange}
+        closeDrawer={closeAddMembersDrawer}
+        isSubmitting={isAddMembersSubmitting}
       />
 
       <ManageCreditsDrawer
@@ -370,6 +407,8 @@ function TeamsWorkflow() {
         isLoadingHistory={isLoadingCreditsHistory}
         onSubmit={handleManageCreditsSubmit}
         isSubmitting={isCreditsSubmitting}
+        onEditHistorySubmit={handleEditCreditsHistorySubmit}
+        isEditingHistorySubmitting={isEditingHistorySubmitting}
         form={form}
       />
 

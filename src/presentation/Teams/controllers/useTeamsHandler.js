@@ -4,20 +4,32 @@ import { Form } from 'antd';
 import { useLocation } from 'react-router-dom';
 import {
   useGetTeamsQuery,
+  useGetAdminDomainsQuery,
   useGetTeamCreditsHistoryQuery,
   useAdjustTeamCreditsMutation,
+  useUpdateTeamCreditsHistoryMutation,
   useAddCustomWorkMutation,
   useEditCustomWorkMutation,
 } from '../../../services/api';
 import { useAddTeamDrawerHandler } from './useAddTeamDrawerHandler';
 import { useEditTeamDrawerHandler } from './useEditTeamDrawerHandler';
+import { useAddMembersDrawerHandler } from './useAddMembersDrawerHandler';
 import dayjs from 'dayjs';
 
-export const useTeamsHandler = (searchValue, selectedCompany) => {
+export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) => {
   const [form] = Form.useForm();
   const { pathname } = useLocation();
 
-  const { data, isLoading, refetch: refetchTeams } = useGetTeamsQuery();
+  const {
+    data,
+    isLoading,
+    isFetching,
+    refetch: refetchTeams,
+  } = useGetTeamsQuery(selectedDomain || undefined);
+
+  const isTeamsTableLoading = isLoading || isFetching;
+
+  const { data: domainsResponse, isLoading: isDomainsLoading } = useGetAdminDomainsQuery();
 
   const [viewTeamDrawerOpen, setViewTeamDrawerOpen] = useState(false);
   const [selectedTeamForView, setSelectedTeamForView] = useState(null);
@@ -55,6 +67,19 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     ];
   }, [rawTeams]);
 
+  const domainOptions = useMemo(() => {
+    const domains = domainsResponse?.data ?? [];
+    const hosts = domains
+      .map(d => d.host?.trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+    const uniqueHosts = [...new Set(hosts)];
+    return [
+      { value: '', label: 'All Domains' },
+      ...uniqueHosts.map(host => ({ value: host, label: host })),
+    ];
+  }, [domainsResponse]);
+
   const filteredData = useMemo(() => {
     let result = tableData;
     if (selectedCompany) {
@@ -72,10 +97,6 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     return result;
   }, [tableData, searchValue, selectedCompany]);
   useEffect(() => {
-    console.log(filteredData);
-  }, [filteredData]);
-
-  useEffect(() => {
     refetchTeams();
   }, [pathname, refetchTeams]);
 
@@ -86,6 +107,8 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     closeEditDrawer,
     form: editTeamForm,
     companyOptions: editTeamCompanyOptions,
+    members: editTeamMembers,
+    refetchTeamMembers: refetchEditTeamMembers,
     handleFinish: handleEditFinish,
     handleClose: handleEditClose,
     handleAfterOpenChange: handleEditAfterOpenChange,
@@ -117,6 +140,30 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     isSubmitting,
   } = useAddTeamDrawerHandler(editTeamDrawerOpen);
 
+  const existingMemberUserIds = useMemo(
+    () => (editTeamMembers ?? []).map(m => m?.userId).filter(Boolean),
+    [editTeamMembers]
+  );
+
+  const {
+    open: addMembersDrawerOpen,
+    openDrawer: openAddMembersDrawer,
+    closeDrawer: closeAddMembersDrawer,
+    form: addMembersForm,
+    availableUserOptions: addMembersUserOptions,
+    isUsersLoading: isAddMembersUsersLoading,
+    handleFinish: handleAddMembersFinish,
+    handleAfterOpenChange: handleAddMembersAfterOpenChange,
+    isSubmitting: isAddMembersSubmitting,
+  } = useAddMembersDrawerHandler({
+    existingMemberUserIds,
+    teamId: selectedTeamForEdit?._id,
+    onSuccess: () => {
+      refetchEditTeamMembers?.();
+      refetchTeams?.();
+    },
+  });
+
   const {
     data: creditsHistoryData,
     isLoading: isLoadingCreditsHistory,
@@ -126,6 +173,8 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
   });
 
   const [adjustTeamCredits, { isLoading: isCreditsSubmitting }] = useAdjustTeamCreditsMutation();
+  const [updateTeamCreditsHistory, { isLoading: isEditingHistorySubmitting }] =
+    useUpdateTeamCreditsHistoryMutation();
   const [addCustomWork, { isLoading: isAddCustomWorkSubmitting }] = useAddCustomWorkMutation();
   const [editCustomWork, { isLoading: isEditCustomWorkSubmitting }] = useEditCustomWorkMutation();
 
@@ -205,6 +254,47 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     [adjustTeamCredits, refetchTeams, closeManageCreditsDrawer]
   );
 
+  const handleEditCreditsHistorySubmit = useCallback(
+    async ({ creditPurchaseId, amount, purchaseType, reason, notes, purchaseDate, teamId }) => {
+      try {
+        const response = await updateTeamCreditsHistory({
+          id: creditPurchaseId,
+          body: {
+            amount,
+            purchaseType,
+            reason,
+            notes,
+            purchaseDate,
+            teamId,
+          },
+        }).unwrap();
+
+        if (response?.success) {
+          notification.success({
+            message: 'Credits history updated successfully',
+            placement: 'bottomRight',
+          });
+          creditHistoryRefetch();
+          refetchTeams();
+          return true;
+        }
+
+        notification.error({
+          message: response?.errorObject?.message || 'Failed to update credits history',
+          placement: 'bottomRight',
+        });
+        return false;
+      } catch (err) {
+        notification.error({
+          message: err?.data?.message || 'Something went wrong',
+          placement: 'bottomRight',
+        });
+        return false;
+      }
+    },
+    [updateTeamCreditsHistory, creditHistoryRefetch, refetchTeams]
+  );
+
   const openCustomWorkDrawer = useCallback(record => {
     setSelectedCustomWorkEntry({
       teamId: record._id,
@@ -269,8 +359,10 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
 
   return {
     tableData: filteredData,
-    isLoading,
+    isLoading: isTeamsTableLoading,
     companyOptions,
+    domainOptions,
+    isDomainsLoading,
 
     viewTeamDrawerOpen,
     selectedTeamForView,
@@ -296,6 +388,16 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     createEditCompany,
     isCreatingEditCompany,
 
+    addMembersDrawerOpen,
+    openAddMembersDrawer,
+    closeAddMembersDrawer,
+    addMembersForm,
+    addMembersUserOptions,
+    isAddMembersUsersLoading,
+    handleAddMembersFinish,
+    handleAddMembersAfterOpenChange,
+    isAddMembersSubmitting,
+
     isDrawerOpen,
     openDrawer,
     closeDrawer,
@@ -320,6 +422,8 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
     closeManageCreditsDrawer,
     handleManageCreditsSubmit,
     isCreditsSubmitting,
+    handleEditCreditsHistorySubmit,
+    isEditingHistorySubmitting,
 
     customWorkEditDrawerOpen,
     selectedCustomWorkEntry,

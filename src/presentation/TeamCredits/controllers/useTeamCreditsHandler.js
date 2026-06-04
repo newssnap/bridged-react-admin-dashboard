@@ -6,6 +6,7 @@ import {
   useGetTeamCreditsQuery,
   useGetTeamCreditsHistoryQuery,
   useAdjustTeamCreditsMutation,
+  useUpdateTeamCreditsHistoryMutation,
 } from '../../../services/api';
 
 export const useTeamCreditsHandler = searchValue => {
@@ -33,6 +34,8 @@ export const useTeamCreditsHandler = searchValue => {
   });
 
   const [adjustTeamCredits, { isLoading: isSubmitting }] = useAdjustTeamCreditsMutation();
+  const [updateTeamCreditsHistory, { isLoading: isEditingHistorySubmitting }] =
+    useUpdateTeamCreditsHistoryMutation();
 
   const rawList = data?.data ?? [];
 
@@ -142,6 +145,52 @@ export const useTeamCreditsHandler = searchValue => {
     }
   };
 
+  const handleEditCreditsHistorySubmit = async ({
+    creditPurchaseId,
+    amount,
+    purchaseType,
+    reason,
+    notes,
+    purchaseDate,
+    teamId,
+  }) => {
+    try {
+      const response = await updateTeamCreditsHistory({
+        id: creditPurchaseId,
+        body: {
+          amount,
+          purchaseType,
+          reason,
+          notes,
+          purchaseDate,
+          teamId,
+        },
+      }).unwrap();
+
+      if (response?.success) {
+        notification.success({
+          message: 'Credits history updated successfully',
+          placement: 'bottomRight',
+        });
+        refetchTeamCredits();
+        refetchHistory();
+        return true;
+      }
+
+      notification.error({
+        message: response?.errorObject?.message || 'Failed to update credits history',
+        placement: 'bottomRight',
+      });
+      return false;
+    } catch (err) {
+      notification.error({
+        message: err?.data?.message || 'Something went wrong',
+        placement: 'bottomRight',
+      });
+      return false;
+    }
+  };
+
   return {
     form,
     tableData: filteredData,
@@ -160,9 +209,11 @@ export const useTeamCreditsHandler = searchValue => {
     historyData: historyData?.data ?? null,
     isLoadingHistory,
     isSubmitting,
+    isEditingHistorySubmitting,
     handleOpenDrawer,
     handleCloseDrawer,
     handleSubmitForm,
+    handleEditCreditsHistorySubmit,
     // Add drawer related
     isAddDrawerOpen,
     selectedTeamIdForAdd,
