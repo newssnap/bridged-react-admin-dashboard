@@ -4,6 +4,7 @@ import { Form } from 'antd';
 import { useLocation } from 'react-router-dom';
 import {
   useGetTeamsQuery,
+  useGetAdminDomainsQuery,
   useGetTeamCreditsHistoryQuery,
   useAdjustTeamCreditsMutation,
   useUpdateTeamCreditsHistoryMutation,
@@ -15,11 +16,20 @@ import { useEditTeamDrawerHandler } from './useEditTeamDrawerHandler';
 import { useAddMembersDrawerHandler } from './useAddMembersDrawerHandler';
 import dayjs from 'dayjs';
 
-export const useTeamsHandler = (searchValue, selectedCompany) => {
+export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) => {
   const [form] = Form.useForm();
   const { pathname } = useLocation();
 
-  const { data, isLoading, refetch: refetchTeams } = useGetTeamsQuery();
+  const {
+    data,
+    isLoading,
+    isFetching,
+    refetch: refetchTeams,
+  } = useGetTeamsQuery(selectedDomain || undefined);
+
+  const isTeamsTableLoading = isLoading || isFetching;
+
+  const { data: domainsResponse, isLoading: isDomainsLoading } = useGetAdminDomainsQuery();
 
   const [viewTeamDrawerOpen, setViewTeamDrawerOpen] = useState(false);
   const [selectedTeamForView, setSelectedTeamForView] = useState(null);
@@ -56,6 +66,19 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
       ...unique.map(name => ({ value: name, label: name })),
     ];
   }, [rawTeams]);
+
+  const domainOptions = useMemo(() => {
+    const domains = domainsResponse?.data ?? [];
+    const hosts = domains
+      .map(d => d.host?.trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+    const uniqueHosts = [...new Set(hosts)];
+    return [
+      { value: '', label: 'All Domains' },
+      ...uniqueHosts.map(host => ({ value: host, label: host })),
+    ];
+  }, [domainsResponse]);
 
   const filteredData = useMemo(() => {
     let result = tableData;
@@ -336,8 +359,10 @@ export const useTeamsHandler = (searchValue, selectedCompany) => {
 
   return {
     tableData: filteredData,
-    isLoading,
+    isLoading: isTeamsTableLoading,
     companyOptions,
+    domainOptions,
+    isDomainsLoading,
 
     viewTeamDrawerOpen,
     selectedTeamForView,
