@@ -415,11 +415,21 @@ export const bridgedApi = createApi({
     }),
 
     getTeams: builder.query({
+      query: domainHost => {
+        const params = domainHost ? `?domainHost=${encodeURIComponent(domainHost)}` : '';
+        return {
+          url: `/Team/Admin${params}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['teams'],
+    }),
+
+    getAdminDomains: builder.query({
       query: () => ({
-        url: `/Team/Admin`,
+        url: '/Domain/Admin/FindAll',
         method: 'GET',
       }),
-      providesTags: ['teams'],
     }),
 
     getTeamsByCompany: builder.query({
@@ -609,6 +619,7 @@ export const {
   useDeleteCustomWorkMutation,
   useEditCustomWorkMutation,
   useGetTeamsQuery,
+  useGetAdminDomainsQuery,
   useCreateTeamMutation,
   useUpdateTeamMutation,
   useFindAllUsersPaginationMutation,
