@@ -324,7 +324,7 @@ const ViewTeamDrawer = ({ open, onClose, team }) => {
       placement="right"
       onClose={onClose}
       open={open}
-      width={590}
+      width={690}
       footer={
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
           <Button size="large" onClick={onClose}>
