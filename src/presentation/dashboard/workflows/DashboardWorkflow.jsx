@@ -193,6 +193,8 @@ function DashboardWorkflow() {
       } else if (key === 'portal') {
         if (API_URL.includes('stg')) {
           window.open(`https://stg-portal.bridged.media/?accessToken=${token}`, '_blank');
+        } else if (API_URL.includes('dev')) {
+          window.open(`https://dev-portal.bridged.media/?accessToken=${token}`, '_blank');
         } else {
           window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
         }
