@@ -19,15 +19,40 @@ import useAssignPlaybookDrawer from '../../dashboard/controllers/useAssignPlaybo
 import Icon from '../../../utils/components/Icon';
 const { Text } = Typography;
 
-const PlaybookManagementField = ({ value = [], onOpen }) => (
-  <Space direction="vertical" size={4} style={{ width: '100%' }}>
-    <Button type="dashed" block size="large" onClick={onOpen}>
-      <Icon name={'PlayLinear'} />
-      Playbooks Management
-    </Button>
-    {value.length > 0 ? <Text type="secondary">{value.length} playbook(s) selected</Text> : null}
-  </Space>
-);
+const PlaybookManagementField = ({
+  value = [],
+  onOpen,
+  playbooks = [],
+  playbookAgentLabelMap = {},
+}) => {
+  const selectedPlaybooks = value
+    .map(playbookType => playbooks.find(playbook => playbook.value === playbookType))
+    .filter(Boolean);
+
+  return (
+    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+      <Button type="dashed" block size="large" onClick={onOpen}>
+        <Icon name={'PlayLinear'} />
+        Playbooks Management
+      </Button>
+      {selectedPlaybooks.length > 0 ? (
+        <Space direction="vertical" size={2} style={{ width: '100%' }}>
+          {selectedPlaybooks.map(playbook => {
+            const agents = (playbook.agentTypes ?? []).map(
+              agentType => playbookAgentLabelMap[agentType] || agentType
+            );
+            return (
+              <Text key={playbook.value} type="secondary">
+                {playbook.title}
+                {agents.length > 0 ? ` - ${agents.join(', ')}` : ''}
+              </Text>
+            );
+          })}
+        </Space>
+      ) : null}
+    </Space>
+  );
+};
 
 const AddTeamDrawer = ({
   open,
@@ -338,7 +363,11 @@ const AddTeamDrawer = ({
               },
             ]}
           >
-            <PlaybookManagementField onOpen={handleOpenPlaybooksDrawer} />
+            <PlaybookManagementField
+              onOpen={handleOpenPlaybooksDrawer}
+              playbooks={playbooks}
+              playbookAgentLabelMap={playbookAgentLabelMap}
+            />
           </Form.Item>
 
           <Form.Item label="WhiteLabeling" name="isWhitelabelingEnabled" valuePropName="checked">
