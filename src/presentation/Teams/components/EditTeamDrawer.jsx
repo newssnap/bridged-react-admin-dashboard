@@ -558,11 +558,8 @@ const EditTeamDrawer = ({
                         </Button>
                       </Tooltip>
                       <Tooltip title="Manage assigned playbooks">
-                        <Button
-                          icon={<CreditCardOutlined />}
-                          onClick={() => openPlaybooksDrawer?.()}
-                          size="middle"
-                        >
+                        <Button onClick={() => openPlaybooksDrawer?.()} size="middle">
+                          <Icon name={'PlayLinear'} />
                           Playbooks Management
                         </Button>
                       </Tooltip>

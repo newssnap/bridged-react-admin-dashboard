@@ -16,12 +16,13 @@ import { CreditCardOutlined, PictureOutlined } from '@ant-design/icons';
 import { useUploadImageMutation } from '../../../services/api';
 import AssignPlaybookDrawer from '../../dashboard/components/AssignPlaybookDrawer';
 import useAssignPlaybookDrawer from '../../dashboard/controllers/useAssignPlaybookDrawer';
-
+import Icon from '../../../utils/components/Icon';
 const { Text } = Typography;
 
 const PlaybookManagementField = ({ value = [], onOpen }) => (
   <Space direction="vertical" size={4} style={{ width: '100%' }}>
-    <Button type="default" block size="large" icon={<CreditCardOutlined />} onClick={onOpen}>
+    <Button type="dashed" block size="large" onClick={onOpen}>
+      <Icon name={'PlayLinear'} />
       Playbooks Management
     </Button>
     {value.length > 0 ? <Text type="secondary">{value.length} playbook(s) selected</Text> : null}
