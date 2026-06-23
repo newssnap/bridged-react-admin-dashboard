@@ -82,39 +82,49 @@ const useAssignPlaybookDrawer = ({ form }) => {
     [playbookMetaMap]
   );
 
-  const openPlaybooksDrawer = () => {
-    setInitialAssignedPlaybookTypes([]);
-    setTeamAssignedPlaybookIdsByType({});
-    setDraftSelectedPlaybooks([]);
-    setSelectedPlaybooks([]);
-    setIsPlaybookDrawerOpen(true);
-  };
+  const openPlaybooksDrawer = useCallback(
+    (options = {}) => {
+      const { preserveSelection = false } = options;
 
-  const closePlaybooksDrawer = () => {
+      if (!preserveSelection) {
+        setInitialAssignedPlaybookTypes([]);
+        setTeamAssignedPlaybookIdsByType({});
+        setDraftSelectedPlaybooks([]);
+        setSelectedPlaybooks([]);
+      } else {
+        setDraftSelectedPlaybooks(selectedPlaybooks);
+      }
+
+      setIsPlaybookDrawerOpen(true);
+    },
+    [selectedPlaybooks]
+  );
+
+  const closePlaybooksDrawer = useCallback(() => {
     setIsPlaybookDrawerOpen(false);
-  };
+  }, []);
 
-  const applyPlaybooksSelection = () => {
+  const applyPlaybooksSelection = useCallback(() => {
     setSelectedPlaybooks(draftSelectedPlaybooks);
     form.setFieldValue('assignedPlaybooks', draftSelectedPlaybooks);
     setIsPlaybookDrawerOpen(false);
-  };
+  }, [form, draftSelectedPlaybooks]);
 
-  const handlePlaybookToggle = (playbookValue, checked) => {
+  const handlePlaybookToggle = useCallback((playbookValue, checked) => {
     setDraftSelectedPlaybooks(prev =>
       checked
         ? [...new Set([...prev, playbookValue])]
         : prev.filter(value => value !== playbookValue)
     );
-  };
+  }, []);
 
-  const resetPlaybooksState = () => {
+  const resetPlaybooksState = useCallback(() => {
     setSelectedPlaybooks([]);
     setDraftSelectedPlaybooks([]);
     setInitialAssignedPlaybookTypes([]);
     setTeamAssignedPlaybookIdsByType({});
     setIsPlaybookDrawerOpen(false);
-  };
+  }, []);
 
   return {
     playbooks,

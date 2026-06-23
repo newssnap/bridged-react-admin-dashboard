@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Drawer,
   Form,
@@ -10,9 +10,24 @@ import {
   Alert,
   ColorPicker,
   notification,
+  Typography,
 } from 'antd';
-import { PictureOutlined } from '@ant-design/icons';
+import { CreditCardOutlined, PictureOutlined } from '@ant-design/icons';
 import { useUploadImageMutation } from '../../../services/api';
+import AssignPlaybookDrawer from '../../dashboard/components/AssignPlaybookDrawer';
+import useAssignPlaybookDrawer from '../../dashboard/controllers/useAssignPlaybookDrawer';
+import Icon from '../../../utils/components/Icon';
+const { Text } = Typography;
+
+const PlaybookManagementField = ({ value = [], onOpen }) => (
+  <Space direction="vertical" size={4} style={{ width: '100%' }}>
+    <Button type="dashed" block size="large" onClick={onOpen}>
+      <Icon name={'PlayLinear'} />
+      Playbooks Management
+    </Button>
+    {value.length > 0 ? <Text type="secondary">{value.length} playbook(s) selected</Text> : null}
+  </Space>
+);
 
 const AddTeamDrawer = ({
   open,
@@ -35,22 +50,41 @@ const AddTeamDrawer = ({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadImage, { isLoading: isUploadingLogo }] = useUploadImageMutation();
 
+  const {
+    playbooks,
+    playbookAgentLabelMap,
+    isLoadingPlaybooks,
+    draftSelectedPlaybooks,
+    isPlaybookDrawerOpen,
+    openPlaybooksDrawer,
+    closePlaybooksDrawer,
+    applyPlaybooksSelection,
+    handlePlaybookToggle,
+    resetPlaybooksState,
+  } = useAssignPlaybookDrawer({ form });
+
+  const handleOpenPlaybooksDrawer = useCallback(() => {
+    openPlaybooksDrawer({ preserveSelection: true });
+  }, [openPlaybooksDrawer]);
+
   useEffect(() => {
-    if (open) {
-      form.resetFields();
-      form.setFieldsValue({
-        teamName: undefined,
-        companyId: undefined,
-        teamOwnerId: undefined,
-        memberIds: undefined,
-        isWhitelabelingEnabled: false,
-        dashboardURL: undefined,
-        primaryColor: '#753fd0',
-        logoUrl: undefined,
-      });
-      setLogoPreviewUrl('');
-    }
-  }, [open, form]);
+    if (!open) return;
+
+    form.resetFields();
+    form.setFieldsValue({
+      teamName: undefined,
+      companyId: undefined,
+      teamOwnerId: undefined,
+      memberIds: undefined,
+      assignedPlaybooks: [],
+      isWhitelabelingEnabled: false,
+      dashboardURL: undefined,
+      primaryColor: '#753fd0',
+      logoUrl: undefined,
+    });
+    resetPlaybooksState();
+    setLogoPreviewUrl('');
+  }, [open, form, resetPlaybooksState]);
 
   const handleLogoUploadClick = () => {
     fileInputRef.current?.click();
@@ -117,7 +151,31 @@ const AddTeamDrawer = ({
     setLogoPreviewUrl('');
   };
 
+  const handlePlaybooksApply = () => {
+    if (draftSelectedPlaybooks.length === 0) {
+      notification.warning({
+        message: 'Please select at least one playbook',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+    applyPlaybooksSelection();
+  };
+
   const handleFinish = values => {
+    const assignedPlaybookTypes = values.assignedPlaybooks ?? [];
+    const playbookIds = assignedPlaybookTypes
+      .map(playbookType => playbooks.find(playbook => playbook.value === playbookType)?.id)
+      .filter(Boolean);
+
+    if (playbookIds.length === 0) {
+      notification.error({
+        message: 'Please select at least one playbook',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+
     const primaryColor =
       typeof values.primaryColor === 'string'
         ? values.primaryColor
@@ -127,6 +185,7 @@ const AddTeamDrawer = ({
       : undefined;
     onSubmit({
       ...values,
+      playbookIds,
       primaryColor,
       dashboardURL,
     });
@@ -137,238 +196,273 @@ const AddTeamDrawer = ({
   const memberOptions = (userOptions ?? []).filter(opt => opt.value !== selectedTeamOwnerId);
 
   return (
-    <Drawer
-      title="Add Team"
-      placement="right"
-      onClose={onClose}
-      open={open}
-      width={520}
-      footer={
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose} size="large">
-            Cancel
-          </Button>
-          <Button type="primary" size="large" onClick={() => form.submit()} loading={isSubmitting}>
-            Create Team
-          </Button>
-        </Space>
-      }
-    >
-      <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
-        <Form.Item
-          label="Team Name"
-          name="teamName"
-          rules={[{ required: true, message: 'Please enter team name' }]}
-        >
-          <Input size="large" placeholder="Enter team name" />
-        </Form.Item>
+    <>
+      <Drawer
+        title="Add Team"
+        placement="right"
+        onClose={onClose}
+        open={open}
+        width={520}
+        footer={
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+            <Button onClick={onClose} size="large">
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => form.submit()}
+              loading={isSubmitting}
+            >
+              Create Team
+            </Button>
+          </Space>
+        }
+      >
+        <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
+          <Form.Item
+            label="Team Name"
+            name="teamName"
+            rules={[{ required: true, message: 'Please enter team name' }]}
+          >
+            <Input size="large" placeholder="Enter team name" />
+          </Form.Item>
 
-        <Form.Item
-          label="Company"
-          name="companyId"
-          rules={[{ required: true, message: 'Please select a company' }]}
-        >
-          <Select
-            size="large"
-            placeholder="Select company"
-            options={companyOptions}
-            showSearch
-            loading={isLoadingCompanies}
-            optionFilterProp="label"
-            filterOption={false}
-            allowClear
-            onChange={companyId => {
-              form.setFieldValue('teamOwnerId', undefined);
-              form.setFieldValue('memberIds', undefined);
-              onCompanyChange(companyId);
-            }}
-            onSearch={onCompanySearch}
-            onBlur={() => onCompanySearch?.('')}
-            notFoundContent={
-              !isLoadingCompanies && companySearchText?.trim() ? (
-                <div
-                  style={{
-                    borderRadius: 8,
-                    padding: 24,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 120,
-                  }}
-                >
+          <Form.Item
+            label="Company"
+            name="companyId"
+            rules={[{ required: true, message: 'Please select a company' }]}
+          >
+            <Select
+              size="large"
+              placeholder="Select company"
+              options={companyOptions}
+              showSearch
+              loading={isLoadingCompanies}
+              optionFilterProp="label"
+              filterOption={false}
+              allowClear
+              onChange={companyId => {
+                form.setFieldValue('teamOwnerId', undefined);
+                form.setFieldValue('memberIds', undefined);
+                onCompanyChange(companyId);
+              }}
+              onSearch={onCompanySearch}
+              onBlur={() => onCompanySearch?.('')}
+              notFoundContent={
+                !isLoadingCompanies && companySearchText?.trim() ? (
                   <div
                     style={{
-                      fontWeight: 600,
-                      fontSize: 14,
-                      marginBottom: 20,
-                      textAlign: 'center',
+                      borderRadius: 8,
+                      padding: 24,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: 120,
                     }}
                   >
-                    No companies found.
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 14,
+                        marginBottom: 20,
+                        textAlign: 'center',
+                      }}
+                    >
+                      No companies found.
+                    </div>
+                    <Button
+                      type="primary"
+                      size="middle"
+                      style={{ minWidth: 140 }}
+                      onClick={async () => {
+                        const createdCompanyId = await onCreateCompany?.({
+                          name: companySearchText ?? '',
+                        });
+                        if (!createdCompanyId) return;
+
+                        form.setFieldValue('companyId', createdCompanyId);
+                        form.setFieldValue('teamOwnerId', undefined);
+                        form.setFieldValue('memberIds', undefined);
+                        onCompanyChange(createdCompanyId);
+                      }}
+                      loading={isCreatingCompany}
+                    >
+                      Create "{companySearchText || 'company'}"
+                    </Button>
                   </div>
-                  <Button
-                    type="primary"
-                    size="middle"
-                    style={{ minWidth: 140 }}
-                    onClick={async () => {
-                      const createdCompanyId = await onCreateCompany?.({
-                        name: companySearchText ?? '',
-                      });
-                      if (!createdCompanyId) return;
+                ) : null
+              }
+            />
+          </Form.Item>
 
-                      form.setFieldValue('companyId', createdCompanyId);
-                      form.setFieldValue('teamOwnerId', undefined);
-                      form.setFieldValue('memberIds', undefined);
-                      onCompanyChange(createdCompanyId);
-                    }}
-                    loading={isCreatingCompany}
-                  >
-                    Create "{companySearchText || 'company'}"
-                  </Button>
-                </div>
-              ) : null
-            }
-          />
-        </Form.Item>
+          <Form.Item
+            label="Team Owner"
+            name="teamOwnerId"
+            rules={[{ required: true, message: 'Please select team owner' }]}
+          >
+            <Select
+              size="large"
+              placeholder="Select team owner"
+              options={userOptions}
+              showSearch
+              optionFilterProp="label"
+              loading={isUsersLoading}
+              allowClear
+            />
+          </Form.Item>
 
-        <Form.Item
-          label="Team Owner"
-          name="teamOwnerId"
-          rules={[{ required: true, message: 'Please select team owner' }]}
-        >
-          <Select
-            size="large"
-            placeholder="Select team owner"
-            options={userOptions}
-            showSearch
-            optionFilterProp="label"
-            loading={isUsersLoading}
-            allowClear
-          />
-        </Form.Item>
+          <Form.Item label="Members (Optional)" name="memberIds">
+            <Select
+              size="large"
+              mode="multiple"
+              placeholder="Select members"
+              options={memberOptions}
+              showSearch
+              optionFilterProp="label"
+              loading={isUsersLoading}
+              allowClear
+            />
+          </Form.Item>
 
-        <Form.Item label="Members (Optional)" name="memberIds">
-          <Select
-            size="large"
-            mode="multiple"
-            placeholder="Select members"
-            options={memberOptions}
-            showSearch
-            optionFilterProp="label"
-            loading={isUsersLoading}
-            allowClear
-          />
-        </Form.Item>
+          <Form.Item
+            label="Playbooks"
+            name="assignedPlaybooks"
+            initialValue={[]}
+            rules={[
+              {
+                type: 'array',
+                min: 1,
+                message: 'Please select at least one playbook',
+              },
+            ]}
+          >
+            <PlaybookManagementField onOpen={handleOpenPlaybooksDrawer} />
+          </Form.Item>
 
-        <Form.Item label="WhiteLabeling" name="isWhitelabelingEnabled" valuePropName="checked">
-          <Switch />
-        </Form.Item>
+          <Form.Item label="WhiteLabeling" name="isWhitelabelingEnabled" valuePropName="checked">
+            <Switch />
+          </Form.Item>
 
-        {isWhitelabelingEnabled && (
-          <>
-            {/* <Form.Item
+          {isWhitelabelingEnabled && (
+            <>
+              {/* <Form.Item
               label="Dashboard subdomain"
               name="dashboardURL"
               tooltip="Your team dashboard will be available at subdomain.bridged.media"
             >
               <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
             </Form.Item> */}
-            <Alert
-              type="info"
-              showIcon
-              message="Need a custom subdomain?"
-              description={
-                <Space direction="vertical" size={4}>
-                  <span>
-                    Custom subdomains are available via the tech team. Contact them to enable this
-                    feature for this team.
-                  </span>
-                </Space>
-              }
-              style={{ marginBottom: 16 }}
-            />
+              <Alert
+                type="info"
+                showIcon
+                message="Need a custom subdomain?"
+                description={
+                  <Space direction="vertical" size={4}>
+                    <span>
+                      Custom subdomains are available via the tech team. Contact them to enable this
+                      feature for this team.
+                    </span>
+                  </Space>
+                }
+                style={{ marginBottom: 16 }}
+              />
 
-            <Form.Item
-              label="Primary Color"
-              name="primaryColor"
-              getValueFromEvent={color => color?.toHexString?.() ?? color}
-            >
-              <ColorPicker format="hex" showText />
-            </Form.Item>
+              <Form.Item
+                label="Primary Color"
+                name="primaryColor"
+                getValueFromEvent={color => color?.toHexString?.() ?? color}
+              >
+                <ColorPicker format="hex" showText />
+              </Form.Item>
 
-            <Form.Item label="Logo" name="logoUrl">
-              <div>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={handleLogoUploadClick}
-                  onKeyDown={e => e.key === 'Enter' && handleLogoUploadClick()}
-                  onDragOver={handleLogoDragOver}
-                  onDragLeave={handleLogoDragLeave}
-                  onDrop={handleLogoDrop}
-                  style={{
-                    border: `1px dashed ${isDragging ? '#1890ff' : '#d9d9d9'}`,
-                    borderRadius: 8,
-                    padding: 24,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    background: logoPreviewUrl
-                      ? `center/contain no-repeat url(${logoPreviewUrl})`
-                      : isDragging
-                        ? '#e6f7ff'
-                        : '#fafafa',
-                    minHeight: 120,
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={handleLogoFileChange}
-                    disabled={isUploadingLogo}
-                  />
-                  {!logoPreviewUrl ? (
-                    <>
-                      <PictureOutlined
-                        style={{ fontSize: 32, color: '#bfbfbf', marginBottom: 8 }}
-                      />
-                      <div style={{ color: '#8c8c8c' }}>Click or drag file here to upload logo</div>
-                      {isUploadingLogo && (
-                        <div style={{ marginTop: 8, color: '#1890ff' }}>Uploading...</div>
-                      )}
-                    </>
-                  ) : null}
-                </div>
-                {logoPreviewUrl && (
-                  <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                    <Button
-                      type="primary"
-                      size="middle"
-                      onClick={handleLogoUploadClick}
-                      loading={isUploadingLogo}
-                      style={{ flex: 1 }}
-                    >
-                      Change
-                    </Button>
-                    <Button
-                      type="default"
-                      size="middle"
-                      onClick={handleDeleteLogo}
-                      disabled={!logoPreviewUrl}
-                      style={{ flex: 1 }}
-                    >
-                      Delete
-                    </Button>
+              <Form.Item label="Logo" name="logoUrl">
+                <div>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleLogoUploadClick}
+                    onKeyDown={e => e.key === 'Enter' && handleLogoUploadClick()}
+                    onDragOver={handleLogoDragOver}
+                    onDragLeave={handleLogoDragLeave}
+                    onDrop={handleLogoDrop}
+                    style={{
+                      border: `1px dashed ${isDragging ? '#1890ff' : '#d9d9d9'}`,
+                      borderRadius: 8,
+                      padding: 24,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      background: logoPreviewUrl
+                        ? `center/contain no-repeat url(${logoPreviewUrl})`
+                        : isDragging
+                          ? '#e6f7ff'
+                          : '#fafafa',
+                      minHeight: 120,
+                    }}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleLogoFileChange}
+                      disabled={isUploadingLogo}
+                    />
+                    {!logoPreviewUrl ? (
+                      <>
+                        <PictureOutlined
+                          style={{ fontSize: 32, color: '#bfbfbf', marginBottom: 8 }}
+                        />
+                        <div style={{ color: '#8c8c8c' }}>
+                          Click or drag file here to upload logo
+                        </div>
+                        {isUploadingLogo && (
+                          <div style={{ marginTop: 8, color: '#1890ff' }}>Uploading...</div>
+                        )}
+                      </>
+                    ) : null}
                   </div>
-                )}
-              </div>
-            </Form.Item>
-          </>
-        )}
-      </Form>
-    </Drawer>
+                  {logoPreviewUrl && (
+                    <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                      <Button
+                        type="primary"
+                        size="middle"
+                        onClick={handleLogoUploadClick}
+                        loading={isUploadingLogo}
+                        style={{ flex: 1 }}
+                      >
+                        Change
+                      </Button>
+                      <Button
+                        type="default"
+                        size="middle"
+                        onClick={handleDeleteLogo}
+                        disabled={!logoPreviewUrl}
+                        style={{ flex: 1 }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Form.Item>
+            </>
+          )}
+        </Form>
+      </Drawer>
+
+      <AssignPlaybookDrawer
+        open={open && isPlaybookDrawerOpen}
+        playbooks={playbooks}
+        playbookAgentLabelMap={playbookAgentLabelMap}
+        draftSelectedPlaybooks={draftSelectedPlaybooks}
+        isLoadingPlaybooks={isLoadingPlaybooks}
+        onClose={closePlaybooksDrawer}
+        onApply={handlePlaybooksApply}
+        onToggle={handlePlaybookToggle}
+      />
+    </>
   );
 };
 
