@@ -1040,3 +1040,8 @@ code {
     opacity: 1;
   }
 }
+
+.playbookCollapse .ant-collapse-item .ant-collapse-header {
+  /* padding-right: 0px !important; */
+  /* padding-left: 0px !important; */
+}
