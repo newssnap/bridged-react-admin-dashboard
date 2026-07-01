@@ -101,6 +101,7 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
         teamOwnerId: values.teamOwnerId,
         isWhitelabelingEnabled: !!values.isWhitelabelingEnabled,
         teamMembers,
+        playbookIds: values.playbookIds ?? [],
       };
 
       if (payload.isWhitelabelingEnabled) {

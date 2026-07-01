@@ -10,9 +10,72 @@ import {
   Alert,
   ColorPicker,
   notification,
+  Typography,
+  Collapse,
 } from 'antd';
 import { PictureOutlined } from '@ant-design/icons';
 import { useUploadImageMutation } from '../../../services/api';
+import useAssignPlaybookDrawer from '../../dashboard/controllers/useAssignPlaybookDrawer';
+import PlaybookSelectionList from '../../dashboard/components/PlaybookSelectionList';
+import Icon from '../../../utils/components/Icon';
+
+const { Text } = Typography;
+
+const PlaybooksCollapseField = ({
+  value = [],
+  onChange,
+  playbooks = [],
+  playbookAgentLabelMap = {},
+  isLoadingPlaybooks = false,
+}) => {
+  const handleToggle = (playbookValue, checked) => {
+    const nextValue = checked
+      ? [...new Set([...value, playbookValue])]
+      : value.filter(item => item !== playbookValue);
+    onChange?.(nextValue);
+  };
+
+  return (
+    <Collapse
+      size="small"
+      className="playbookCollapse"
+      style={{ backgroundColor: 'transparent' }}
+      expandIconPosition="end"
+      expandIcon={({ isActive }) => (
+        <Icon
+          name="ArrowRightOutlined"
+          color="primary"
+          style={{
+            transition: 'transform 0.2s',
+            width: 6,
+            transform: isActive ? 'rotate(270deg)' : 'rotate(90deg)',
+          }}
+        />
+      )}
+      items={[
+        {
+          key: 'playbooks',
+          label: (
+            <Space size={8}>
+              <Text>Playbooks</Text>
+              {value.length > 0 ? <Text type="secondary">({value.length})</Text> : null}
+            </Space>
+          ),
+          children: isLoadingPlaybooks ? (
+            <Text type="secondary">Loading playbooks...</Text>
+          ) : (
+            <PlaybookSelectionList
+              playbooks={playbooks}
+              playbookAgentLabelMap={playbookAgentLabelMap}
+              selectedPlaybooks={value}
+              onToggle={handleToggle}
+            />
+          ),
+        },
+      ]}
+    />
+  );
+};
 
 const AddTeamDrawer = ({
   open,
@@ -35,21 +98,26 @@ const AddTeamDrawer = ({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadImage, { isLoading: isUploadingLogo }] = useUploadImageMutation();
 
+  const { playbooks, playbookAgentLabelMap, isLoadingPlaybooks } = useAssignPlaybookDrawer({
+    form,
+  });
+
   useEffect(() => {
-    if (open) {
-      form.resetFields();
-      form.setFieldsValue({
-        teamName: undefined,
-        companyId: undefined,
-        teamOwnerId: undefined,
-        memberIds: undefined,
-        isWhitelabelingEnabled: false,
-        dashboardURL: undefined,
-        primaryColor: '#753fd0',
-        logoUrl: undefined,
-      });
-      setLogoPreviewUrl('');
-    }
+    if (!open) return;
+
+    form.resetFields();
+    form.setFieldsValue({
+      teamName: undefined,
+      companyId: undefined,
+      teamOwnerId: undefined,
+      memberIds: undefined,
+      assignedPlaybooks: [],
+      isWhitelabelingEnabled: false,
+      dashboardURL: undefined,
+      primaryColor: '#753fd0',
+      logoUrl: undefined,
+    });
+    setLogoPreviewUrl('');
   }, [open, form]);
 
   const handleLogoUploadClick = () => {
@@ -118,6 +186,19 @@ const AddTeamDrawer = ({
   };
 
   const handleFinish = values => {
+    const assignedPlaybookTypes = values.assignedPlaybooks ?? [];
+    const playbookIds = assignedPlaybookTypes
+      .map(playbookType => playbooks.find(playbook => playbook.value === playbookType)?.id)
+      .filter(Boolean);
+
+    if (playbookIds.length === 0) {
+      notification.error({
+        message: 'Please select at least one playbook',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+
     const primaryColor =
       typeof values.primaryColor === 'string'
         ? values.primaryColor
@@ -127,6 +208,7 @@ const AddTeamDrawer = ({
       : undefined;
     onSubmit({
       ...values,
+      playbookIds,
       primaryColor,
       dashboardURL,
     });
@@ -258,6 +340,25 @@ const AddTeamDrawer = ({
             optionFilterProp="label"
             loading={isUsersLoading}
             allowClear
+            style={{ marginBottom: '15px' }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="assignedPlaybooks"
+          initialValue={[]}
+          rules={[
+            {
+              type: 'array',
+              min: 1,
+              message: 'Please select at least one playbook',
+            },
+          ]}
+        >
+          <PlaybooksCollapseField
+            playbooks={playbooks}
+            playbookAgentLabelMap={playbookAgentLabelMap}
+            isLoadingPlaybooks={isLoadingPlaybooks}
           />
         </Form.Item>
 
@@ -267,13 +368,6 @@ const AddTeamDrawer = ({
 
         {isWhitelabelingEnabled && (
           <>
-            {/* <Form.Item
-              label="Dashboard subdomain"
-              name="dashboardURL"
-              tooltip="Your team dashboard will be available at subdomain.bridged.media"
-            >
-              <Input size="large" placeholder="subdomain" addonAfter=".bridged.media" />
-            </Form.Item> */}
             <Alert
               type="info"
               showIcon

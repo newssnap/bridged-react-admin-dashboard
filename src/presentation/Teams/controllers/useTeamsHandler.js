@@ -31,8 +31,6 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
 
   const { data: domainsResponse, isLoading: isDomainsLoading } = useGetAdminDomainsQuery();
 
-  const [viewTeamDrawerOpen, setViewTeamDrawerOpen] = useState(false);
-  const [selectedTeamForView, setSelectedTeamForView] = useState(null);
   const [manageCreditsDrawerOpen, setManageCreditsDrawerOpen] = useState(false);
   const [selectedTeamForCredits, setSelectedTeamForCredits] = useState(null);
   const [customWorkEditDrawerOpen, setCustomWorkEditDrawerOpen] = useState(false);
@@ -201,16 +199,6 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     [filteredData]
   );
 
-  const openViewDrawer = useCallback(record => {
-    setSelectedTeamForView(record);
-    setViewTeamDrawerOpen(true);
-  }, []);
-
-  const closeViewDrawer = useCallback(() => {
-    setViewTeamDrawerOpen(false);
-    setSelectedTeamForView(null);
-  }, []);
-
   const openManageCreditsDrawer = useCallback(record => {
     setSelectedTeamForCredits(record);
     setManageCreditsDrawerOpen(true);
@@ -363,11 +351,6 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     companyOptions,
     domainOptions,
     isDomainsLoading,
-
-    viewTeamDrawerOpen,
-    selectedTeamForView,
-    openViewDrawer,
-    closeViewDrawer,
 
     editTeamDrawerOpen,
     selectedTeamForEdit,
