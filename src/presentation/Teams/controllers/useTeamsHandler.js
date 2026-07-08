@@ -50,9 +50,12 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
       customWork: item.customWork ?? 0,
       companyId: item.companyId ?? undefined,
       isWhitelabelingEnabled: !!item.isWhitelabelingEnabled,
+      isAgentVisualizationEnabled: !!item.isAgentVisualizationEnabled,
       dashboardURL: item.dashboardURL ?? undefined,
       primaryColor: item.primaryColor ?? undefined,
       logo: item.logo ?? undefined,
+      agentVisualizationConfig: item.agentVisualizationConfig ?? undefined,
+      brandSync: item.brandSync ?? undefined,
     }));
   }, [rawTeams]);
 

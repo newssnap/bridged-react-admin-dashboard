@@ -100,6 +100,10 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
         companyId: values.companyId,
         teamOwnerId: values.teamOwnerId,
         isWhitelabelingEnabled: !!values.isWhitelabelingEnabled,
+        isAgentVisualizationEnabled:
+          values.isAgentVisualizationEnabled !== undefined
+            ? !!values.isAgentVisualizationEnabled
+            : !!values.isBrandSyncEnabled,
         teamMembers,
         playbookIds: values.playbookIds ?? [],
       };
@@ -108,6 +112,46 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
         payload.dashboardURL = values.dashboardURL?.trim() ?? '';
         payload.primaryColor = values.primaryColor ?? '';
         payload.logo = values.logoUrl?.trim() ?? '';
+      }
+
+      if (payload.isAgentVisualizationEnabled) {
+        payload.agentVisualizationConfig = {
+          primaryColor:
+            values.agentVisualizationConfig?.primaryColor ??
+            values.brandSyncPrimaryColor ??
+            values.brandSync?.primaryColor ??
+            '',
+          accentColour:
+            values.agentVisualizationConfig?.accentColour ??
+            values.brandSyncAccentColour ??
+            values.brandSync?.accentColour ??
+            '',
+          logo:
+            values.agentVisualizationConfig?.logo ??
+            values.brandSyncLogo?.trim() ??
+            values.brandSync?.logo ??
+            '',
+          theme:
+            values.agentVisualizationConfig?.theme ??
+            values.brandSyncTheme ??
+            values.brandSync?.theme ??
+            'light',
+          fontName:
+            values.agentVisualizationConfig?.fontName ??
+            values.brandSyncFontName?.trim() ??
+            values.brandSync?.fontName ??
+            '',
+          baseFontScale:
+            values.agentVisualizationConfig?.baseFontScale ??
+            values.brandSyncBaseFontScale ??
+            values.brandSync?.baseFontScale ??
+            null,
+          borderRadius:
+            values.agentVisualizationConfig?.borderRadius ??
+            values.brandSyncBorderRadius?.trim() ??
+            values.brandSync?.borderRadius ??
+            '',
+        };
       }
 
       const response = await createTeam(payload).unwrap();
