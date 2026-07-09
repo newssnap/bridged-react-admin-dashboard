@@ -564,28 +564,28 @@ export const bridgedApi = createApi({
     }),
 
     crawlBranding: builder.mutation({
-      // query: data => ({
-      //   url: '/Team/Admin/VisualizationConfig/Suggest',
-      //   method: 'POST',
-      //   body: data,
-      // }),
-      async queryFn() {
-        return {
-          data: {
-            success: true,
-            data: {
-              primaryColor: '#475569',
-              accentColour: '#111111',
-              logo: '',
-              theme: 'light',
-              fontName: 'Inter',
-              baseFontScale: 4,
-              borderRadius: '0px',
-            },
-            errorObject: null,
-          },
-        };
-      },
+      query: data => ({
+        url: '/Team/Admin/VisualizationConfig/Suggest',
+        method: 'POST',
+        body: data,
+      }),
+      // async queryFn() {
+      //   return {
+      //     data: {
+      //       success: true,
+      //       data: {
+      //         primaryColor: '#475569',
+      //         accentColour: '#111111',
+      //         logo: '',
+      //         theme: 'light',
+      //         fontName: 'Inter',
+      //         baseFontScale: 4,
+      //         borderRadius: '0px',
+      //       },
+      //       errorObject: null,
+      //     },
+      //   };
+      // },
     }),
   }),
 });
