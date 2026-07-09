@@ -103,9 +103,25 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
       teamName: team.teamName ?? undefined,
       companyId: companyId ?? undefined,
       isWhitelabelingEnabled: !!team.isWhitelabelingEnabled,
+      isBrandSyncEnabled:
+        team.isAgentVisualizationEnabled !== undefined
+          ? !!team.isAgentVisualizationEnabled
+          : !!team.isBrandSyncEnabled,
       dashboardURL: dashboardSubdomain,
       primaryColor: team.primaryColor ?? '#753fd0',
       logoUrl: team.logo ?? undefined,
+      brandSyncPrimaryColor:
+        team.agentVisualizationConfig?.primaryColor ?? team.brandSync?.primaryColor ?? undefined,
+      brandSyncAccentColour:
+        team.agentVisualizationConfig?.accentColour ?? team.brandSync?.accentColour ?? undefined,
+      brandSyncLogo: team.agentVisualizationConfig?.logo ?? team.brandSync?.logo ?? undefined,
+      brandSyncTheme: team.agentVisualizationConfig?.theme ?? team.brandSync?.theme ?? 'light',
+      brandSyncFontName:
+        team.agentVisualizationConfig?.fontName ?? team.brandSync?.fontName ?? undefined,
+      brandSyncBaseFontScale:
+        team.agentVisualizationConfig?.baseFontScale ?? team.brandSync?.baseFontScale ?? undefined,
+      brandSyncBorderRadius:
+        team.agentVisualizationConfig?.borderRadius ?? team.brandSync?.borderRadius ?? undefined,
     });
     if (companyId) {
       onCompanyChange?.(companyId);
@@ -124,6 +140,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           title: values.teamName?.trim() ?? '',
           companyId: values.companyId ?? '',
           isWhitelabelingEnabled: !!values.isWhitelabelingEnabled,
+          isAgentVisualizationEnabled: !!values.isBrandSyncEnabled,
         };
 
         if (payload.isWhitelabelingEnabled) {
@@ -136,6 +153,28 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           payload.dashboardURL = '';
           payload.primaryColor = '';
           payload.logo = '';
+        }
+
+        if (payload.isAgentVisualizationEnabled) {
+          payload.agentVisualizationConfig = {
+            primaryColor: values.brandSyncPrimaryColor ?? '',
+            accentColour: values.brandSyncAccentColour ?? '',
+            logo: values.brandSyncLogo?.trim() ?? '',
+            theme: values.brandSyncTheme ?? 'light',
+            fontName: values.brandSyncFontName?.trim() ?? '',
+            baseFontScale: values.brandSyncBaseFontScale ?? null,
+            borderRadius: values.brandSyncBorderRadius?.trim() ?? '',
+          };
+        } else {
+          payload.agentVisualizationConfig = {
+            primaryColor: '',
+            accentColour: '',
+            logo: '',
+            theme: 'light',
+            fontName: '',
+            baseFontScale: null,
+            borderRadius: '',
+          };
         }
 
         const response = await updateTeam(payload).unwrap();
