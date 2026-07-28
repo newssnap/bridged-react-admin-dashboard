@@ -636,7 +636,7 @@ function DashboardWorkflow() {
       title: 'Full Name',
       dataIndex: 'fullname',
       key: 'fullname',
-      width: '150px',
+      width: '120px',
       render: fullname => (
         <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
       ),
@@ -700,7 +700,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '100px',
+      width: oauthAuthorizePayload ? '190px' : '75px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -718,6 +718,7 @@ function DashboardWorkflow() {
             <div onClick={e => e.stopPropagation()}>
               <Button
                 type="primary"
+                size="middle"
                 loading={isCurrentRowAuthorizing}
                 disabled={isAuthorizingOAuth && authorizingUserId !== record._id}
                 onClick={() => handleConnectToClaude(record)}
