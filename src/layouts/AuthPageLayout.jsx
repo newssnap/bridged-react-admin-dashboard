@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Affix, Col, Layout, Row, theme } from 'antd';
 import useGetWindowWidth from '../utils/controllers/useGetWindowWidth';
 import GlobalSidebar from './GlobalSidebar';
@@ -16,6 +16,12 @@ function AuthPageLayout({ children, HeaderComp }) {
   // Custom hook to get window width
   const width = useGetWindowWidth();
 
+  // Hide sidebar during Claude OAuth connect flow
+  const isClaudeOAuthFlow = useMemo(() => {
+    const oauthRedirect = new URLSearchParams(location.search).get('oauth_redirect');
+    return Boolean(oauthRedirect);
+  }, [location.search]);
+
   // State to manage the width of the main content
   const [mainWidth, setMainWidth] = useState(() => {
     return window.innerWidth <= 768 ? 80 : 265;
@@ -31,29 +37,33 @@ function AuthPageLayout({ children, HeaderComp }) {
     setMainWidth(width <= 768 ? 80 : 265);
   }, [width]);
 
+  const contentMarginLeft = isClaudeOAuthFlow ? 0 : mainWidth;
+
   return (
-    <Layout className="container" hasSider>
-      {/* Sidebar */}
-      <Sider
-        style={{
-          backgroundColor: 'var(--secondary-Color)',
-          overflow: 'hidden',
-          height: '100vh',
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          bottom: 0,
-        }}
-        breakpoint="md"
-        width={mainWidth}
-      >
-        <GlobalSidebar />
-      </Sider>
+    <Layout className="container" hasSider={!isClaudeOAuthFlow}>
+      {/* Sidebar — hidden during Connect to Claude OAuth flow */}
+      {!isClaudeOAuthFlow && (
+        <Sider
+          style={{
+            backgroundColor: 'var(--secondary-Color)',
+            overflow: 'hidden',
+            height: '100vh',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            bottom: 0,
+          }}
+          breakpoint="md"
+          width={mainWidth}
+        >
+          <GlobalSidebar />
+        </Sider>
+      )}
 
       {/* Main Content */}
       <Layout
         style={{
-          marginLeft: mainWidth,
+          marginLeft: contentMarginLeft,
         }}
       >
         {HeaderComp && (
