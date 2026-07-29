@@ -2,6 +2,7 @@
   "name": "bridged",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "yarn@4.17.0",
   "dependencies": {
     "@ant-design/charts": "^1.4.2",
     "@ant-design/icons": "^5.2.6",
@@ -70,5 +71,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
     "prettier": "^3.5.3"
+  },
+  "resolutions": {
+    "@mapbox/jsonlint-lines-primitives": "2.0.2"
   }
 }
