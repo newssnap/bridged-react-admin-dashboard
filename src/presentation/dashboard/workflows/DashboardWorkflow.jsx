@@ -16,7 +16,6 @@ import {
   Select,
   DatePicker,
   Divider,
-  Alert,
   Spin,
   Badge,
   Tooltip,
@@ -303,17 +302,26 @@ function DashboardWorkflow() {
           description: 'Redirect URL was not returned by the server.',
           placement: 'bottomRight',
         });
+        setAuthorizingUserId(null);
         return;
       }
 
-      window.location.assign(redirectUrl);
+      notification.success({
+        message: 'Connected successfully',
+        description: 'Redirecting you back to Claude…',
+        placement: 'top',
+        duration: 2,
+      });
+
+      setTimeout(() => {
+        window.location.assign(redirectUrl);
+      }, 1200);
     } catch (error) {
       notification.error({
         message: 'OAuth Error',
         description: error?.data?.errorObject?.userErrorText || 'Failed to connect to Claude.',
         placement: 'bottomRight',
       });
-    } finally {
       setAuthorizingUserId(null);
     }
   };
@@ -700,7 +708,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: oauthAuthorizePayload ? '190px' : '75px',
+      width: oauthAuthorizePayload ? '110px' : '75px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -723,7 +731,7 @@ function DashboardWorkflow() {
                 disabled={isAuthorizingOAuth && authorizingUserId !== record._id}
                 onClick={() => handleConnectToClaude(record)}
               >
-                Connect to Claude
+                Connect
               </Button>
             </div>
           );
@@ -868,12 +876,21 @@ function DashboardWorkflow() {
     },
   ];
 
+  const tableColumns = oauthAuthorizePayload
+    ? columns.filter(column =>
+        ['user', 'email', 'fullname', 'teamTitle', 'actions'].includes(column.key)
+      )
+    : columns;
+
   return (
     <>
       <Row gutter={[15, 30]} justify="space-between" align="middle">
         <Col span={24}>
-          <Title level={2} style={{ marginBottom: '24px', fontWeight: 300 }}>
-            Users
+          <Title
+            level={2}
+            style={{ marginBottom: '24px', fontWeight: 300 }}
+          >
+            {oauthAuthorizePayload ? 'Connect to Claude' : 'Users'}
           </Title>
         </Col>
         <Col span={24}>
@@ -881,14 +898,16 @@ function DashboardWorkflow() {
             {/* LEFT SIDE: Actions & Filters */}
             <Col xs={24} sm={24} md={16} lg={16} xl={18} xxl={18}>
               <Space size="middle" wrap style={{ width: '100%' }}>
-                <Button
-                  size="large"
-                  type="primary"
-                  onClick={handleOpenCreateUserDrawer}
-                  icon={<PlusOutlined />}
-                >
-                  Add User
-                </Button>
+                {!oauthAuthorizePayload && (
+                  <Button
+                    size="large"
+                    type="primary"
+                    onClick={handleOpenCreateUserDrawer}
+                    icon={<PlusOutlined />}
+                  >
+                    Add User
+                  </Button>
+                )}
 
                 <Select
                   ref={selectRef}
@@ -973,7 +992,9 @@ function DashboardWorkflow() {
 
             <Col xs={24} sm={24} md={24} lg={8} xl={6} xxl={6}>
               <Input
-                placeholder="Search by email"
+                placeholder={
+                  oauthAuthorizePayload ? 'Search user to connect' : 'Search by email'
+                }
                 allowClear
                 size="large"
                 value={searchText}
@@ -988,15 +1009,19 @@ function DashboardWorkflow() {
 
         <Col span={24}>
           <Table
-            columns={columns}
+            columns={tableColumns}
             dataSource={Array.isArray(users) ? users : []}
             rowKey="_id"
             loading={isLoading}
             bordered
-            onRow={record => ({
-              onClick: () => handleOpenEditUserDrawer(record),
-              style: { cursor: 'pointer' },
-            })}
+            onRow={
+              oauthAuthorizePayload
+                ? undefined
+                : record => ({
+                    onClick: () => handleOpenEditUserDrawer(record),
+                    style: { cursor: 'pointer' },
+                  })
+            }
             pagination={{
               current: page,
               pageSize: limit,
