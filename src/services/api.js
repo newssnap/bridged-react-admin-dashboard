@@ -578,7 +578,7 @@ export const bridgedApi = createApi({
 
     oAuthAuthorize: builder.mutation({
       query: data => ({
-        url: '/oauth/authorize/approve',
+        url: '/admin/oauth/authorize/approve',
         method: 'POST',
         body: data,
       }),
