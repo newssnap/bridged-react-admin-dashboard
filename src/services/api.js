@@ -33,7 +33,12 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     localStorage.removeItem('refreshToken');
 
     // Redirect to login page
-    window.location.href = '/login';
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthRedirect = searchParams.get('oauth_redirect');
+    const redirectQuery = oauthRedirect
+      ? `oauth_redirect=${encodeURIComponent(oauthRedirect)}`
+      : `oauth_redirect=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
+    window.location.href = `/login?${redirectQuery}`;
   }
 
   return result;
@@ -569,23 +574,14 @@ export const bridgedApi = createApi({
         method: 'POST',
         body: data,
       }),
-      // async queryFn() {
-      //   return {
-      //     data: {
-      //       success: true,
-      //       data: {
-      //         primaryColor: '#475569',
-      //         accentColour: '#111111',
-      //         logo: '',
-      //         theme: 'light',
-      //         fontName: 'Inter',
-      //         baseFontScale: 4,
-      //         borderRadius: '0px',
-      //       },
-      //       errorObject: null,
-      //     },
-      //   };
-      // },
+    }),
+
+    oAuthAuthorize: builder.mutation({
+      query: data => ({
+        url: '/admin/oauth/authorize/approve',
+        method: 'POST',
+        body: data,
+      }),
     }),
   }),
 });
@@ -656,4 +652,5 @@ export const {
   useGetTeamPlaybooksQuery,
   useLazyGetTeamPlaybooksQuery,
   useCrawlBrandingMutation,
+  useOAuthAuthorizeMutation,
 } = bridgedApi;

@@ -1,6 +1,6 @@
 import { useLoginMutation } from '../../../../services/api';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { notification } from 'antd';
 import { setAuthData } from '../../../../redux/slices/auth/authSlice';
 
@@ -8,6 +8,7 @@ import { setAuthData } from '../../../../redux/slices/auth/authSlice';
 const useLoginHandler = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [_LOGIN, { isLoading }] = useLoginMutation();
 
   // Function to handle the login process
@@ -31,8 +32,14 @@ const useLoginHandler = () => {
           })
         );
 
-        // Navigate to the main page and show a success message
-        navigate('/');
+        // Navigate to the users page and preserve oauth redirect context (if present)
+        const searchParams = new URLSearchParams(location.search);
+        const oauthRedirect = searchParams.get('oauth_redirect');
+        if (oauthRedirect) {
+          navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`);
+        } else {
+          navigate('/');
+        }
         notification.success({
           message: 'Login Successful',
           placement: 'bottomRight',
