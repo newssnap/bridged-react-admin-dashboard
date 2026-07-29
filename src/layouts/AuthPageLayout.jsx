@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Affix, Col, Layout, Row, theme } from 'antd';
 import useGetWindowWidth from '../utils/controllers/useGetWindowWidth';
 import GlobalSidebar from './GlobalSidebar';
-import { useDispatch } from 'react-redux';
 // import SchedulingForm from '../utils/components/SchedulingForm';
 import { useLocation } from 'react-router-dom';
 
@@ -10,8 +9,6 @@ const { Content, Sider, Header } = Layout;
 
 function AuthPageLayout({ children, HeaderComp }) {
   const location = useLocation();
-
-  const dispatch = useDispatch();
 
   // Custom hook to get window width
   const width = useGetWindowWidth();
