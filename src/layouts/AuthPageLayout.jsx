@@ -27,7 +27,7 @@ function AuthPageLayout({ children, HeaderComp }) {
 
   // Theme color for the background of the container
   const {
-    token: { colorBgContainer, colorBorderSecondary, colorBgBase },
+    token: { colorBgContainer, colorBorderSecondary },
   } = theme.useToken();
 
   // Update mainWidth when the window width changes
@@ -38,7 +38,11 @@ function AuthPageLayout({ children, HeaderComp }) {
   const contentMarginLeft = isClaudeOAuthFlow ? 0 : mainWidth;
 
   return (
-    <Layout className="container" hasSider={!isClaudeOAuthFlow}>
+    <Layout
+      className="container"
+      hasSider={!isClaudeOAuthFlow}
+      style={{ backgroundColor: colorBgContainer }}
+    >
       {/* Sidebar — hidden during Connect to Claude OAuth flow */}
       {!isClaudeOAuthFlow && (
         <Sider
@@ -62,6 +66,8 @@ function AuthPageLayout({ children, HeaderComp }) {
       <Layout
         style={{
           marginLeft: contentMarginLeft,
+          minHeight: '100vh',
+          backgroundColor: colorBgContainer,
         }}
       >
         {HeaderComp && (
@@ -81,12 +87,21 @@ function AuthPageLayout({ children, HeaderComp }) {
             </Header>
           </Affix>
         )}
-        <Row style={{ backgroundColor: colorBgBase, height: '100%' }} justify="center">
+        <Row
+          style={{
+            backgroundColor: colorBgContainer,
+            minHeight: isClaudeOAuthFlow ? '100vh' : '100%',
+            flex: 1,
+          }}
+          justify="center"
+        >
           <Content
             className="contentContainer"
             style={{
               maxWidth: '2000px',
               overflow: 'hidden',
+              width: '100%',
+              backgroundColor: colorBgContainer,
               ...(location.pathname.includes('/ailabs/create') ||
               location.pathname.includes('/ailabs/edit')
                 ? {
