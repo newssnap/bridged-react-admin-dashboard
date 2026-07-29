@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { notification } from 'antd';
 import { setAuthData } from '../../../../redux/slices/auth/authSlice';
+import { getValidOAuthRedirectFromSearch } from '../../../../utils/controllers/oauthRedirect';
 
 // Custom hook for handling login functionality
 const useLoginHandler = () => {
@@ -32,9 +33,8 @@ const useLoginHandler = () => {
           })
         );
 
-        // Navigate to the users page and preserve oauth redirect context (if present)
-        const searchParams = new URLSearchParams(location.search);
-        const oauthRedirect = searchParams.get('oauth_redirect');
+        // Preserve Claude OAuth context only for a real authorize URL
+        const oauthRedirect = getValidOAuthRedirectFromSearch(location.search);
         if (oauthRedirect) {
           navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`);
         } else {
