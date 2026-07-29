@@ -53,6 +53,7 @@ import {
 } from '../../../services/api';
 import AddUserDrawer from '../components/AddUserDrawer';
 import EditUserDrawer from '../components/EditUserDrawer';
+import ClaudeRedirectOverlay from '../components/ClaudeRedirectOverlay';
 import { parseOAuthAuthorizePayload } from '../../../utils/controllers/oauthRedirect';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -178,6 +179,7 @@ function DashboardWorkflow() {
   const location = useLocation();
   const [_OAUTH_AUTHORIZE, { isLoading: isAuthorizingOAuth }] = useOAuthAuthorizeMutation();
   const [authorizingUserId, setAuthorizingUserId] = useState(null);
+  const [isRedirectingToClaude, setIsRedirectingToClaude] = useState(false);
 
   const oauthAuthorizePayload = useMemo(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -282,16 +284,11 @@ function DashboardWorkflow() {
         return;
       }
 
-      notification.success({
-        message: 'Connected successfully',
-        description: 'Redirecting you back to Claude…',
-        placement: 'top',
-        duration: 2,
-      });
+      setIsRedirectingToClaude(true);
 
       setTimeout(() => {
         window.location.assign(redirectUrl);
-      }, 1200);
+      }, 1800);
     } catch (error) {
       notification.error({
         message: 'OAuth Error',
@@ -299,6 +296,7 @@ function DashboardWorkflow() {
         placement: 'bottomRight',
       });
       setAuthorizingUserId(null);
+      setIsRedirectingToClaude(false);
     }
   };
 
@@ -860,12 +858,10 @@ function DashboardWorkflow() {
 
   return (
     <>
+      <ClaudeRedirectOverlay open={isRedirectingToClaude} />
       <Row gutter={[15, 30]} justify="space-between" align="middle">
         <Col span={24}>
-          <Title
-            level={2}
-            style={{ marginBottom: '24px', fontWeight: 300 }}
-          >
+          <Title level={2} style={{ marginBottom: '24px', fontWeight: 300 }}>
             {oauthAuthorizePayload ? 'Connect to Claude' : 'Users'}
           </Title>
         </Col>
