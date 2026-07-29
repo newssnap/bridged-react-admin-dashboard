@@ -2,25 +2,23 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Affix, Col, Layout, Row, theme } from 'antd';
 import useGetWindowWidth from '../utils/controllers/useGetWindowWidth';
 import GlobalSidebar from './GlobalSidebar';
-import { useDispatch } from 'react-redux';
 // import SchedulingForm from '../utils/components/SchedulingForm';
 import { useLocation } from 'react-router-dom';
+import { getValidOAuthRedirectFromSearch } from '../utils/controllers/oauthRedirect';
 
 const { Content, Sider, Header } = Layout;
 
 function AuthPageLayout({ children, HeaderComp }) {
   const location = useLocation();
 
-  const dispatch = useDispatch();
-
   // Custom hook to get window width
   const width = useGetWindowWidth();
 
-  // Hide sidebar during Claude OAuth connect flow
-  const isClaudeOAuthFlow = useMemo(() => {
-    const oauthRedirect = new URLSearchParams(location.search).get('oauth_redirect');
-    return Boolean(oauthRedirect);
-  }, [location.search]);
+  // Hide sidebar only during a real Claude OAuth connect flow
+  const isClaudeOAuthFlow = useMemo(
+    () => Boolean(getValidOAuthRedirectFromSearch(location.search)),
+    [location.search]
+  );
 
   // State to manage the width of the main content
   const [mainWidth, setMainWidth] = useState(() => {
