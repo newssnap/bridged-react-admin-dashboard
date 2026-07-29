@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import Sidebar from '../presentation/authentication/reusable/components/Sidebar';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getValidOAuthRedirectFromSearch } from '../utils/controllers/oauthRedirect';
 
 function AuthenticationLayout({ children, Sidebarcontent }) {
   const isAuth = useSelector(state => state.auth.data.isAuth);
@@ -12,8 +13,7 @@ function AuthenticationLayout({ children, Sidebarcontent }) {
   // Redirect to the home page if the user is authenticated
   useEffect(() => {
     if (isAuth) {
-      const searchParams = new URLSearchParams(location.search);
-      const oauthRedirect = searchParams.get('oauth_redirect');
+      const oauthRedirect = getValidOAuthRedirectFromSearch(location.search);
       if (oauthRedirect) {
         navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`, { replace: true });
         return;
