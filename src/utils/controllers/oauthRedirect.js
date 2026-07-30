@@ -18,6 +18,7 @@ export function parseOAuthAuthorizePayload(oauthRedirect) {
       state: oauthParams.get('state'),
       code_challenge: oauthParams.get('code_challenge'),
       code_challenge_method: oauthParams.get('code_challenge_method'),
+      resource: oauthParams.get('resource'),
     };
 
     const hasRequiredParams = Object.values(payload).every(Boolean);
