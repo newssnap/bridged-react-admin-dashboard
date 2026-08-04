@@ -1,24 +1,31 @@
-import { Col, Row } from "antd";
-import React, { useEffect } from "react";
-import Sidebar from "../presentation/authentication/reusable/components/Sidebar";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Col, Row } from 'antd';
+import React, { useEffect } from 'react';
+import Sidebar from '../presentation/authentication/reusable/components/Sidebar';
+import { useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function AuthenticationLayout({ children, Sidebarcontent }) {
-  const isAuth = useSelector((state) => state.auth.data.isAuth);
+  const isAuth = useSelector(state => state.auth.data.isAuth);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Redirect to the home page if the user is authenticated
   useEffect(() => {
     if (isAuth) {
-      navigate("/");
+      const searchParams = new URLSearchParams(location.search);
+      const oauthRedirect = searchParams.get('oauth_redirect');
+      if (oauthRedirect) {
+        navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`, { replace: true });
+        return;
+      }
+      navigate('/', { replace: true });
     }
-  }, [isAuth, navigate]);
+  }, [isAuth, navigate, location.search]);
 
   return (
     <Row
       style={{
-        height: "100vh",
+        height: '100vh',
       }}
       align="stretch"
       justify="center"
@@ -32,8 +39,8 @@ function AuthenticationLayout({ children, Sidebarcontent }) {
       <Col {...{ xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }}>
         <Row
           style={{
-            height: "100%",
-            width: "100%",
+            height: '100%',
+            width: '100%',
           }}
           className="authCardContent"
         >

@@ -49,10 +49,14 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
       creditBalance: item.creditBalance ?? 0,
       customWork: item.customWork ?? 0,
       companyId: item.companyId ?? undefined,
+      isSponsorsActive: !!item.isSponsorsActive,
       isWhitelabelingEnabled: !!item.isWhitelabelingEnabled,
+      isAgentVisualizationEnabled: !!item.isAgentVisualizationEnabled,
       dashboardURL: item.dashboardURL ?? undefined,
       primaryColor: item.primaryColor ?? undefined,
       logo: item.logo ?? undefined,
+      agentVisualizationConfig: item.agentVisualizationConfig ?? undefined,
+      brandSync: item.brandSync ?? undefined,
     }));
   }, [rawTeams]);
 

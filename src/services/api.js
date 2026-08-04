@@ -33,7 +33,12 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     localStorage.removeItem('refreshToken');
 
     // Redirect to login page
-    window.location.href = '/login';
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthRedirect = searchParams.get('oauth_redirect');
+    const redirectQuery = oauthRedirect
+      ? `oauth_redirect=${encodeURIComponent(oauthRedirect)}`
+      : `oauth_redirect=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
+    window.location.href = `/login?${redirectQuery}`;
   }
 
   return result;
@@ -562,6 +567,22 @@ export const bridgedApi = createApi({
       keepUnusedDataFor: 0,
       providesTags: (result, error, teamId) => [{ type: 'teamPlaybooks', id: teamId }],
     }),
+
+    crawlBranding: builder.mutation({
+      query: data => ({
+        url: '/Team/Admin/VisualizationConfig/Suggest',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+
+    oAuthAuthorize: builder.mutation({
+      query: data => ({
+        url: '/admin/oauth/authorize/approve',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -630,4 +651,6 @@ export const {
   useDisablePlaybookForTeamMutation,
   useGetTeamPlaybooksQuery,
   useLazyGetTeamPlaybooksQuery,
+  useCrawlBrandingMutation,
+  useOAuthAuthorizeMutation,
 } = bridgedApi;

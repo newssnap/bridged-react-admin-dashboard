@@ -42,13 +42,14 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { ACTIVE_COLOR } from '../../../constants/DashboardColors';
 import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
 import {
   useCreateCompanyMutation,
   useGetCompaniesQuery,
   useGetTeamsByCompanyQuery,
   useLazyGetUserForUpdateByAdminQuery,
+  useOAuthAuthorizeMutation,
   useUpdateUserByAdminMutation,
 } from '../../../services/api';
 import AddUserDrawer from '../components/AddUserDrawer';
@@ -174,7 +175,37 @@ function DashboardWorkflow() {
     generateNewUserConfigurations,
   } = useAgentManagementHandler();
 
-  const navigate = useNavigate();
+  const location = useLocation();
+  const [_OAUTH_AUTHORIZE, { isLoading: isAuthorizingOAuth }] = useOAuthAuthorizeMutation();
+  const [authorizingUserId, setAuthorizingUserId] = useState(null);
+
+  const oauthAuthorizePayload = useMemo(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const oauthRedirect = searchParams.get('oauth_redirect');
+
+    if (!oauthRedirect) {
+      return null;
+    }
+
+    try {
+      const oauthUrl = new URL(oauthRedirect);
+      const oauthParams = oauthUrl.searchParams;
+      const payload = {
+        response_type: oauthParams.get('response_type'),
+        client_id: oauthParams.get('client_id'),
+        redirect_uri: oauthParams.get('redirect_uri'),
+        scope: (oauthParams.get('scope') || '').replace(/\+/g, ' ').trim(),
+        state: oauthParams.get('state'),
+        code_challenge: oauthParams.get('code_challenge'),
+        code_challenge_method: oauthParams.get('code_challenge_method'),
+      };
+
+      const hasRequiredParams = Object.values(payload).every(value => value);
+      return hasRequiredParams ? payload : null;
+    } catch (error) {
+      return null;
+    }
+  }, [location.search]);
 
   const handleMenuClick = async (key, record) => {
     const token = await handleGenerateUserTokenForLogin(
@@ -234,6 +265,56 @@ function DashboardWorkflow() {
         message: 'Error',
         description: 'Failed to generate user token. Please try again.',
       });
+    }
+  };
+
+  const handleConnectToClaude = async record => {
+    if (!oauthAuthorizePayload) {
+      notification.error({
+        message: 'OAuth Error',
+        description: 'OAuth parameters are missing or invalid.',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+
+    if (!record?._id || !record?.teamId) {
+      notification.warning({
+        message: 'Missing User Data',
+        description: 'Selected user must have both user id and team id.',
+        placement: 'bottomRight',
+      });
+      return;
+    }
+
+    try {
+      setAuthorizingUserId(record._id);
+      const response = await _OAUTH_AUTHORIZE({
+        ...oauthAuthorizePayload,
+        selected_user_id: record._id,
+        selected_team_id: record.teamId,
+      }).unwrap();
+
+      const redirectUrl = response?.data?.redirect_url || response?.redirect_url;
+
+      if (!redirectUrl) {
+        notification.error({
+          message: 'OAuth Error',
+          description: 'Redirect URL was not returned by the server.',
+          placement: 'bottomRight',
+        });
+        return;
+      }
+
+      window.location.assign(redirectUrl);
+    } catch (error) {
+      notification.error({
+        message: 'OAuth Error',
+        description: error?.data?.errorObject?.userErrorText || 'Failed to connect to Claude.',
+        placement: 'bottomRight',
+      });
+    } finally {
+      setAuthorizingUserId(null);
     }
   };
 
@@ -555,7 +636,7 @@ function DashboardWorkflow() {
       title: 'Full Name',
       dataIndex: 'fullname',
       key: 'fullname',
-      width: '150px',
+      width: '120px',
       render: fullname => (
         <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
       ),
@@ -619,7 +700,7 @@ function DashboardWorkflow() {
     {
       title: 'Actions',
       key: 'actions',
-      width: '75px',
+      width: oauthAuthorizePayload ? '190px' : '75px',
       fixed: 'right',
       align: 'center',
       onHeaderCell: () => ({
@@ -629,6 +710,25 @@ function DashboardWorkflow() {
         },
       }),
       render: (_, record) => {
+        if (oauthAuthorizePayload) {
+          const isCurrentRowAuthorizing =
+            isAuthorizingOAuth && authorizingUserId && authorizingUserId === record._id;
+
+          return (
+            <div onClick={e => e.stopPropagation()}>
+              <Button
+                type="primary"
+                size="middle"
+                loading={isCurrentRowAuthorizing}
+                disabled={isAuthorizingOAuth && authorizingUserId !== record._id}
+                onClick={() => handleConnectToClaude(record)}
+              >
+                Connect to Claude
+              </Button>
+            </div>
+          );
+        }
+
         const menuItems = [
           {
             key: 'edit',
