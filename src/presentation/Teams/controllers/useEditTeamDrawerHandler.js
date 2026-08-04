@@ -102,6 +102,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     form.setFieldsValue({
       teamName: team.teamName ?? undefined,
       companyId: companyId ?? undefined,
+      isSponsorsActive: !!team.isSponsorsActive,
       isWhitelabelingEnabled: !!team.isWhitelabelingEnabled,
       isBrandSyncEnabled:
         team.isAgentVisualizationEnabled !== undefined
@@ -139,6 +140,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           _id: values.teamId,
           title: values.teamName?.trim() ?? '',
           companyId: values.companyId ?? '',
+          isSponsorsActive: !!values.isSponsorsActive,
           isWhitelabelingEnabled: !!values.isWhitelabelingEnabled,
           isAgentVisualizationEnabled: !!values.isBrandSyncEnabled,
         };
