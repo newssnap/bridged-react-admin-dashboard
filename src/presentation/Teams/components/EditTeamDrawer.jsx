@@ -594,6 +594,25 @@ const EditTeamDrawer = ({
                 />
               </Form.Item>
 
+              <Card size="small" style={{ marginBottom: 16 }}>
+                <Space
+                  align="center"
+                  style={{ width: '100%', justifyContent: 'space-between', gap: 16 }}
+                >
+                  <Space direction="vertical" size={0}>
+                    <Text strong>Sponsor Access</Text>
+                    <Text type="secondary">Enable this team to use sponsor-specific features.</Text>
+                  </Space>
+                  <Form.Item
+                    name="isSponsorsActive"
+                    valuePropName="checked"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+                  </Form.Item>
+                </Space>
+              </Card>
+
               <Card
                 size="small"
                 title={

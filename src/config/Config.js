@@ -36,7 +36,7 @@ function resolveEnvironment() {
     }
 
     // default local env
-    return ENV_CONFIG.staging;
+    return ENV_CONFIG.dev;
   }
 
   // deployed staging
