@@ -417,6 +417,13 @@ const EditTeamDrawer = ({
       return;
     }
 
+    if (applyToWhitelabeling) {
+      form.setFieldValue('isWhitelabelingEnabled', true);
+    }
+    if (applyToBrandSync) {
+      form.setFieldValue('isBrandSyncEnabled', true);
+    }
+
     notification.success({
       message:
         target === 'both'
@@ -594,6 +601,25 @@ const EditTeamDrawer = ({
                 />
               </Form.Item>
 
+              <Card size="small" style={{ marginBottom: 16 }}>
+                <Space
+                  align="center"
+                  style={{ width: '100%', justifyContent: 'space-between', gap: 16 }}
+                >
+                  <Space direction="vertical" size={0}>
+                    <Text strong>Sponsor Access</Text>
+                    <Text type="secondary">Enable this team to use sponsor-specific features.</Text>
+                  </Space>
+                  <Form.Item
+                    name="isSponsorsActive"
+                    valuePropName="checked"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+                  </Form.Item>
+                </Space>
+              </Card>
+
               <Card
                 size="small"
                 title={
@@ -625,6 +651,7 @@ const EditTeamDrawer = ({
                     <Col span={12}>
                       <Card
                         size="small"
+                        className={`brand-section-card${isWhitelabelingEnabled ? ' is-expanded' : ''}`}
                         title="Whitelabeling"
                         extra={
                           <Form.Item
@@ -635,14 +662,17 @@ const EditTeamDrawer = ({
                             <Switch />
                           </Form.Item>
                         }
-                        style={{ height: '100%', opacity: isWhitelabelingEnabled ? 1 : 0.65 }}
                       >
+                        <div
+                          className={`brand-section-collapse${isWhitelabelingEnabled ? ' is-open' : ''}`}
+                        >
+                          <div className="brand-section-collapse-inner">
                         <Form.Item
                           label="Primary Color"
                           name="primaryColor"
                           getValueFromEvent={color => color?.toHexString?.() ?? color}
                         >
-                          <ColorPicker format="hex" showText disabled={!isWhitelabelingEnabled} />
+                          <ColorPicker format="hex" showText />
                         </Form.Item>
 
                         <Form.Item label="Logo" name="logoUrl">
@@ -650,30 +680,17 @@ const EditTeamDrawer = ({
                             <div
                               role="button"
                               tabIndex={0}
-                              onClick={() => isWhitelabelingEnabled && handleLogoUploadClick()}
-                              onKeyDown={e =>
-                                isWhitelabelingEnabled &&
-                                e.key === 'Enter' &&
-                                handleLogoUploadClick()
-                              }
-                              onDragOver={e => {
-                                if (!isWhitelabelingEnabled) return;
-                                handleLogoDragOver(e);
-                              }}
-                              onDragLeave={e => {
-                                if (!isWhitelabelingEnabled) return;
-                                handleLogoDragLeave(e);
-                              }}
-                              onDrop={e => {
-                                if (!isWhitelabelingEnabled) return;
-                                handleLogoDrop(e);
-                              }}
+                              onClick={handleLogoUploadClick}
+                              onKeyDown={e => e.key === 'Enter' && handleLogoUploadClick()}
+                              onDragOver={handleLogoDragOver}
+                              onDragLeave={handleLogoDragLeave}
+                              onDrop={handleLogoDrop}
                               style={{
                                 border: `1px dashed ${isDragging ? '#1890ff' : '#d9d9d9'}`,
                                 borderRadius: 8,
                                 padding: 24,
                                 textAlign: 'center',
-                                cursor: isWhitelabelingEnabled ? 'pointer' : 'not-allowed',
+                                cursor: 'pointer',
                                 background: displayedLogoUrl
                                   ? `center/contain no-repeat url(${displayedLogoUrl})`
                                   : isDragging
@@ -688,7 +705,7 @@ const EditTeamDrawer = ({
                                 accept="image/*"
                                 style={{ display: 'none' }}
                                 onChange={handleLogoFileChange}
-                                disabled={isUploadingLogo || !isWhitelabelingEnabled}
+                                disabled={isUploadingLogo}
                               />
                               {!displayedLogoUrl ? (
                                 <>
@@ -713,7 +730,6 @@ const EditTeamDrawer = ({
                                   size="middle"
                                   onClick={handleLogoUploadClick}
                                   loading={isUploadingLogo}
-                                  disabled={!isWhitelabelingEnabled}
                                   style={{ flex: 1 }}
                                 >
                                   Change
@@ -722,7 +738,7 @@ const EditTeamDrawer = ({
                                   type="default"
                                   size="middle"
                                   onClick={handleDeleteLogo}
-                                  disabled={!displayedLogoUrl || !isWhitelabelingEnabled}
+                                  disabled={!displayedLogoUrl}
                                   style={{ flex: 1 }}
                                 >
                                   Delete
@@ -731,12 +747,15 @@ const EditTeamDrawer = ({
                             )}
                           </div>
                         </Form.Item>
+                          </div>
+                        </div>
                       </Card>
                     </Col>
 
                     <Col span={12}>
                       <Card
                         size="small"
+                        className={`brand-section-card${isBrandSyncEnabled ? ' is-expanded' : ''}`}
                         title="BrandSync"
                         extra={
                           <Form.Item
@@ -747,8 +766,11 @@ const EditTeamDrawer = ({
                             <Switch />
                           </Form.Item>
                         }
-                        style={{ height: '100%', opacity: isBrandSyncEnabled ? 1 : 0.65 }}
                       >
+                        <div
+                          className={`brand-section-collapse${isBrandSyncEnabled ? ' is-open' : ''}`}
+                        >
+                          <div className="brand-section-collapse-inner">
                         <Row gutter={12}>
                           <Col span={12}>
                             <Form.Item
@@ -756,7 +778,7 @@ const EditTeamDrawer = ({
                               name="brandSyncPrimaryColor"
                               getValueFromEvent={color => color?.toHexString?.() ?? color}
                             >
-                              <ColorPicker format="hex" showText disabled={!isBrandSyncEnabled} />
+                              <ColorPicker format="hex" showText />
                             </Form.Item>
                           </Col>
                           <Col span={12}>
@@ -765,7 +787,7 @@ const EditTeamDrawer = ({
                               name="brandSyncAccentColour"
                               getValueFromEvent={color => color?.toHexString?.() ?? color}
                             >
-                              <ColorPicker format="hex" showText disabled={!isBrandSyncEnabled} />
+                              <ColorPicker format="hex" showText />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -775,7 +797,6 @@ const EditTeamDrawer = ({
                             <Form.Item label="Theme" name="brandSyncTheme">
                               <Select
                                 size="large"
-                                disabled={!isBrandSyncEnabled}
                                 options={[
                                   { value: 'light', label: 'Light' },
                                   { value: 'dark', label: 'Dark' },
@@ -785,11 +806,7 @@ const EditTeamDrawer = ({
                           </Col>
                           <Col span={12}>
                             <Form.Item label="Font Name" name="brandSyncFontName">
-                              <Input
-                                size="large"
-                                placeholder="Inter"
-                                disabled={!isBrandSyncEnabled}
-                              />
+                              <Input size="large" placeholder="Inter" />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -797,22 +814,12 @@ const EditTeamDrawer = ({
                         <Row gutter={12}>
                           <Col span={12}>
                             <Form.Item label="Base Font Scale" name="brandSyncBaseFontScale">
-                              <InputNumber
-                                size="large"
-                                style={{ width: '100%' }}
-                                min={1}
-                                max={12}
-                                disabled={!isBrandSyncEnabled}
-                              />
+                              <InputNumber size="large" style={{ width: '100%' }} min={1} max={12} />
                             </Form.Item>
                           </Col>
                           <Col span={12}>
                             <Form.Item label="Border Radius" name="brandSyncBorderRadius">
-                              <Input
-                                size="large"
-                                placeholder="0px"
-                                disabled={!isBrandSyncEnabled}
-                              />
+                              <Input size="large" placeholder="0px" />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -822,30 +829,19 @@ const EditTeamDrawer = ({
                             <div
                               role="button"
                               tabIndex={0}
-                              onClick={() => isBrandSyncEnabled && handleBrandSyncLogoUploadClick()}
+                              onClick={handleBrandSyncLogoUploadClick}
                               onKeyDown={event =>
-                                isBrandSyncEnabled &&
-                                event.key === 'Enter' &&
-                                handleBrandSyncLogoUploadClick()
+                                event.key === 'Enter' && handleBrandSyncLogoUploadClick()
                               }
-                              onDragOver={event => {
-                                if (!isBrandSyncEnabled) return;
-                                handleBrandSyncLogoDragOver(event);
-                              }}
-                              onDragLeave={event => {
-                                if (!isBrandSyncEnabled) return;
-                                handleBrandSyncLogoDragLeave(event);
-                              }}
-                              onDrop={event => {
-                                if (!isBrandSyncEnabled) return;
-                                handleBrandSyncLogoDrop(event);
-                              }}
+                              onDragOver={handleBrandSyncLogoDragOver}
+                              onDragLeave={handleBrandSyncLogoDragLeave}
+                              onDrop={handleBrandSyncLogoDrop}
                               style={{
                                 border: `1px dashed ${isBrandSyncDragging ? '#1890ff' : '#d9d9d9'}`,
                                 borderRadius: 8,
                                 padding: 24,
                                 textAlign: 'center',
-                                cursor: isBrandSyncEnabled ? 'pointer' : 'not-allowed',
+                                cursor: 'pointer',
                                 background: displayedBrandSyncLogoUrl
                                   ? `center/contain no-repeat url(${displayedBrandSyncLogoUrl})`
                                   : isBrandSyncDragging
@@ -860,7 +856,7 @@ const EditTeamDrawer = ({
                                 accept="image/*"
                                 style={{ display: 'none' }}
                                 onChange={handleBrandSyncLogoFileChange}
-                                disabled={isUploadingLogo || !isBrandSyncEnabled}
+                                disabled={isUploadingLogo}
                               />
                               {!displayedBrandSyncLogoUrl ? (
                                 <>
@@ -880,7 +876,6 @@ const EditTeamDrawer = ({
                                   size="middle"
                                   onClick={handleBrandSyncLogoUploadClick}
                                   loading={isUploadingLogo}
-                                  disabled={!isBrandSyncEnabled}
                                   style={{ flex: 1 }}
                                 >
                                   Change
@@ -889,7 +884,7 @@ const EditTeamDrawer = ({
                                   type="default"
                                   size="middle"
                                   onClick={handleDeleteBrandSyncLogo}
-                                  disabled={!displayedBrandSyncLogoUrl || !isBrandSyncEnabled}
+                                  disabled={!displayedBrandSyncLogoUrl}
                                   style={{ flex: 1 }}
                                 >
                                   Delete
@@ -898,6 +893,8 @@ const EditTeamDrawer = ({
                             )}
                           </div>
                         </Form.Item>
+                          </div>
+                        </div>
                       </Card>
                     </Col>
                   </Row>

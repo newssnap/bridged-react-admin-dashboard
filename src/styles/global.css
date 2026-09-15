@@ -1045,3 +1045,35 @@ code {
   /* padding-right: 0px !important; */
   /* padding-left: 0px !important; */
 }
+
+.brand-section-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.brand-section-collapse.is-open {
+  grid-template-rows: 1fr;
+}
+
+.brand-section-collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.brand-section-collapse.is-open .brand-section-collapse-inner {
+  opacity: 1;
+}
+
+.brand-section-card .ant-card-body {
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: padding 0.3s ease;
+}
+
+.brand-section-card.is-expanded .ant-card-body {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
