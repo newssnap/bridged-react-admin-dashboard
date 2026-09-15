@@ -388,6 +388,13 @@ const AddTeamDrawer = ({
       return;
     }
 
+    if (applyToWhitelabeling) {
+      form.setFieldValue('isWhitelabelingEnabled', true);
+    }
+    if (applyToBrandSync) {
+      form.setFieldValue('isBrandSyncEnabled', true);
+    }
+
     notification.success({
       message:
         target === 'both'
@@ -644,6 +651,7 @@ const AddTeamDrawer = ({
                 <Col span={12}>
                   <Card
                     size="small"
+                    className={`brand-section-card${isWhitelabelingEnabled ? ' is-expanded' : ''}`}
                     title="Whitelabeling"
                     extra={
                       <Form.Item
@@ -654,14 +662,17 @@ const AddTeamDrawer = ({
                         <Switch />
                       </Form.Item>
                     }
-                    style={{ height: '100%', opacity: isWhitelabelingEnabled ? 1 : 0.65 }}
                   >
+                    <div
+                      className={`brand-section-collapse${isWhitelabelingEnabled ? ' is-open' : ''}`}
+                    >
+                      <div className="brand-section-collapse-inner">
                     <Form.Item
                       label="Primary Color"
                       name="primaryColor"
                       getValueFromEvent={color => color?.toHexString?.() ?? color}
                     >
-                      <ColorPicker format="hex" showText disabled={!isWhitelabelingEnabled} />
+                      <ColorPicker format="hex" showText />
                     </Form.Item>
 
                     <Form.Item label="Logo" name="logoUrl">
@@ -669,26 +680,19 @@ const AddTeamDrawer = ({
                         <div
                           role="button"
                           tabIndex={0}
-                          onClick={() => isWhitelabelingEnabled && fileInputRef.current?.click()}
-                          onKeyDown={event =>
-                            isWhitelabelingEnabled &&
-                            event.key === 'Enter' &&
-                            fileInputRef.current?.click()
-                          }
+                          onClick={() => fileInputRef.current?.click()}
+                          onKeyDown={event => event.key === 'Enter' && fileInputRef.current?.click()}
                           onDragOver={event => {
-                            if (!isWhitelabelingEnabled) return;
                             event.preventDefault();
                             event.stopPropagation();
                             setIsDragging(true);
                           }}
                           onDragLeave={event => {
-                            if (!isWhitelabelingEnabled) return;
                             event.preventDefault();
                             event.stopPropagation();
                             setIsDragging(false);
                           }}
                           onDrop={event => {
-                            if (!isWhitelabelingEnabled) return;
                             event.preventDefault();
                             setIsDragging(false);
                             const file = event.dataTransfer?.files?.[0];
@@ -705,7 +709,7 @@ const AddTeamDrawer = ({
                             borderRadius: 8,
                             padding: 24,
                             textAlign: 'center',
-                            cursor: isWhitelabelingEnabled ? 'pointer' : 'not-allowed',
+                            cursor: 'pointer',
                             background: logoPreviewUrl
                               ? `center/contain no-repeat url(${logoPreviewUrl})`
                               : isDragging
@@ -720,7 +724,7 @@ const AddTeamDrawer = ({
                             accept="image/*"
                             style={{ display: 'none' }}
                             onChange={handleLogoFileChange}
-                            disabled={isUploadingLogo || !isWhitelabelingEnabled}
+                            disabled={isUploadingLogo}
                           />
                           {!logoPreviewUrl ? (
                             <>
@@ -743,7 +747,6 @@ const AddTeamDrawer = ({
                               size="middle"
                               onClick={() => fileInputRef.current?.click()}
                               loading={isUploadingLogo}
-                              disabled={!isWhitelabelingEnabled}
                               style={{ flex: 1 }}
                             >
                               Change
@@ -755,7 +758,6 @@ const AddTeamDrawer = ({
                                 form.setFieldValue('logoUrl', undefined);
                                 setLogoPreviewUrl('');
                               }}
-                              disabled={!isWhitelabelingEnabled}
                               style={{ flex: 1 }}
                             >
                               Delete
@@ -764,12 +766,15 @@ const AddTeamDrawer = ({
                         ) : null}
                       </div>
                     </Form.Item>
+                      </div>
+                    </div>
                   </Card>
                 </Col>
 
                 <Col span={12}>
                   <Card
                     size="small"
+                    className={`brand-section-card${isBrandSyncEnabled ? ' is-expanded' : ''}`}
                     title="BrandSync"
                     extra={
                       <Form.Item
@@ -780,8 +785,11 @@ const AddTeamDrawer = ({
                         <Switch />
                       </Form.Item>
                     }
-                    style={{ height: '100%', opacity: isBrandSyncEnabled ? 1 : 0.65 }}
                   >
+                    <div
+                      className={`brand-section-collapse${isBrandSyncEnabled ? ' is-open' : ''}`}
+                    >
+                      <div className="brand-section-collapse-inner">
                     <Row gutter={12}>
                       <Col span={12}>
                         <Form.Item
@@ -789,7 +797,7 @@ const AddTeamDrawer = ({
                           name="brandSyncPrimaryColor"
                           getValueFromEvent={color => color?.toHexString?.() ?? color}
                         >
-                          <ColorPicker format="hex" showText disabled={!isBrandSyncEnabled} />
+                          <ColorPicker format="hex" showText />
                         </Form.Item>
                       </Col>
                       <Col span={12}>
@@ -798,7 +806,7 @@ const AddTeamDrawer = ({
                           name="brandSyncAccentColour"
                           getValueFromEvent={color => color?.toHexString?.() ?? color}
                         >
-                          <ColorPicker format="hex" showText disabled={!isBrandSyncEnabled} />
+                          <ColorPicker format="hex" showText />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -808,7 +816,6 @@ const AddTeamDrawer = ({
                         <Form.Item label="Theme" name="brandSyncTheme">
                           <Select
                             size="large"
-                            disabled={!isBrandSyncEnabled}
                             options={[
                               { value: 'light', label: 'Light' },
                               { value: 'dark', label: 'Dark' },
@@ -818,7 +825,7 @@ const AddTeamDrawer = ({
                       </Col>
                       <Col span={12}>
                         <Form.Item label="Font Name" name="brandSyncFontName">
-                          <Input size="large" placeholder="Inter" disabled={!isBrandSyncEnabled} />
+                          <Input size="large" placeholder="Inter" />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -826,18 +833,12 @@ const AddTeamDrawer = ({
                     <Row gutter={12}>
                       <Col span={12}>
                         <Form.Item label="Base Font Scale" name="brandSyncBaseFontScale">
-                          <InputNumber
-                            size="large"
-                            style={{ width: '100%' }}
-                            min={1}
-                            max={12}
-                            disabled={!isBrandSyncEnabled}
-                          />
+                          <InputNumber size="large" style={{ width: '100%' }} min={1} max={12} />
                         </Form.Item>
                       </Col>
                       <Col span={12}>
                         <Form.Item label="Border Radius" name="brandSyncBorderRadius">
-                          <Input size="large" placeholder="0px" disabled={!isBrandSyncEnabled} />
+                          <Input size="large" placeholder="0px" />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -847,28 +848,21 @@ const AddTeamDrawer = ({
                         <div
                           role="button"
                           tabIndex={0}
-                          onClick={() =>
-                            isBrandSyncEnabled && brandSyncFileInputRef.current?.click()
-                          }
+                          onClick={() => brandSyncFileInputRef.current?.click()}
                           onKeyDown={event =>
-                            isBrandSyncEnabled &&
-                            event.key === 'Enter' &&
-                            brandSyncFileInputRef.current?.click()
+                            event.key === 'Enter' && brandSyncFileInputRef.current?.click()
                           }
                           onDragOver={event => {
-                            if (!isBrandSyncEnabled) return;
                             event.preventDefault();
                             event.stopPropagation();
                             setIsBrandSyncDragging(true);
                           }}
                           onDragLeave={event => {
-                            if (!isBrandSyncEnabled) return;
                             event.preventDefault();
                             event.stopPropagation();
                             setIsBrandSyncDragging(false);
                           }}
                           onDrop={event => {
-                            if (!isBrandSyncEnabled) return;
                             event.preventDefault();
                             setIsBrandSyncDragging(false);
                             const file = event.dataTransfer?.files?.[0];
@@ -885,7 +879,7 @@ const AddTeamDrawer = ({
                             borderRadius: 8,
                             padding: 24,
                             textAlign: 'center',
-                            cursor: isBrandSyncEnabled ? 'pointer' : 'not-allowed',
+                            cursor: 'pointer',
                             background: brandSyncLogoPreviewUrl
                               ? `center/contain no-repeat url(${brandSyncLogoPreviewUrl})`
                               : isBrandSyncDragging
@@ -900,7 +894,7 @@ const AddTeamDrawer = ({
                             accept="image/*"
                             style={{ display: 'none' }}
                             onChange={handleBrandSyncLogoFileChange}
-                            disabled={isUploadingLogo || !isBrandSyncEnabled}
+                            disabled={isUploadingLogo}
                           />
                           {!brandSyncLogoPreviewUrl ? (
                             <>
@@ -920,7 +914,6 @@ const AddTeamDrawer = ({
                               size="middle"
                               onClick={() => brandSyncFileInputRef.current?.click()}
                               loading={isUploadingLogo}
-                              disabled={!isBrandSyncEnabled}
                               style={{ flex: 1 }}
                             >
                               Change
@@ -932,7 +925,6 @@ const AddTeamDrawer = ({
                                 form.setFieldValue('brandSyncLogo', undefined);
                                 setBrandSyncLogoPreviewUrl('');
                               }}
-                              disabled={!isBrandSyncEnabled}
                               style={{ flex: 1 }}
                             >
                               Delete
@@ -941,6 +933,8 @@ const AddTeamDrawer = ({
                         ) : null}
                       </div>
                     </Form.Item>
+                      </div>
+                    </div>
                   </Card>
                 </Col>
               </Row>
