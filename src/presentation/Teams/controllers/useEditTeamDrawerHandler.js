@@ -259,17 +259,23 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
   const memberTableData = useMemo(
     () =>
-      members.map((m, index) => ({
-        key: m._id || m.userId || index,
-        _id: m.userId || m._id,
-        membershipId: m._id,
-        userId: m.userId,
-        name: m.name?.trim() || m.email || '—',
-        email: m.email || '—',
-        role: m.isOwner ? 'Owner' : 'Member',
-        profilePicture: m.profilePicture,
-        status: m.status,
-      })),
+      [...members]
+        .map((m, index) => ({
+          key: m._id || m.userId || index,
+          _id: m.userId || m._id,
+          membershipId: m._id,
+          userId: m.userId,
+          name: m.name?.trim() || m.email || '—',
+          email: m.email || '—',
+          role: m.isOwner ? 'Owner' : 'Member',
+          profilePicture: m.profilePicture,
+          status: m.status,
+        }))
+        .sort((a, b) => {
+          if (a.role === 'Owner' && b.role !== 'Owner') return -1;
+          if (a.role !== 'Owner' && b.role === 'Owner') return 1;
+          return 0;
+        }),
     [members]
   );
 
