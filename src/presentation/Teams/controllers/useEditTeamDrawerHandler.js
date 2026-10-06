@@ -259,17 +259,23 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
   const memberTableData = useMemo(
     () =>
-      members.map((m, index) => ({
-        key: m._id || m.userId || index,
-        _id: m.userId || m._id,
-        membershipId: m._id,
-        userId: m.userId,
-        name: m.name?.trim() || m.email || '—',
-        email: m.email || '—',
-        role: m.isOwner ? 'Owner' : 'Member',
-        profilePicture: m.profilePicture,
-        status: m.status,
-      })),
+      [...members]
+        .map((m, index) => ({
+          key: m._id || m.userId || index,
+          _id: m.userId || m._id,
+          membershipId: m._id,
+          userId: m.userId,
+          name: m.name?.trim() || m.email || '—',
+          email: m.email || '—',
+          role: m.isOwner ? 'Owner' : 'Member',
+          profilePicture: m.profilePicture,
+          status: m.status,
+        }))
+        .sort((a, b) => {
+          if (a.role === 'Owner' && b.role !== 'Owner') return -1;
+          if (a.role !== 'Owner' && b.role === 'Owner') return 1;
+          return 0;
+        }),
     [members]
   );
 
@@ -277,11 +283,11 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     async (key, record) => {
       if (!record?._id) return;
 
-      const token = await handleGenerateUserTokenForLogin({ _id: record._id }, key);
-      if (!token) return;
+      const tokens = await handleGenerateUserTokenForLogin({ _id: record._id }, key);
+      if (!tokens?.accessToken) return;
 
       if (key === 'portal') {
-        openUserPortal(token);
+        openUserPortal(tokens.accessToken, tokens.refreshToken);
       } else if (key === 'plugin') {
         const handlePluginStatus = event => {
           if (event.source !== window) return;
@@ -311,7 +317,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
             source: 'qweek-website',
             payload: {
               type: 'LOGIN_TOKEN',
-              token,
+              token: tokens.accessToken,
             },
           },
           '*'
