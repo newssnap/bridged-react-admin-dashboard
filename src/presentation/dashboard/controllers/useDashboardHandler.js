@@ -44,7 +44,10 @@ export const useDashboardHandler = () => {
     try {
       const response = await generateUserToken(data).unwrap();
       if (response.success) {
-        return response.data.jwtToken;
+        return {
+          accessToken: response.data.jwtToken,
+          refreshToken: response.data.refreshToken,
+        };
       } else {
         notification.error({
           message: response.errorObject.userErrorText

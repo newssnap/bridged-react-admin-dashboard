@@ -283,11 +283,11 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     async (key, record) => {
       if (!record?._id) return;
 
-      const token = await handleGenerateUserTokenForLogin({ _id: record._id }, key);
-      if (!token) return;
+      const tokens = await handleGenerateUserTokenForLogin({ _id: record._id }, key);
+      if (!tokens?.accessToken) return;
 
       if (key === 'portal') {
-        openUserPortal(token);
+        openUserPortal(tokens.accessToken, tokens.refreshToken);
       } else if (key === 'plugin') {
         const handlePluginStatus = event => {
           if (event.source !== window) return;
@@ -317,7 +317,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
             source: 'qweek-website',
             payload: {
               type: 'LOGIN_TOKEN',
-              token,
+              token: tokens.accessToken,
             },
           },
           '*'

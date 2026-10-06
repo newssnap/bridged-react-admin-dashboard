@@ -43,6 +43,7 @@ import formatDate from '../../../utils/formatting/formateDate';
 import { ChromeOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
+import { openUserPortal } from '../../../utils/controllers/openUserPortal';
 import {
   useCreateCompanyMutation,
   useGetCompaniesQuery,
@@ -187,34 +188,34 @@ function DashboardWorkflow() {
   }, [location.search]);
 
   const handleMenuClick = async (key, record) => {
-    const token = await handleGenerateUserTokenForLogin(
+    const tokens = await handleGenerateUserTokenForLogin(
       {
         _id: record._id,
       },
       key
     );
-    if (token) {
+    if (tokens?.accessToken) {
       if (key === 'dashboard') {
         if (API_URL.includes('stg')) {
-          window.open(`https://stg-dashboard.bridged.media/?accessToken=${token}`, '_blank');
+          window.open(
+            `https://stg-dashboard.bridged.media/?accessToken=${tokens.accessToken}`,
+            '_blank'
+          );
         } else {
-          window.open(`https://dashboard.bridged.media/?accessToken=${token}`, '_blank');
+          window.open(
+            `https://dashboard.bridged.media/?accessToken=${tokens.accessToken}`,
+            '_blank'
+          );
         }
       } else if (key === 'portal') {
-        if (API_URL.includes('stg')) {
-          window.open(`https://stg-portal.bridged.media/?accessToken=${token}`, '_blank');
-        } else if (API_URL.includes('dev')) {
-          window.open(`https://dev-portal.bridged.media/?accessToken=${token}`, '_blank');
-        } else {
-          window.open(`https://portal.bridged.media/?accessToken=${token}`, '_blank');
-        }
+        openUserPortal(tokens.accessToken, tokens.refreshToken);
       } else if (key === 'plugin') {
         window.postMessage(
           {
             source: 'qweek-website',
             payload: {
               type: 'LOGIN_TOKEN',
-              token: token,
+              token: tokens.accessToken,
             },
           },
           '*'
@@ -966,9 +967,7 @@ function DashboardWorkflow() {
 
             <Col xs={24} sm={24} md={24} lg={8} xl={6} xxl={6}>
               <Input
-                placeholder={
-                  oauthAuthorizePayload ? 'Search user to connect' : 'Search by email'
-                }
+                placeholder={oauthAuthorizePayload ? 'Search user to connect' : 'Search by email'}
                 allowClear
                 size="large"
                 value={searchText}
