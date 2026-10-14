@@ -248,7 +248,7 @@ function CrawlBrandingSheet({ open, onOpenChange, form, resetWhen }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
-        <SheetHeader className="border-b px-6 py-4 pe-14">
+        <SheetHeader className="border-b pe-14">
           <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
             Import branding from a website
           </SheetTitle>
@@ -272,9 +272,12 @@ function CrawlBrandingSheet({ open, onOpenChange, form, resetWhen }) {
                   id="team-crawl-url"
                   type="url"
                   inputMode="url"
-                  placeholder="https://stg-blog.bridged.media"
+                  placeholder="https://example.com"
                   value={crawlUrl}
                   onChange={event => setCrawlUrl(event.target.value)}
+                  autoFocus
+                  autoComplete="off"
+                  spellCheck={false}
                   className="flex-1"
                 />
                 <Button type="submit" disabled={isCrawlingBranding}>

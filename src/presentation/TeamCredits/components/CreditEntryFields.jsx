@@ -21,7 +21,7 @@ const AMOUNT_RULES = [
 function CreditEntryFields() {
   return (
     <div className="@container flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-5 @sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-5 @sm:grid-cols-2">
         <FormField label="Amount" name="amount" rules={AMOUNT_RULES}>
           <NumberInput min={1} placeholder="e.g. 500" className="w-full" />
         </FormField>

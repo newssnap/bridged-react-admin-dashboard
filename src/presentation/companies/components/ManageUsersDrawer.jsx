@@ -111,7 +111,10 @@ function RoleBadge({ user }) {
 /** Rows that stand in for the user list on its first load. */
 function UsersSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg ring-1 ring-foreground/10" aria-hidden="true">
+    <div
+      className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/10"
+      aria-hidden="true"
+    >
       <div className="h-11 border-b border-border bg-muted" />
       {Array.from({ length: 6 }, (_, index) => (
         <div
@@ -290,7 +293,7 @@ const ManageUsersDrawer = ({ open, setManageUsersDrawer, companyId, companyName 
                 <HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} />
               </EmptyMedia>
               <EmptyTitle>
-                {searching ? `No users match "${searchValue}"` : 'No users found'}
+                {searching ? `No users match “${searchValue.trim()}”` : 'No users found'}
               </EmptyTitle>
               <EmptyDescription>
                 {searching

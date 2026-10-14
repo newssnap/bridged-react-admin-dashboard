@@ -84,7 +84,7 @@ function TeamsToolbar({
         <div className="flex flex-col gap-2">
           <h5 className={filterLabelClass}>Company</h5>
           <FilterCombobox
-            placeholder="All companies"
+            placeholder="Company"
             options={companyOptions}
             value={company}
             onSelect={onCompanyChange}
@@ -93,7 +93,7 @@ function TeamsToolbar({
         <div className="flex flex-col gap-2">
           <h5 className={filterLabelClass}>Domain</h5>
           <FilterCombobox
-            placeholder="All domains"
+            placeholder="Domain"
             options={domainOptions}
             value={domain}
             onSelect={onDomainChange}

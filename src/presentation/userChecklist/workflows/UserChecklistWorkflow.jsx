@@ -3,7 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Add01Icon, CheckListIcon, CloudOffIcon } from '@hugeicons/core-free-icons';
+import {
+  Add01Icon,
+  CheckListIcon,
+  CloudOffIcon,
+  DashboardSquare02Icon,
+  Mail01Icon,
+  TaskDone01Icon,
+} from '@hugeicons/core-free-icons';
 import { confirm } from '@/components/confirm-dialog';
 import { useForm } from '@/components/form';
 import {
@@ -40,17 +47,31 @@ const NO_CHECKLISTS = [];
 function ChecklistTrail() {
   return (
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
+      <HugeiconsIcon
+        icon={DashboardSquare02Icon}
+        strokeWidth={2}
+        className="size-3.5 shrink-0 text-muted-foreground"
+      />
       <Link
         to="/"
-        className="truncate rounded-sm font-medium text-muted-foreground transition-colors duration-150 ease-out-quad outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="min-w-0 truncate rounded-sm font-medium text-muted-foreground transition-colors duration-150 ease-out-quad outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
       >
         Accounts
       </Link>
       <span aria-hidden className="text-muted-foreground/50">
         /
       </span>
-      <span className="truncate font-medium text-muted-foreground">Checklist</span>
+      <span className="min-w-0 truncate font-medium text-muted-foreground">Checklist</span>
     </nav>
+  );
+}
+
+function MetaItem({ icon, children }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <HugeiconsIcon icon={icon} strokeWidth={2} className="size-3.5 shrink-0" />
+      <span className="truncate">{children}</span>
+    </span>
   );
 }
 
@@ -337,6 +358,8 @@ const UserChecklistWorkflow = () => {
   const hasError = isUserChecklistError && !isFetchingUserChecklist;
   const isLoadingIdentity = isLoadingTeamMembers;
   const percent = totals.total ? Math.round((totals.done / totals.total) * 100) : 0;
+  // The first-run empty state carries the add action; the header holds it otherwise.
+  const showCreateButton = isLoadingUserChecklist || hasError || checklists.length > 0;
 
   const assigneeLabelFor = checklist => {
     if (!checklist?.assignedUser || checklist.assignedUser === id) return null;
@@ -377,7 +400,7 @@ const UserChecklistWorkflow = () => {
           title="No checklists yet"
           description="Add a checklist to give this account tasks to work through."
         >
-          <Button type="button" variant="outline" onClick={handleDrawerOpen}>
+          <Button type="button" onClick={handleDrawerOpen}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
             Add checklist
           </Button>
@@ -388,7 +411,7 @@ const UserChecklistWorkflow = () => {
       return (
         <PageEmpty
           icon={CheckListIcon}
-          title={`No checklists match "${debouncedValue.trim()}"`}
+          title={`No checklists match “${debouncedValue.trim()}”`}
           description="Try another name."
         >
           <Button type="button" variant="outline" onClick={() => inputHandler('')}>
@@ -423,60 +446,66 @@ const UserChecklistWorkflow = () => {
         eyebrow={<ChecklistTrail />}
         title={
           isLoadingIdentity ? (
-            <span
-              aria-label="Loading account"
-              className="inline-block h-8 w-56 max-w-full animate-pulse rounded-lg bg-muted align-middle md:h-9"
-            />
+            <Skeleton className="h-8 w-56 md:h-9" />
           ) : (
             userName || userEmail || 'User checklist'
           )
         }
-        description={
-          userName && userEmail ? userEmail : 'The checklists and tasks for this account.'
-        }
         actions={
-          <Button type="button" onClick={handleDrawerOpen}>
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add checklist
-          </Button>
+          showCreateButton && (
+            <Button type="button" onClick={handleDrawerOpen} disabled={isLoadingUserChecklist}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add checklist
+            </Button>
+          )
         }
       >
-        <div className="mt-3 flex max-w-sm flex-col gap-2" role="status" aria-live="polite">
-          {isLoadingUserChecklist ? (
-            <>
-              <Skeleton className="h-4 w-40 rounded-md" />
-              <Skeleton className="h-2 w-full rounded-full" />
-            </>
-          ) : hasError ? null : (
-            <>
-              <p className="text-sm text-muted-foreground tabular-nums">
-                {totals.total ? (
-                  <>
-                    <span className="font-medium text-foreground">
-                      {totals.done} of {plural(totals.total, 'task')} done
-                    </span>{' '}
-                    · {plural(checklists.length, 'checklist')}
-                  </>
-                ) : (
-                  'No tasks yet'
-                )}
-              </p>
-              {totals.total > 0 && (
-                <Progress
-                  value={percent}
-                  aria-label={`${percent}% of tasks done`}
-                  className="h-2"
-                />
+        {isLoadingIdentity || isLoadingUserChecklist ? (
+          <div className="mt-1 flex items-center gap-3">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        ) : (
+          <div className="mt-1 flex flex-col gap-3">
+            <div
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13.5px] text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              {userName && userEmail && <MetaItem icon={Mail01Icon}>{userEmail}</MetaItem>}
+              {!hasError && (
+                <>
+                  <MetaItem icon={CheckListIcon}>{plural(checklists.length, 'checklist')}</MetaItem>
+                  <MetaItem icon={TaskDone01Icon}>
+                    {totals.total ? (
+                      <span className="tabular-nums">
+                        <span className="font-medium text-foreground">
+                          {totals.done} of {plural(totals.total, 'task')}
+                        </span>{' '}
+                        done
+                      </span>
+                    ) : (
+                      'No tasks yet'
+                    )}
+                  </MetaItem>
+                </>
               )}
-            </>
-          )}
-        </div>
+            </div>
+            {!hasError && totals.total > 0 && (
+              <Progress
+                value={percent}
+                aria-label={`${percent}% of tasks done`}
+                className="h-1.5 max-w-sm"
+              />
+            )}
+          </div>
+        )}
       </PageHeader>
 
       {!hasError && !isLoadingUserChecklist && checklists.length > 0 && (
         <PageToolbar>
           <PageToolbarSpacer />
-          <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+          <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
             {plural(filteredChecklists.length, 'checklist')}
           </p>
           <ToolbarSearch

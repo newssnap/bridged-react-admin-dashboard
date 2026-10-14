@@ -21,6 +21,7 @@ const CREATE_VALUE = '__create__';
  *   options are shown as they come back. Without it the options are filtered here.
  * - `onCreate(name)`: offers "Create “name”" when the typed name isn't in the list. It should
  *   resolve to the new option's value, which is then selected.
+ * - `unknownLabel`: shown for a value that isn't among the options (never the raw id).
  * - `allowClear`: shows a clear button while something is selected (`onValueChange(undefined)`).
  *
  * Works inside a FormField (`value` + `onValueChange`).
@@ -37,6 +38,7 @@ function OptionCombobox({
   allowClear = false,
   placeholder = 'Select',
   emptyText = 'No results found.',
+  unknownLabel = 'Not in the list',
   className,
   id,
   'aria-invalid': ariaInvalid,
@@ -61,7 +63,8 @@ function OptionCombobox({
   const selected = hasValue
     ? (options.find(option => option.value === value) ?? {
         value,
-        label: labelsRef.current.get(value) ?? String(value),
+        // Never show a raw id: blank while the list loads, then a plain note.
+        label: labelsRef.current.get(value) ?? (loading ? '' : unknownLabel),
       })
     : null;
 

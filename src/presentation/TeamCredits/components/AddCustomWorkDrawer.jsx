@@ -51,19 +51,17 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
         if (!next) onClose();
       }}
     >
-      <SheetContent className={sheetContentClasses('md')}>
+      <SheetContent
+        className={sheetContentClasses('md')}
+        // Several fields: nothing is focused or selected on open.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <CreditSheetHeader
           title="Add custom work"
           description="Log work done for a team and the credits it used."
         />
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6">
-          <Form
-            form={form}
-            onFinish={handleFinish}
-            requiredMark="optional"
-            scrollToFirstError
-            autoComplete="off"
-          >
+          <Form form={form} onFinish={handleFinish} scrollToFirstError autoComplete="off">
             <CustomWorkFields
               teams={teamsData}
               categoryOptions={categoryOptions}

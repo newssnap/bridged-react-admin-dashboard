@@ -39,7 +39,9 @@ function LedgerTable({ history, loading, onEdit }) {
       header: 'Date',
       meta: { minWidth: 150 },
       cell: ({ getValue }) => (
-        <span className="whitespace-nowrap tabular-nums">{formatDateAndTime(getValue())}</span>
+        <span className="whitespace-nowrap text-muted-foreground tabular-nums">
+          {formatDateAndTime(getValue())}
+        </span>
       ),
     },
     {

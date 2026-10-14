@@ -1,6 +1,6 @@
 import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Add01Icon, Building03Icon } from '@hugeicons/core-free-icons';
+import { Building03Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/empty';
 import useDebouncedInput from '@/utils/controllers/useDebouncedInput';
 import CompaniesTopbar from '../components/CompaniesTopbar';
+import CompaniesEmptyState from '../components/CompaniesEmptyState';
 import CompaniesTable from '../components/CompaniesTable';
 import CompaniesTableSkeleton from '../components/CompaniesTableSkeleton';
 import CompanyFormDrawer from '../components/CompanyFormDrawer';
@@ -52,10 +53,14 @@ const CompaniesWorkflow = () => {
   const openManageUsers = company =>
     setManageUsersDrawer({ open: true, companyId: company?.id, companyName: company?.name });
 
+  // First run (no companies at all): the empty state carries "Add company", so the header
+  // doesn't show a second one (same as Domains).
+  const isFirstRunEmpty = !isLoading && !isError && !searching && companies.length === 0;
+
   let content;
   if (isError && !isLoading) {
     content = (
-      <Empty className="rounded-lg border border-dashed bg-muted/30 py-16">
+      <Empty className="min-h-[500px] border border-dashed bg-muted/30 py-16">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <HugeiconsIcon icon={Building03Icon} strokeWidth={2} />
@@ -72,6 +77,8 @@ const CompaniesWorkflow = () => {
     );
   } else if (isInitialLoading) {
     content = <CompaniesTableSkeleton />;
+  } else if (!isLoading && companies.length === 0) {
+    content = <CompaniesEmptyState searchQuery={debouncedValue} onAddCompany={openCreateDrawer} />;
   } else {
     content = (
       <CompaniesTable
@@ -84,43 +91,17 @@ const CompaniesWorkflow = () => {
         onEdit={openEditDrawer}
         onDelete={deleteCompany}
         onManageUsers={openManageUsers}
-        emptyState={
-          <Empty className="py-12">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <HugeiconsIcon icon={Building03Icon} strokeWidth={2} />
-              </EmptyMedia>
-              <EmptyTitle>
-                {searching ? `No companies match "${debouncedValue}"` : 'No companies yet'}
-              </EmptyTitle>
-              <EmptyDescription>
-                {searching ? 'Try another company name.' : 'Add a company to group users under it.'}
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              {searching ? (
-                <Button type="button" variant="outline" onClick={() => inputHandler('')}>
-                  Clear search
-                </Button>
-              ) : (
-                <Button type="button" variant="outline" onClick={openCreateDrawer}>
-                  <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-                  Add company
-                </Button>
-              )}
-            </EmptyContent>
-          </Empty>
-        }
       />
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <CompaniesTopbar
         searchQuery={inputQuery}
         onSearchChange={inputHandler}
         onAddCompany={openCreateDrawer}
+        showCreateButton={!isFirstRunEmpty}
         count={isInitialLoading || isError ? undefined : total}
       />
 

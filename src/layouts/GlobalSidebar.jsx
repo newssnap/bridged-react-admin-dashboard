@@ -11,17 +11,14 @@ function GlobalSidebar({ collapsed = false }) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className={cn('shrink-0 px-3 pt-3.5 pb-2.5', collapsed && 'px-2 pt-3 pb-2')}>
+      <div
+        className={cn(
+          'shrink-0 px-3 pt-3 pb-2 sm:pt-3.5 sm:pb-2.5',
+          collapsed && 'px-2 sm:pt-3 sm:pb-2'
+        )}
+      >
         <div className={cn('flex min-h-6 items-center gap-2', collapsed && 'justify-center')}>
-          {collapsed ? (
-            <Link
-              to="/"
-              aria-label="Accounts"
-              className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
-            >
-              B
-            </Link>
-          ) : (
+          {!collapsed && (
             <Link
               to="/"
               className="flex min-w-0 animate-in items-center gap-2 leading-none duration-300 ease-out-quad fade-in-0"

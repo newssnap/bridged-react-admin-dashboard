@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import { useLazyGetTeamPlaybooksQuery } from '../../../services/api';
+import { plural } from './AccountParts';
 import PlaybookSelectionList, { PlaybookSelectionSkeleton } from './PlaybookSelectionList';
 
 /**
@@ -99,7 +100,10 @@ const AssignPlaybookDrawer = ({
         if (!next) onClose?.();
       }}
     >
-      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+      <SheetContent
+        onOpenAutoFocus={event => event.preventDefault()}
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+      >
         <SheetHeader className="border-b pe-14">
           <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
             Assign playbooks
@@ -122,7 +126,7 @@ const AssignPlaybookDrawer = ({
 
         <SheetFooter className="flex-row items-center justify-end gap-2 border-t px-6 py-4">
           <p className="me-auto text-sm text-muted-foreground tabular-nums" aria-live="polite">
-            {selectedCount === 1 ? '1 playbook selected' : `${selectedCount} playbooks selected`}
+            {showListLoading ? null : `${plural(selectedCount, 'playbook')} selected`}
           </p>
           <Button type="button" variant="outline" onClick={onClose} disabled={isApplying}>
             Cancel
@@ -134,8 +138,8 @@ const AssignPlaybookDrawer = ({
               showListLoading || isApplying || (Boolean(teamId) && !teamPlaybooksInitialSyncDone)
             }
           >
-            {(showListLoading || isApplying) && <Spinner data-icon="inline-start" />}
-            Assign playbooks
+            {isApplying && <Spinner data-icon="inline-start" />}
+            {isApplying ? 'Assigning…' : 'Assign playbooks'}
           </Button>
         </SheetFooter>
       </SheetContent>

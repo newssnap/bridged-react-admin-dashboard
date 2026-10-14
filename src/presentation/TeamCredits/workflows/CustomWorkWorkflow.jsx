@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Add01Icon,
+  ArrowRight01Icon,
   Briefcase01Icon,
   Coins01Icon,
   Loading03Icon,
@@ -81,6 +82,8 @@ function CustomWorkWorkflow() {
   const filtered = searching || status !== 'all';
   const isError = Boolean(error) && !allTableData.length;
   const showSkeleton = isLoading && !allTableData.length;
+  // First run: the empty state carries the add action, so the header doesn't repeat it.
+  const isFirstRun = !showSkeleton && !isError && !allTableData.length;
 
   const clearFilters = () => {
     inputHandler('');
@@ -146,15 +149,24 @@ function CustomWorkWorkflow() {
     {
       id: 'actions',
       header: <span className="sr-only">Actions</span>,
-      meta: { align: 'right', width: 96 },
+      meta: { align: 'right', width: 120, pin: 'end' },
       cell: ({ row }) => (
-        <CustomWorkActions
-          record={row.original}
-          onEdit={handleEdit}
-          onPreview={handlePreview}
-          onDelete={handleDelete}
-          isDeleting={isDeleting}
-        />
+        <div className="flex items-center justify-end gap-1">
+          <CustomWorkActions
+            record={row.original}
+            onEdit={handleEdit}
+            onPreview={handlePreview}
+            onDelete={handleDelete}
+            isDeleting={isDeleting}
+          />
+          {/* The row opens the entry's details; the chevron says so. */}
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            strokeWidth={2}
+            aria-hidden
+            className="size-4 text-muted-foreground"
+          />
+        </div>
       ),
     },
   ];
@@ -165,10 +177,12 @@ function CustomWorkWorkflow() {
         title="Custom work"
         description="Work done for teams outside the product, and the credits it used."
         actions={
-          <Button type="button" onClick={handleOpenAddDrawer} disabled={showSkeleton}>
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add custom work
-          </Button>
+          !isFirstRun && (
+            <Button type="button" onClick={handleOpenAddDrawer} disabled={showSkeleton}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add custom work
+            </Button>
+          )
         }
       />
 
@@ -197,66 +211,64 @@ function CustomWorkWorkflow() {
         </StatStrip>
       )}
 
-      <div className="flex flex-col gap-4">
-        <PageToolbar>
-          <SegmentedControl
-            options={CUSTOM_WORK_STATUS_FILTERS}
-            value={status}
-            onValueChange={setStatus}
-            label="Status"
-            layoutId="custom-work-status"
-          />
-          <PageToolbarSpacer />
-          {!showSkeleton && !isError && (
-            <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
-              {plural(visibleData.length, 'entry', 'entries')}
-            </p>
-          )}
-          <ToolbarSearch
-            value={inputQuery}
-            onChange={inputHandler}
-            placeholder="Search teams, work or categories"
-          />
-        </PageToolbar>
-
-        {showSkeleton ? (
-          <TableSkeleton columns={5} />
-        ) : visibleData.length === 0 ? (
-          <ListEmptyState
-            icon={WorkHistoryIcon}
-            isError={isError}
-            onRetry={refetch}
-            errorTitle="Couldn't load custom work"
-            filtered={filtered}
-            filteredTitle={
-              searching
-                ? `No custom work matches “${debouncedValue.trim()}”`
-                : 'No custom work matches this status'
-            }
-            filteredDescription={
-              searching ? 'Try another team, title or category.' : 'Pick another status.'
-            }
-            onClearFilters={clearFilters}
-            emptyTitle="No custom work yet"
-            emptyDescription="Log work done for a team to keep track of the credits it used."
-            actionLabel="Add custom work"
-            onAction={handleOpenAddDrawer}
-          />
-        ) : (
-          <DataTable
-            key={`${status}:${debouncedValue}`}
-            columns={columns}
-            data={visibleData}
-            loading={isLoading}
-            getRowId={(record, index) => String(record.key ?? index)}
-            onRowClick={record => handlePreview(record)}
-            pagination={visibleData.length > PAGE_SIZE}
-            initialState={{ pagination: { pageIndex: 0, pageSize: PAGE_SIZE } }}
-            paginationProps={{ align: 'start', showSizeChanger: false }}
-            minWidth={900}
-          />
+      <PageToolbar>
+        <SegmentedControl
+          options={CUSTOM_WORK_STATUS_FILTERS}
+          value={status}
+          onValueChange={setStatus}
+          label="Status"
+          layoutId="custom-work-status"
+        />
+        <PageToolbarSpacer />
+        {!showSkeleton && !isError && (
+          <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
+            {plural(visibleData.length, 'entry', 'entries')}
+          </p>
         )}
-      </div>
+        <ToolbarSearch
+          value={inputQuery}
+          onChange={inputHandler}
+          placeholder="Search teams, work or categories"
+        />
+      </PageToolbar>
+
+      {showSkeleton ? (
+        <TableSkeleton columns={5} />
+      ) : visibleData.length === 0 ? (
+        <ListEmptyState
+          icon={WorkHistoryIcon}
+          isError={isError}
+          onRetry={refetch}
+          errorTitle="Couldn't load custom work"
+          filtered={filtered}
+          filteredTitle={
+            searching
+              ? `No custom work matches “${debouncedValue.trim()}”`
+              : 'No custom work matches this status'
+          }
+          filteredDescription={
+            searching ? 'Try another team, title or category.' : 'Pick another status.'
+          }
+          onClearFilters={clearFilters}
+          emptyTitle="No custom work yet"
+          emptyDescription="Log work done for a team to keep track of the credits it used."
+          actionLabel="Add custom work"
+          onAction={handleOpenAddDrawer}
+        />
+      ) : (
+        <DataTable
+          key={`${status}:${debouncedValue}`}
+          columns={columns}
+          data={visibleData}
+          loading={isLoading}
+          getRowId={(record, index) => String(record.key ?? index)}
+          onRowClick={record => handlePreview(record)}
+          pagination={visibleData.length > PAGE_SIZE}
+          initialState={{ pagination: { pageIndex: 0, pageSize: PAGE_SIZE } }}
+          paginationProps={{ align: 'start', showSizeChanger: false }}
+          minWidth={900}
+        />
+      )}
 
       <AddCustomWorkDrawer
         open={isAddDrawerOpen}

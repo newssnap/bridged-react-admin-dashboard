@@ -148,8 +148,11 @@ const AddTeamDrawer = ({
           if (!next) onClose();
         }}
       >
-        <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
-          <SheetHeader className="border-b px-6 py-4 pe-14">
+        <SheetContent
+          className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+          onOpenAutoFocus={event => event.preventDefault()}
+        >
+          <SheetHeader className="border-b pe-14">
             <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
               Create team
             </SheetTitle>

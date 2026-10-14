@@ -36,9 +36,11 @@ const AddMembersDrawer = ({
     >
       <SheetContent
         className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[400px]"
+        // Don't drop straight into the member picker; it would open its list on focus.
+        onOpenAutoFocus={event => event.preventDefault()}
         onCloseAutoFocus={() => handleAfterOpenChange?.(false)}
       >
-        <SheetHeader className="border-b px-6 py-4 pe-14">
+        <SheetHeader className="border-b pe-14">
           <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
             Add members
           </SheetTitle>

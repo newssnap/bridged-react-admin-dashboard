@@ -39,7 +39,11 @@ const TaskManagementDrawer = ({
         if (!next) onClose();
       }}
     >
-      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+      <SheetContent
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+        // Don't land on the first row's Edit button: it flashed its tooltip and focus ring.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <SheetHeader className="border-b pe-14">
           <SheetTitle className="truncate text-[17px] font-semibold tracking-[-0.01em]">
             {selectedChecklist?.title || 'Checklist'}

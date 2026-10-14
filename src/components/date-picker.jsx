@@ -39,7 +39,7 @@ const withDay = (base, day) =>
 const isValid = value => Boolean(value && typeof value.isValid === 'function' && value.isValid());
 
 const triggerClassName =
-  'flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-transparent bg-input/50 px-3 text-start text-sm transition-[color,box-shadow,background-color,border-color] duration-150 ease-out-quad outline-none hover:bg-input/70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/30';
+  'flex h-9 w-full min-w-0 items-center gap-2 rounded-sm border border-transparent bg-input/50 px-3 text-start text-sm transition-[color,box-shadow,background-color,border-color] duration-150 ease-out-quad outline-none hover:bg-input/70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/30';
 
 function useOpenState(open, onOpenChange) {
   const [inner, setInner] = React.useState(false);

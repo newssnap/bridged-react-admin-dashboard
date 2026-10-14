@@ -52,7 +52,7 @@ function CustomWorkFields({ teams, categoryOptions, onAddCategory, notesName, te
         )}
       </FormField>
 
-      <div className="grid grid-cols-1 gap-5 @sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-5 @sm:grid-cols-2">
         <FormField
           label="Credits used"
           name="creditsUsed"
@@ -79,7 +79,7 @@ function CustomWorkFields({ teams, categoryOptions, onAddCategory, notesName, te
         </FormField>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 @sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-5 @sm:grid-cols-2">
         <FormField
           label="Start date"
           name="dateFrom"

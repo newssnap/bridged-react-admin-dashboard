@@ -58,28 +58,18 @@ const AddTeamCreditsDrawer = ({
         if (!next) onClose();
       }}
     >
-      <SheetContent className={sheetContentClasses('md')}>
+      <SheetContent
+        className={sheetContentClasses('md')}
+        // Several fields: nothing is focused or selected on open.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <CreditSheetHeader
           title="Add credits"
           description="Assign credits to a team, or deduct them."
         />
         <div className="min-h-0 flex-1 overflow-y-auto" data-flat="true">
           <SheetSection>
-            <Alert className="rounded-lg border-transparent bg-primary/[0.07] *:[svg]:text-primary">
-              <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} />
-              <AlertTitle>Credits turn on usage and reporting</AlertTitle>
-              <AlertDescription>
-                Once a team has credits, its credit usage and reports are switched on.
-              </AlertDescription>
-            </Alert>
-
-            <Form
-              form={form}
-              onFinish={handleFinish}
-              requiredMark="optional"
-              scrollToFirstError
-              autoComplete="off"
-            >
+            <Form form={form} onFinish={handleFinish} scrollToFirstError autoComplete="off">
               <div className="flex flex-col gap-5">
                 <FormField
                   label="Team"
@@ -103,6 +93,14 @@ const AddTeamCreditsDrawer = ({
                 )}
 
                 <CreditEntryFields />
+
+                <Alert className="rounded-lg border-transparent bg-primary/[0.07] *:[svg]:text-primary">
+                  <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} />
+                  <AlertTitle>Credits turn on usage and reporting</AlertTitle>
+                  <AlertDescription>
+                    Once a team has credits, its credit usage and reports are switched on.
+                  </AlertDescription>
+                </Alert>
               </div>
             </Form>
           </SheetSection>

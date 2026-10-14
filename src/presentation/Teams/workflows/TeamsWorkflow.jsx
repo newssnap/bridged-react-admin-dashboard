@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Add01Icon,
   AlertCircleIcon,
+  ArrowRight01Icon,
   PencilEdit02Icon,
   UserGroupIcon,
 } from '@hugeicons/core-free-icons';
@@ -40,6 +41,9 @@ const readStoredFilters = () => {
     return { company: '', domain: '' };
   }
 };
+
+const teamNameOf = team =>
+  team?.teamName && team.teamName !== '—' ? team.teamName : 'Untitled team';
 
 const textOrDash = value =>
   value && value !== '—' ? (
@@ -187,9 +191,7 @@ function TeamsWorkflow() {
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} className="size-4" />
             </span>
-            <span className="truncate font-medium">
-              {team.teamName && team.teamName !== '—' ? team.teamName : 'Untitled team'}
-            </span>
+            <span className="truncate font-medium">{teamNameOf(team)}</span>
           </div>
         );
       },
@@ -232,26 +234,36 @@ function TeamsWorkflow() {
     {
       id: 'actions',
       header: <span className="sr-only">Actions</span>,
-      meta: { align: 'right', width: '64px' },
+      meta: { align: 'right', width: '96px', pin: 'end' },
       cell: ({ row }) => {
         const team = row.original;
         return (
-          <div className="inline-flex items-center" onClick={event => event.stopPropagation()}>
+          <div className="flex items-center justify-end gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Edit ${team.teamName}`}
+                  aria-label={`Edit ${teamNameOf(team)}`}
                   className="text-muted-foreground hover:text-foreground"
-                  onClick={() => openEditDrawer(team)}
+                  onClick={event => {
+                    event.stopPropagation();
+                    openEditDrawer(team);
+                  }}
                 >
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Edit</TooltipContent>
             </Tooltip>
+            {/* The row opens the team; the chevron says so. */}
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              strokeWidth={2}
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
           </div>
         );
       },
@@ -345,7 +357,6 @@ function TeamsWorkflow() {
               data={isError ? [] : tableData}
               getRowId={(record, index) => String(record?.key ?? index)}
               onRowClick={record => openEditDrawer(record)}
-              getRowClassName={record => (record?.companyId === '' ? 'bg-muted/40' : undefined)}
               pagination={tableData.length > LIST_PAGE_SIZE}
               initialState={{ pagination: { pageIndex: 0, pageSize: LIST_PAGE_SIZE } }}
               paginationProps={{ align: 'start', showSizeChanger: false }}

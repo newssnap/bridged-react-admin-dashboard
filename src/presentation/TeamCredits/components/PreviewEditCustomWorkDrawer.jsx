@@ -6,62 +6,61 @@ import { Form, useForm } from '@/components/form';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetFooter } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
-import formatDate from '../../../utils/formatting/formateDate';
 import {
   addCategoryOption,
   DEFAULT_CATEGORY_OPTIONS,
   getCategoryLabel,
 } from '../constants/customWork';
-import { formatNumber, hasValue } from '../utils/creditFormat';
+import { formatDateRange, formatNumber, hasValue } from '../utils/creditFormat';
 import { resolveCustomWorkStatusForSubmit } from '../utils/resolveCustomWorkStatusForSubmit';
 import CustomWorkFields from './CustomWorkFields';
 import CustomWorkStatusBadge from './CustomWorkStatusBadge';
 import { CreditSheetHeader, DiscardButton, sheetContentClasses } from './SheetParts';
 import TeamIdentity from './TeamIdentity';
 
-/** One label / value row of the read view. */
-function DetailRow({ label, children }) {
-  return (
-    <div className="grid grid-cols-1 gap-1 px-6 py-3.5 sm:grid-cols-[140px_1fr] sm:gap-4">
-      <dt className="text-[13px] font-medium text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-sm text-foreground">{children}</dd>
-    </div>
-  );
-}
-
+/** The read view, laid out like the portal's lead details: a hero block, then the notes. */
 function CustomWorkDetails({ record }) {
+  const title = hasValue(record.workProject) ? record.workProject : 'Untitled work';
   return (
-    <>
-      <div className="border-b px-6 py-5">
-        <TeamIdentity teamName={record.teamName} companyName={record.companyName} />
+    <div className="flex w-full flex-col">
+      <div className="flex flex-col gap-5 border-b p-6">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Work or project</span>
+          <h4 className="min-w-0 text-[17px] font-semibold tracking-[-0.01em] break-words">
+            {title}
+          </h4>
+        </div>
+        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-2.5 text-[13.5px]">
+          <dt className="text-muted-foreground">Team</dt>
+          <dd className="min-w-0">
+            <TeamIdentity teamName={record.teamName} companyName={record.companyName} />
+          </dd>
+          <dt className="text-muted-foreground">Category</dt>
+          <dd className="min-w-0 break-words">
+            {hasValue(record.category) ? getCategoryLabel(record.category) : '—'}
+          </dd>
+          <dt className="text-muted-foreground">Credits used</dt>
+          <dd className="font-medium tabular-nums">{formatNumber(Number(record.creditsUsed))}</dd>
+          <dt className="text-muted-foreground">Status</dt>
+          <dd>
+            <CustomWorkStatusBadge status={record.status} />
+          </dd>
+          <dt className="text-muted-foreground">Dates</dt>
+          <dd className="tabular-nums">{formatDateRange(record.startDate, record.endDate)}</dd>
+        </dl>
       </div>
-      <dl className="divide-y">
-        <DetailRow label="Category">
-          {hasValue(record.category) ? getCategoryLabel(record.category) : '—'}
-        </DetailRow>
-        <DetailRow label="Credits used">
-          <span className="font-medium tabular-nums">
-            {formatNumber(Number(record.creditsUsed))}
-          </span>
-        </DetailRow>
-        <DetailRow label="Status">
-          <CustomWorkStatusBadge status={record.status} />
-        </DetailRow>
-        <DetailRow label="Start date">
-          <span className="tabular-nums">{formatDate(record.startDate)}</span>
-        </DetailRow>
-        <DetailRow label="End date">
-          <span className="tabular-nums">{formatDate(record.endDate)}</span>
-        </DetailRow>
-        <DetailRow label="Notes">
-          {hasValue(record.notes) ? (
-            <p className="break-words whitespace-pre-wrap">{record.notes}</p>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </DetailRow>
-      </dl>
-    </>
+
+      <div className="flex flex-col gap-2 p-6">
+        <span className="text-xs font-medium text-muted-foreground">Notes</span>
+        {hasValue(record.notes) ? (
+          <p className="text-[13.5px] break-words whitespace-pre-wrap">{record.notes}</p>
+        ) : (
+          <div className="rounded-lg bg-muted/60 px-4 py-6 text-center text-[13.5px] text-muted-foreground">
+            No notes were added to this entry.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -159,12 +158,16 @@ const PreviewEditCustomWorkDrawer = ({
         if (!next) onClose();
       }}
     >
-      <SheetContent className={sheetContentClasses('md')}>
+      <SheetContent
+        className={sheetContentClasses('md')}
+        // Nothing is focused on open: the read view opens on its content, the form has several fields.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <CreditSheetHeader
-          title={isPreview ? (workTitle ?? 'Custom work') : 'Edit custom work'}
+          title={isPreview ? 'Custom work details' : 'Edit custom work'}
           description={
             isPreview
-              ? 'Work done for a team and the credits it used.'
+              ? 'Work done for a team, and the credits it used.'
               : (workTitle ?? 'Change the details of this entry.')
           }
         />
@@ -175,13 +178,7 @@ const PreviewEditCustomWorkDrawer = ({
           </div>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6">
-            <Form
-              form={form}
-              onFinish={handleFinish}
-              requiredMark="optional"
-              scrollToFirstError
-              autoComplete="off"
-            >
+            <Form form={form} onFinish={handleFinish} scrollToFirstError autoComplete="off">
               <CustomWorkFields
                 teams={teamsData}
                 categoryOptions={categoryOptions}
@@ -196,9 +193,6 @@ const PreviewEditCustomWorkDrawer = ({
         <SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
           {isPreview ? (
             <>
-              <Button type="button" variant="ghost" onClick={onClose}>
-                Close
-              </Button>
               <Button
                 type="button"
                 variant="outline"

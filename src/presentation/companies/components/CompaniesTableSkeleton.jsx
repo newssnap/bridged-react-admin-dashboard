@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /** Stands in for the companies table on first load: same ring, header band and row shape. */
 const CompaniesTableSkeleton = ({ rows = 8 }) => (
   <div
-    className="overflow-hidden rounded-lg ring-1 ring-foreground/10"
+    className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/10"
     role="status"
     aria-label="Loading companies"
   >

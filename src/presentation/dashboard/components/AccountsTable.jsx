@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
-import dayjs from 'dayjs';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Add01Icon, Link01Icon, UserGroupIcon } from '@hugeicons/core-free-icons';
+import { Add01Icon, ArrowRight01Icon, Link01Icon, UserGroupIcon } from '@hugeicons/core-free-icons';
 import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,8 +16,6 @@ import { Spinner } from '@/components/ui/spinner';
 import formatDate from '../../../utils/formatting/formateDate';
 import { UserIdentity, UserRoleBadge, UserStatusBadge } from './AccountParts';
 import UserActions from './UserActions';
-
-const loginTime = record => (record?.last_login_at ? dayjs(record.last_login_at).valueOf() : 0);
 
 /** Loading stand-in: the table frame with a header band and person rows. */
 function AccountsTableSkeleton({ rows = 6 }) {
@@ -41,7 +38,7 @@ function AccountsTableSkeleton({ rows = 6 }) {
           <Skeleton className="hidden h-5 w-16 rounded-full sm:block" />
           <Skeleton className="hidden h-5 w-20 rounded-full md:block" />
           <Skeleton className="hidden h-3.5 w-24 lg:block" />
-          <Skeleton className="h-7 w-14 rounded-full" />
+          <Skeleton className="h-7 w-20 rounded-full" />
         </div>
       ))}
     </div>
@@ -223,11 +220,9 @@ function AccountsTable({
         },
         hasTeam && teamColumn,
         {
+          // The server returns the most recent logins first, across every page.
           id: 'lastLogin',
-          accessorFn: loginTime,
           header: 'Last login',
-          enableSorting: true,
-          sortDescFirst: true,
           meta: { width: '136px' },
           cell: ({ row }) => (
             <span className="text-muted-foreground tabular-nums">
@@ -238,9 +233,18 @@ function AccountsTable({
         {
           id: 'actions',
           header: <span className="sr-only">Actions</span>,
-          meta: { align: 'right', width: '96px' },
+          meta: { align: 'right', width: '120px', pin: 'end' },
           cell: ({ row }) => (
-            <UserActions record={row.original} busy={isRowBusy(row.original)} {...actions} />
+            <div className="flex items-center justify-end gap-1">
+              <UserActions record={row.original} busy={isRowBusy(row.original)} {...actions} />
+              {/* The row opens the edit drawer; the chevron says so. */}
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                strokeWidth={2}
+                aria-hidden
+                className="size-4 text-muted-foreground"
+              />
+            </div>
           ),
         },
       ].filter(Boolean);
@@ -253,7 +257,6 @@ function AccountsTable({
         data={rows}
         getRowId={(record, index) => record?._id || String(index)}
         onRowClick={isConnectMode ? undefined : record => onRowClick(record)}
-        initialState={{ sorting: [{ id: 'lastLogin', desc: true }] }}
         manualPagination
         rowCount={total}
         state={{ pagination: { pageIndex: Math.max(0, page - 1), pageSize: limit } }}

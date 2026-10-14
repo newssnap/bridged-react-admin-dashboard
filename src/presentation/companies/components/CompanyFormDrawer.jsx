@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 
-const NAME_RULES = [{ required: true, message: 'Enter a company name' }];
+const NAME_RULES = [{ required: true, whitespace: true, message: 'Enter a company name' }];
 
 /** One drawer for adding and renaming a company. */
 const CompanyFormDrawer = ({ open, mode, initialValues, onClose, onSubmit, confirmLoading }) => {
@@ -58,7 +58,7 @@ const CompanyFormDrawer = ({ open, mode, initialValues, onClose, onSubmit, confi
           <SheetDescription>
             {isEditing
               ? 'Rename the company. Its users stay as they are.'
-              : 'Add a company, then add its users from the Manage users menu.'}
+              : 'The organisation your users belong to.'}
           </SheetDescription>
         </SheetHeader>
 
@@ -92,7 +92,12 @@ const CompanyFormDrawer = ({ open, mode, initialValues, onClose, onSubmit, confi
               Cancel
             </Button>
           )}
-          <Button type="button" onClick={() => form.submit()} disabled={confirmLoading}>
+          <Button
+            type="button"
+            onClick={() => form.submit()}
+            // Editing: nothing to save until the name changes (same as Save changes elsewhere).
+            disabled={confirmLoading || (isEditing && !isDirty)}
+          >
             {confirmLoading && <Spinner data-icon="inline-start" />}
             {isEditing ? 'Save changes' : 'Add company'}
           </Button>

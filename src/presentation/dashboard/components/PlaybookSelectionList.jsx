@@ -91,7 +91,7 @@ const PlaybookSelectionList = ({
   playbookAgentLabelMap = {},
   selectedPlaybooks = [],
   onToggle,
-  emptyDescription = 'No active playbooks found',
+  emptyDescription = 'Only active playbooks can be assigned, and there are none right now.',
 }) => {
   if (playbooks.length === 0) {
     return (
@@ -100,7 +100,7 @@ const PlaybookSelectionList = ({
           <EmptyMedia variant="icon">
             <HugeiconsIcon icon={BookOpen01Icon} strokeWidth={2} />
           </EmptyMedia>
-          <EmptyTitle>No playbooks yet</EmptyTitle>
+          <EmptyTitle>No active playbooks</EmptyTitle>
           <EmptyDescription>{emptyDescription}</EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -127,6 +127,7 @@ const PlaybookSelectionList = ({
               tabIndex={0}
               onClick={toggle}
               onKeyDown={event => {
+                if (event.target !== event.currentTarget) return;
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
                   toggle();

@@ -31,13 +31,14 @@ function CompanyActions({ company, onEdit, onDelete }) {
             <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Edit company</TooltipContent>
+        <TooltipContent>Edit</TooltipContent>
       </Tooltip>
       <Tooltip>
         <ConfirmPopover
           title="Delete this company?"
           description={`${name} will be deleted. This can't be undone.`}
           confirmText="Delete"
+          cancelText="Cancel"
           confirmVariant="destructive"
           align="end"
           onConfirm={() => onDelete(company)}
@@ -54,7 +55,7 @@ function CompanyActions({ company, onEdit, onDelete }) {
             </Button>
           </TooltipTrigger>
         </ConfirmPopover>
-        <TooltipContent>Delete company</TooltipContent>
+        <TooltipContent>Delete</TooltipContent>
       </Tooltip>
     </div>
   );
@@ -69,7 +70,6 @@ const CompaniesTable = ({
   isLoading,
   onEdit,
   onDelete,
-  emptyState,
 }) => {
   const columns = [
     {
@@ -120,11 +120,7 @@ const CompaniesTable = ({
       header: <span className="sr-only">Actions</span>,
       meta: { align: 'right', width: '96px' },
       cell: ({ row }) => (
-        <CompanyActions
-          company={row.original}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        <CompanyActions company={row.original} onEdit={onEdit} onDelete={onDelete} />
       ),
     },
   ];
@@ -143,7 +139,6 @@ const CompaniesTable = ({
         state={{ pagination: { pageIndex: page - 1, pageSize: limit } }}
         onPaginationChange={next => onPageChange(next.pageIndex + 1)}
         paginationProps={{ align: 'start', showSizeChanger: false }}
-        emptyState={emptyState}
         minWidth={520}
       />
     </div>

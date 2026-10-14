@@ -11,17 +11,28 @@ import {
 
 const numberFormat = new Intl.NumberFormat('en-GB');
 
-/** Page header ("Add company") and the toolbar: result count + search. */
-const CompaniesTopbar = ({ searchQuery, onSearchChange, onAddCompany, count }) => (
+/**
+ * Page header ("Add company") and the toolbar: result count + search. The header action hides
+ * while the first-run empty state shows its own.
+ */
+const CompaniesTopbar = ({
+  searchQuery,
+  onSearchChange,
+  onAddCompany,
+  showCreateButton = true,
+  count,
+}) => (
   <>
     <PageHeader
       title="Companies"
       description="The companies your users belong to, and who is in each one."
       actions={
-        <Button type="button" onClick={onAddCompany}>
-          <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-          Add company
-        </Button>
+        showCreateButton && (
+          <Button type="button" onClick={onAddCompany}>
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+            Add company
+          </Button>
+        )
       }
     />
 

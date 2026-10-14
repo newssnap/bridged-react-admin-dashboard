@@ -38,17 +38,17 @@ export function usageStatus(percent) {
     return {
       label: 'Credits nearly exhausted',
       badge: 'destructive',
-      bar: '*:data-[slot=progress-indicator]:bg-destructive',
+      bar: 'bg-destructive',
     };
   }
   if (percent >= 75) {
     return {
       label: 'High usage',
       badge: 'warning',
-      bar: '*:data-[slot=progress-indicator]:bg-warning',
+      bar: 'bg-warning',
     };
   }
-  return { label: 'Usage within limits', badge: 'success', bar: '' };
+  return { label: 'Usage within limits', badge: 'success', bar: 'bg-primary' };
 }
 
 /**

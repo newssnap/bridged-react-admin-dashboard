@@ -108,7 +108,11 @@ const TaskFormDrawer = ({
         if (!next) handleClose();
       }}
     >
-      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+      <SheetContent
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+        // Several fields: nothing is focused or selected on open.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <SheetHeader className="border-b pe-14">
           <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
             {isEditing ? 'Edit task' : 'Add task'}
@@ -121,7 +125,7 @@ const TaskFormDrawer = ({
           <Form form={form} onFinish={onSubmit} autoComplete="off">
             <FieldGroup>
               <FormField label="Title" name="title" rules={TITLE_RULES}>
-                <Input placeholder="e.g. Connect your website" autoFocus />
+                <Input placeholder="e.g. Connect your website" />
               </FormField>
 
               <FormField
@@ -206,8 +210,8 @@ const TaskFormDrawer = ({
                 >
                   <FileUploadDropzone
                     icon={isUploadingImage ? <Spinner /> : Image01Icon}
-                    title={isUploadingImage ? 'Uploading…' : 'Add an image'}
-                    description="Click or drop an image here."
+                    title={isUploadingImage ? 'Uploading image…' : 'Click or drop an image here'}
+                    description="One image at a time. Add as many as the task needs."
                   />
                 </FileUpload>
                 {uploadedFiles.length > 0 && (

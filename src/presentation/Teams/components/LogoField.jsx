@@ -2,14 +2,16 @@ import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Delete02Icon, Image01Icon, Upload04Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { FileUpload, FileUploadDropzone, FileUploadTrigger } from '@/components/file-upload';
+import { Skeleton } from '@/components/ui/skeleton';
+import { FileUpload, FileUploadTrigger } from '@/components/file-upload';
+import { cn } from '@/lib/utils';
 
 const EMPTY_LIST = [];
 
 /**
- * A logo picker: a dropzone while there is no logo, then the logo with Replace / Remove.
- * The file goes to `onSelectFile(file)`; the parent uploads it and stores the URL.
+ * A logo picker, shaped like the portal's profile ImagePicker: the logo tile (click to pick a
+ * file), then Upload / Replace and Remove beside it. The file goes to `onSelectFile(file)`; the
+ * parent uploads it and stores the URL.
  */
 function LogoField({ id, value, onSelectFile, onRemove, uploading = false, label = 'logo' }) {
   const handleFile = file => {
@@ -26,44 +28,49 @@ function LogoField({ id, value, onSelectFile, onRemove, uploading = false, label
       disabled={uploading}
       beforeUpload={handleFile}
     >
-      {value ? (
-        <div className="flex items-center gap-4 rounded-lg bg-input/30 p-3 ring-1 ring-foreground/10">
-          <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-background ring-1 ring-foreground/10">
-            <img src={value} alt={`Current ${label}`} className="size-full object-contain p-1.5" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+      <div className="flex items-center gap-4">
+        {uploading ? (
+          <Skeleton className="h-16 w-28 shrink-0 rounded-md" />
+        ) : (
+          <FileUploadTrigger
+            aria-label={value ? `Replace ${label}` : `Upload ${label}`}
+            className={cn(
+              'relative flex h-16 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground ring-1 ring-foreground/10 transition-shadow duration-150 ease-out-quad outline-none hover:ring-foreground/25 focus-visible:ring-2 focus-visible:ring-ring/50',
+              value && 'bg-white'
+            )}
+          >
+            {value ? (
+              <img alt="" src={value} className="size-full object-contain p-2" />
+            ) : (
+              <HugeiconsIcon icon={Image01Icon} strokeWidth={2} className="size-5" />
+            )}
+          </FileUploadTrigger>
+        )}
+        <div className="flex min-w-0 flex-col items-start gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <FileUploadTrigger asChild>
               <Button type="button" variant="outline" size="sm" id={id} disabled={uploading}>
-                {uploading ? (
-                  <Spinner data-icon="inline-start" />
-                ) : (
-                  <HugeiconsIcon icon={Upload04Icon} strokeWidth={2} data-icon="inline-start" />
-                )}
-                {uploading ? 'Uploading…' : 'Replace'}
+                <HugeiconsIcon icon={Upload04Icon} strokeWidth={2} data-icon="inline-start" />
+                {uploading ? 'Uploading…' : value ? 'Replace' : 'Upload'}
               </Button>
             </FileUploadTrigger>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={uploading}
-              onClick={onRemove}
-              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/15"
-            >
-              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-              Remove
-            </Button>
+            {value && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={uploading}
+                onClick={onRemove}
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/15"
+              >
+                <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
+                Remove
+              </Button>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground">An image file, such as PNG or SVG.</p>
         </div>
-      ) : (
-        <FileUploadDropzone
-          id={id}
-          icon={uploading ? <Spinner /> : Image01Icon}
-          title={uploading ? 'Uploading…' : `Upload ${label}`}
-          description="Click or drag an image here"
-          className="p-5"
-        />
-      )}
+      </div>
     </FileUpload>
   );
 }

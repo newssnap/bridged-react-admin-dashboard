@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Add01Icon,
   Alert02Icon,
+  ArrowRight01Icon,
   Coins01Icon,
   UserGroupIcon,
   Wallet01Icon,
@@ -65,6 +66,8 @@ function TeamCreditsWorkflow() {
   const searching = Boolean(debouncedValue.trim());
   const isError = Boolean(error) && !allTableData.length;
   const showSkeleton = isLoading && !allTableData.length;
+  // First run: the empty state carries the add action, so the header doesn't repeat it.
+  const isFirstRun = !showSkeleton && !isError && !allTableData.length;
 
   const stats = useMemo(() => {
     const totalBalance = allTableData.reduce(
@@ -121,29 +124,38 @@ function TeamCreditsWorkflow() {
     {
       id: 'actions',
       header: <span className="sr-only">Actions</span>,
-      meta: { align: 'right', width: 64 },
+      meta: { align: 'right', width: 96, pin: 'end' },
       cell: ({ row }) => {
         const record = row.original;
         const name = hasValue(record.teamName) ? record.teamName : 'this team';
         return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Manage credits for ${name}`}
-                className="text-muted-foreground hover:text-foreground"
-                onClick={event => {
-                  event.stopPropagation();
-                  handleOpenDrawer(record.teamId);
-                }}
-              >
-                <HugeiconsIcon icon={Coins01Icon} strokeWidth={2} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Manage credits</TooltipContent>
-          </Tooltip>
+          <div className="flex items-center justify-end gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Manage credits for ${name}`}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={event => {
+                    event.stopPropagation();
+                    handleOpenDrawer(record.teamId);
+                  }}
+                >
+                  <HugeiconsIcon icon={Coins01Icon} strokeWidth={2} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Manage credits</TooltipContent>
+            </Tooltip>
+            {/* The row opens the team's credits; the chevron says so. */}
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              strokeWidth={2}
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
+          </div>
         );
       },
     },
@@ -155,10 +167,12 @@ function TeamCreditsWorkflow() {
         title="Team credits"
         description="Each team's credit balance, and the ledger of credits assigned or deducted."
         actions={
-          <Button type="button" onClick={handleOpenAddDrawer} disabled={showSkeleton}>
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add credits
-          </Button>
+          !isFirstRun && (
+            <Button type="button" onClick={handleOpenAddDrawer} disabled={showSkeleton}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add credits
+            </Button>
+          )
         }
       />
 
@@ -187,49 +201,47 @@ function TeamCreditsWorkflow() {
         </StatStrip>
       )}
 
-      <div className="flex flex-col gap-4">
-        <PageToolbar>
-          <PageToolbarSpacer />
-          {!showSkeleton && !isError && (
-            <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
-              {plural(tableData.length, 'team')}
-            </p>
-          )}
-          <ToolbarSearch value={inputQuery} onChange={inputHandler} placeholder="Search teams" />
-        </PageToolbar>
-
-        {showSkeleton ? (
-          <TableSkeleton columns={3} />
-        ) : tableData.length === 0 ? (
-          <ListEmptyState
-            icon={Coins01Icon}
-            isError={isError}
-            onRetry={refetch}
-            errorTitle="Couldn't load team credits"
-            filtered={searching}
-            filteredTitle={`No teams match “${debouncedValue.trim()}”`}
-            filteredDescription="Try another team name."
-            onClearFilters={() => inputHandler('')}
-            emptyTitle="No team credits yet"
-            emptyDescription="Add credits to a team to switch on its credit usage and reports."
-            actionLabel="Add credits"
-            onAction={handleOpenAddDrawer}
-          />
-        ) : (
-          <DataTable
-            key={debouncedValue}
-            columns={columns}
-            data={tableData}
-            loading={isLoading}
-            getRowId={(record, index) => String(record.teamId ?? index)}
-            onRowClick={record => handleOpenDrawer(record.teamId)}
-            pagination={tableData.length > PAGE_SIZE}
-            initialState={{ pagination: { pageIndex: 0, pageSize: PAGE_SIZE } }}
-            paginationProps={{ align: 'start', showSizeChanger: false }}
-            minWidth={640}
-          />
+      <PageToolbar>
+        <PageToolbarSpacer />
+        {!showSkeleton && !isError && (
+          <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
+            {plural(tableData.length, 'team')}
+          </p>
         )}
-      </div>
+        <ToolbarSearch value={inputQuery} onChange={inputHandler} placeholder="Search teams" />
+      </PageToolbar>
+
+      {showSkeleton ? (
+        <TableSkeleton columns={3} />
+      ) : tableData.length === 0 ? (
+        <ListEmptyState
+          icon={Coins01Icon}
+          isError={isError}
+          onRetry={refetch}
+          errorTitle="Couldn't load team credits"
+          filtered={searching}
+          filteredTitle={`No teams match “${debouncedValue.trim()}”`}
+          filteredDescription="Try another team name."
+          onClearFilters={() => inputHandler('')}
+          emptyTitle="No team credits yet"
+          emptyDescription="Add credits to a team to switch on its credit usage and reports."
+          actionLabel="Add credits"
+          onAction={handleOpenAddDrawer}
+        />
+      ) : (
+        <DataTable
+          key={debouncedValue}
+          columns={columns}
+          data={tableData}
+          loading={isLoading}
+          getRowId={(record, index) => String(record.teamId ?? index)}
+          onRowClick={record => handleOpenDrawer(record.teamId)}
+          pagination={tableData.length > PAGE_SIZE}
+          initialState={{ pagination: { pageIndex: 0, pageSize: PAGE_SIZE } }}
+          paginationProps={{ align: 'start', showSizeChanger: false }}
+          minWidth={640}
+        />
+      )}
 
       <ManageCreditsDrawer
         open={isDrawerOpen}

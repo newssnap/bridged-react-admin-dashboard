@@ -19,15 +19,7 @@ export const initialsOf = (name, email) => {
 /** Photo (or initials), name on top and email underneath; the email alone if there's no name. */
 export function UserIdentity({ photo, name, email, className }) {
   const displayName = realName(name);
-  const emailLink = email ? (
-    <a
-      href={`mailto:${email}`}
-      onClick={event => event.stopPropagation()}
-      className="truncate rounded-sm outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
-    >
-      {email}
-    </a>
-  ) : null;
+  const primary = displayName || email;
 
   return (
     <div className={cn('flex min-w-0 items-center gap-3', className)}>
@@ -38,13 +30,13 @@ export function UserIdentity({ photo, name, email, className }) {
         </AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-col">
-        {displayName ? (
-          <>
-            <p className="truncate font-medium text-foreground">{displayName}</p>
-            <p className="flex min-w-0 text-xs text-muted-foreground">{emailLink}</p>
-          </>
-        ) : (
-          <p className="flex min-w-0 font-medium text-foreground">{emailLink ?? '—'}</p>
+        <p className="truncate font-medium text-foreground" title={primary || undefined}>
+          {primary || '—'}
+        </p>
+        {displayName && email && (
+          <p className="truncate text-xs text-muted-foreground" title={email}>
+            {email}
+          </p>
         )}
       </div>
     </div>

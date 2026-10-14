@@ -35,8 +35,8 @@ export function TaskStatusBadge({ completed }) {
 function DetailRow({ label, children }) {
   return (
     <div className="grid grid-cols-1 gap-1 py-3 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-center sm:gap-4">
-      <dt className="text-[13px] text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-sm">{children}</dd>
+      <dt className="text-[13.5px] text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-[13.5px]">{children}</dd>
     </div>
   );
 }
@@ -81,7 +81,11 @@ function TaskDetailsDrawer({
         if (!next) onClose();
       }}
     >
-      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+      <SheetContent
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+        // A read drawer: don't land on the first image link (it flashed a focus ring on open).
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <SheetHeader className="border-b pe-14">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
             <SheetTitle className="min-w-0 truncate text-[17px] font-semibold tracking-[-0.01em]">

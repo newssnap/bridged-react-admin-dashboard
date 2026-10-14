@@ -253,7 +253,7 @@ function TreeSelect({
           tabIndex={disabled ? -1 : 0}
           data-slot="tree-select-trigger"
           className={cn(
-            'flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-lg border border-transparent bg-input/50 py-1.5 ps-3 pe-8 text-sm transition-[color,box-shadow,background-color,border-color] duration-150 ease-out-quad outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/30 relative has-data-[slot=tree-select-chip]:ps-1.5',
+            'flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-sm border border-transparent bg-input/50 py-1.5 ps-3 pe-8 text-sm transition-[color,box-shadow,background-color,border-color] duration-150 ease-out-quad outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/30 relative has-data-[slot=tree-select-chip]:ps-1.5',
             className
           )}
         >

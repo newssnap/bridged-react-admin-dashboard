@@ -70,7 +70,7 @@ function SettingRow({
         <div
           hidden={!panelOpen}
           className={cn(
-            'flex flex-col gap-4 rounded-md bg-muted/50 p-4',
+            'flex flex-col gap-3 rounded-md bg-muted/50 p-3',
             panelOpen ? 'reveal-in' : 'hidden',
             icon && 'sm:ms-12'
           )}
@@ -141,12 +141,12 @@ function DrawerSection({ title, description, action, className, children, ...pro
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="flex min-w-0 flex-col gap-0.5">
             {title ? (
-              <h3 id={headingId} className="text-[15px] font-semibold tracking-[-0.01em]">
+              <h3 id={headingId} className="text-sm font-semibold text-foreground">
                 {title}
               </h3>
             ) : null}
             {description ? (
-              <p className="text-[13px] text-muted-foreground">{description}</p>
+              <p className="text-[13px] text-pretty text-muted-foreground">{description}</p>
             ) : null}
           </div>
           {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}

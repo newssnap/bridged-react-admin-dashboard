@@ -3,7 +3,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const ROWS = [0, 1, 2, 3];
 
-/** Stands in for the checklists table: header band, then rows with an icon tile and two lines. */
+/** Stands in for the checklists table: header band, then rows with an icon tile, two lines,
+ * the task count, two action buttons and the row chevron. */
 export function ChecklistTableSkeleton() {
   return (
     <div
@@ -14,11 +15,18 @@ export function ChecklistTableSkeleton() {
       <div className="h-11 border-b bg-muted" />
       <div className="divide-y">
         {ROWS.map(row => (
-          <div key={row} className="flex items-center gap-3 px-4 py-3.5">
+          <div key={row} className="flex items-center gap-3 py-3 ps-5 pe-5">
             <Skeleton className="size-8 shrink-0 rounded-lg" />
-            <Skeleton className="h-4 w-40 rounded-md" />
-            <Skeleton className="ms-auto h-4 w-16 rounded-md" />
-            <Skeleton className="size-8 shrink-0 rounded-full" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Skeleton className="h-4 w-40 max-w-full rounded-md" />
+              <Skeleton className="h-3 w-24 rounded-md" />
+            </div>
+            <Skeleton className="h-4 w-16 shrink-0 rounded-md" />
+            <div className="flex w-[120px] shrink-0 items-center justify-end gap-1">
+              <Skeleton className="size-8 rounded-full" />
+              <Skeleton className="size-8 rounded-full" />
+              <Skeleton className="size-4 rounded-sm" />
+            </div>
           </div>
         ))}
       </div>
@@ -35,7 +43,10 @@ export function ChecklistPanelSkeleton({ rows = 3 }) {
           <Skeleton className="h-5 w-44 rounded-md" />
           <Skeleton className="h-3.5 w-28 rounded-md" />
         </div>
-        <Skeleton className="h-8 w-24 rounded-full" />
+        <div className="flex shrink-0 items-center gap-1">
+          <Skeleton className="h-8 w-24 rounded-full" />
+          <Skeleton className="size-8 rounded-full" />
+        </div>
       </div>
       <div className="divide-y border-t">
         {Array.from({ length: rows }, (_, index) => (

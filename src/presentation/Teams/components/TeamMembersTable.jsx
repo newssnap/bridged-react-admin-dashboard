@@ -154,7 +154,7 @@ function TeamMembersTable({
       meta: { width: '110px' },
       cell: ({ getValue }) =>
         getValue() === 'Owner' ? (
-          <Badge variant="outline">Owner</Badge>
+          <Badge variant="info">Owner</Badge>
         ) : (
           <span className="text-muted-foreground">Member</span>
         ),

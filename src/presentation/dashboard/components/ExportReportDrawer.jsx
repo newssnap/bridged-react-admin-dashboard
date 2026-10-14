@@ -56,22 +56,29 @@ function ReportTypeChoices({ value = [], onValueChange, id, 'aria-describedby': 
             key={type.value}
             htmlFor={checkboxId}
             className={cn(
-              'flex cursor-pointer items-start gap-3.5 rounded-lg bg-card p-3.5 ring-1 ring-foreground/10 transition-[box-shadow,background-color] duration-150 ease-out-quad has-focus-visible:ring-2 has-focus-visible:ring-ring/50',
-              checked && 'bg-primary/[0.05] ring-2 ring-primary'
+              'flex cursor-pointer items-start gap-3.5 rounded-lg bg-card p-3.5 ring-1 ring-foreground/10 transition-[background-color,box-shadow] duration-150 ease-out-quad hover:bg-muted/50 has-focus-visible:ring-2 has-focus-visible:ring-ring/50',
+              checked && 'bg-primary/[0.05] ring-2 ring-primary hover:bg-primary/[0.05]'
             )}
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <span
+              className={cn(
+                'flex size-10 shrink-0 items-center justify-center rounded-md transition-colors duration-150',
+                checked ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+              )}
+            >
               <HugeiconsIcon icon={type.icon} strokeWidth={2} className="size-5" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-sm font-medium text-foreground">{type.label}</span>
-              <span className="text-[13px] text-muted-foreground">{type.description}</span>
+              <span className="text-[13px] text-pretty text-muted-foreground">
+                {type.description}
+              </span>
             </span>
             <Checkbox
               id={checkboxId}
               checked={checked}
               onCheckedChange={next => toggle(type.value, next === true)}
-              className="mt-0.5"
+              className="mt-0.5 shrink-0"
             />
           </label>
         );
@@ -108,7 +115,10 @@ function ExportReportDrawer({
         if (!next) onClose();
       }}
     >
-      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+      <SheetContent
+        onOpenAutoFocus={event => event.preventDefault()}
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+      >
         <SheetHeader className="border-b pe-14">
           <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
             Export report
@@ -147,7 +157,6 @@ function ExportReportDrawer({
                   options={domainOptions}
                   placeholder={domainOptions.length ? 'Pick domains' : 'No domains found'}
                   emptyText="No domains found."
-                  loading={isGenerating}
                   disabled={!needsDomains}
                   allowClear
                 />

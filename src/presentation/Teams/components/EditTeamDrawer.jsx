@@ -170,9 +170,11 @@ const EditTeamDrawer = ({
       >
         <SheetContent
           className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[900px]"
+          // Open on the drawer, not inside the form: Radix would focus and select the team name.
+          onOpenAutoFocus={event => event.preventDefault()}
           onCloseAutoFocus={() => handleAfterOpenChange?.(false)}
         >
-          <SheetHeader className="border-b px-6 py-4 pe-14">
+          <SheetHeader className="border-b pe-14">
             <SheetTitle className="truncate text-[17px] font-semibold tracking-[-0.01em]">
               Edit team
             </SheetTitle>

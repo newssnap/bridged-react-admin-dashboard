@@ -51,11 +51,12 @@ Use semantic tokens only: `bg-background`, `bg-card`, `bg-muted`, `text-foregrou
 
 ### Radius
 
-`--radius: 1rem` (16px). The scale: `sm` 0.6×, `md` 0.8× (~13px), `lg` 1× (16px), `xl` 1.4× (~22px).
+`--radius: 1rem` (16px). The scale: `sm` 0.6× (~10px), `md` 0.8× (~13px), `lg` 1× (16px), `xl` 1.4× (~22px).
 
 | Use | Class |
 | --- | --- |
-| Surfaces: cards, panels, tables, inputs, selects, menus, popovers, alerts, empty and upload boxes | `rounded-lg` |
+| Fields: inputs, textareas, input groups (search, password, number), select and combobox triggers, date pickers, tree selects, colour-picker triggers, OTP slots | `rounded-sm` (set in the kit; don't override it) |
+| Surfaces: cards, panels, tables, menus, popovers, alerts, empty and upload boxes | `rounded-lg` |
 | Nested pieces: icon tiles, inner panels, menu items, rows, tooltips, stat strips | `rounded-md` |
 | Dialogs, command palette, app inset, auth panels | `rounded-xl` |
 | Pills: buttons (`rounded-4xl` in the kit), badges, tabs, segmented controls, chips | `rounded-full` |
@@ -397,7 +398,7 @@ const [form] = useForm();
 ```
 
 - Bindings are detected from the child (`Input`, `Textarea`, `Select`, `Switch`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Slider`, `NumberInput`, …). Set `bind="…"` when they aren't.
-- **Inputs are filled**: `bg-input/50`, no visible border, `rounded-lg`, `h-9`. `InputGroupInput` stays transparent inside its group.
+- **Inputs are filled**: `bg-input/50`, no visible border, `rounded-sm` (~10px), `h-9`. `InputGroupInput` stays transparent inside its group. A hand-built field-like trigger uses the same `rounded-sm`, never `rounded-lg`.
 - **Selects** open item-aligned. Don't set `position="popper"` on `SelectContent`.
 - **Choice controls**:
   - a small set uses `SegmentedControl` or `ToggleGroup`;
@@ -439,6 +440,7 @@ const [form] = useForm();
   - `900px`: tables, previews or two-column content inside the drawer.
   Existing drawers vary; don't change their widths in a refine unless asked.
 - **Sheet titles**: `text-[17px] font-semibold tracking-[-0.01em]`, with an optional `SheetDescription`.
+- **Focus on open**: a sheet with a single field may `autoFocus` it (focus, never select). Edit sheets with several fields pass `onOpenAutoFocus={e => e.preventDefault()}` so nothing is pre-selected.
 - **One drawer for create and edit**:
   - switch the title ("Add webhook" / "Edit webhook") and the button ("Add webhook" / "Save changes") on an `isEditing` flag;
   - the button always names the thing, never a bare "Create";
@@ -510,7 +512,7 @@ import { Add01Icon } from '@hugeicons/core-free-icons';
 - **Sizes**: inside buttons the kit sizes icons automatically. Elsewhere use `size-4`, or `size-3.5` / `size-5`.
 - Inside a Button, mark icons `data-icon="inline-start" | "inline-end"` so spacing is right.
 - **Icon-only buttons** need an `aria-label` and usually a Tooltip.
-- **Legacy**: `utils/components/Icon.jsx` (name-based) is still used in about 30 files. Don't use it in new code.
+- The legacy name-based `Icon.jsx` was removed from the admin in v3. Hugeicons only.
 
 ## 10. Feedback: toasts, loading, empty and error states
 
@@ -625,30 +627,43 @@ The toaster is mounted once in `App.js` (top right, 1.5s, at most 3 visible).
 
 ## 14. Reference implementations
 
-Copy from these. They are the most recently refined examples of each pattern.
+Copy from these. **Admin pages first** (in this repo); for patterns the admin doesn't have yet, use the portal's reference files (`bridged-dashboard`, same paths under `src/presentation/`).
+
+### In the admin
+
+| Pattern | File |
+| --- | --- |
+| Table page with filters popover, row actions, add/edit sheet | `src/presentation/dashboard/workflows/DashboardWorkflow.jsx` + `components/{AccountsToolbar,AccountsTable,UserActions,UserDrawer}.jsx` |
+| Simple table page (two row actions, ConfirmPopover delete) | `src/presentation/companies/workflows/CompaniesWorkflow.jsx` + `components/{CompaniesTopbar,CompaniesTable,CompanyFormDrawer}.jsx` |
+| Large edit sheet: flat sections, setting rows, members table | `src/presentation/Teams/components/{EditTeamDrawer,SettingParts,TeamParts,TeamMembersTable}.jsx` |
+| Stat strip + quick status filter + read-then-edit sheet | `src/presentation/TeamCredits/workflows/CustomWorkWorkflow.jsx` + `components/PreviewEditCustomWorkDrawer.jsx` |
+| Balance, usage thresholds and ledger | `src/presentation/TeamCredits/components/{ManageCreditsDrawer,CreditBalanceSummary,LedgerTable}.jsx` |
+| Detail page with eyebrow, result-led progress, panels of rows | `src/presentation/userChecklist/workflows/UserChecklistWorkflow.jsx` + `components/ChecklistPanel.jsx` |
+| Picker cards (multi-select) | `src/presentation/dashboard/components/PlaybookSelectionList.jsx` |
+| App shell, sidebar, ⌘K palette | `src/layouts/AuthPageLayout.jsx`, `src/layouts/GlobalSidebar.jsx`, `src/utils/components/commandPalette/CommandPalette.jsx` |
+| Login | `src/presentation/authentication/login/workflow/LoginWorkflow.jsx` |
+
+### In the portal (`bridged-dashboard`)
 
 | Pattern | File |
 | --- | --- |
 | List page (grid + list + toolbar + drawers) | `src/presentation/agents/dashboard/agents/workflows/AgentDashboardWorkflow.jsx` |
 | Toolbar with filters popover | `src/presentation/agents/dashboard/agents/components/TopBar.jsx` |
+| Table with row chevron and actions | `src/presentation/agents/dashboard/agents/components/AgentList.jsx` |
 | List card | `src/presentation/agents/dashboard/agents/components/AgentCard.jsx` |
 | Sheet form | `src/presentation/agents/dashboard/agents/components/AddFolderDrawer.jsx` |
 | Table page | `src/presentation/website/domains/components/TopBar.jsx` + `AllDomains.jsx` |
-| Photo-led grid + create tile | `src/presentation/events/workflows/EventsWorkflow.jsx` |
 | Detail page with header tabs and meta | `src/presentation/events/components/EventDetailLayout.jsx` |
-| Grid/list switch over a shared workflow | `src/presentation/screens/dashboards/reusable/workflow/ScreensWorkflow.jsx` |
-| Empty state for list pages | `src/presentation/screens/dashboards/reusable/components/DashboardEmptyState.jsx` |
-| Editor footer | `src/presentation/agents/create/reusable/components/StepFooter.jsx` |
-| Overview / report page | `src/presentation/agents/overview/components/TopBar.jsx` + `src/presentation/agents/overview/components/shared/OverviewSection.jsx` |
+| Overview / report page | `src/presentation/agents/overview/components/TopBar.jsx` + `shared/OverviewSection.jsx` |
 | Wizard header, stepper, draft | `src/presentation/agents/create/reusable/components/AgentTopBar.jsx` |
-| Form with live preview | `src/presentation/screens/create/reusable/components/ScreenEditorParts.jsx` |
 | Wizard sections and setting rows | `src/presentation/agents/create/reusable/components/{SectionCard,SectionHeader,SettingRow,SettingGroup}.jsx` |
 | Settings page with unsaved changes | `src/presentation/setting/profile/components/{ProfileForm,ProfileActions}.jsx` |
 | Row/card actions menu | `src/presentation/agents/dashboard/agents/components/AgentActions.jsx` |
 | Bulk selection bar | `src/presentation/screens/create/collections-v2/components/ContextMaterials.jsx` |
 | Error state with retry | `src/presentation/Sponsors/workflows/SponsorsWorkflow.jsx` |
 | Person row | `src/presentation/setting/team/components/TeamParts.jsx` |
-| All page blocks in one place | `/theme` in development (`src/presentation/theme/blocks/patterns.jsx`) |
+| Credit usage and thresholds | `src/presentation/setting/creditUsage/components/AccountSummary.jsx` |
+| All page blocks in one place | `/theme` in the portal's development build (`src/presentation/theme/blocks/patterns.jsx`) |
 
 ## 15. Interaction details
 
@@ -749,7 +764,8 @@ Tab state stays local. It is not in the URL, unless the tabs are routes.
 | Card grids | `gap-5` |
 | Card body | `p-5` (list cards: `p-5 gap-4`) |
 | Section card header | `px-5 py-4` |
-| Sheet header, footer | `px-6 py-4` |
+| Sheet header | the kit default (`p-6`) with `border-b pe-14`; don't add padding |
+| Sheet footer | `px-6 py-4` |
 | Sheet body | `px-6 pt-4 pb-6` |
 | Settings card | `p-5 sm:p-6 gap-5` |
 | `SettingRow` | `px-4 py-3.5` |
@@ -778,19 +794,16 @@ Use the kit `Empty` (`Empty` > `EmptyHeader` > `EmptyMedia variant="icon"` / `Em
 
 ## 16. Legacy: don't copy these
 
-These still work but predate the standard. When building something similar, follow this doc, not them. When you refine their page, move them over.
+The admin's v3 revamp removed antd, the name-based `Icon.jsx`, the old theme file and all unrouted pages, so the admin carries little legacy UI. Patterns to avoid if you meet them (in old branches, or when porting from elsewhere):
 
 | Legacy | Use instead |
 | --- | --- |
-| `utils/components/Icon.jsx` (name-based icons, about 30 files) | `HugeiconsIcon` (see the `DashboardEmptyState` note below) |
-| `DashboardEmptyState` takes `iconName` and renders the legacy `Icon` | It's still the standard list-page empty state, so pass `iconName`. Moving it to a Hugeicons `icon` prop is a welcome refine. |
-| `NotificationBanner.jsx`, `PendingTeamInvitesBar.jsx` | The global banner pattern in §8 |
+| antd components, `notification`, `Modal.confirm`, `Form.useForm` | The kit, `toast` (sonner), `confirm()`, `useForm` from `@/components/form` |
 | Hand-made `bg-amber-500/10` callouts | The `Alert` tones in §8 |
 | "Failed to …", "Error while …", "Something went wrong", "… successfully" toasts | "Couldn't …" and past-tense success (§10) |
-| "Deleting…", "Accepting Team Invite" info toasts | A button Spinner and one result toast |
+| "Deleting…" info toasts | A button Spinner and one result toast |
 | `'--'` for missing values | "—" |
-| Webhooks under `presentation/setting/integrations/…/webhooks` (bottom-right toasts, "successfully", `minWidth={1100}`) | Refine it in place; never copy it or build a second webhooks page |
-| Status maps duplicated per feature (`STATUS_BADGE_VARIANT` in events and dashboard) | The §5 status table; share one map within a feature |
+| Status maps duplicated per feature | The §5 status table; share one map within a feature (e.g. `TeamCredits/constants/customWork.js`) |
 | Local `initials()` and `plural()` copies | Fine for now. If you add a third use in one feature, lift it into `src/lib/`. |
 
 ## 17. Process rules for UI work

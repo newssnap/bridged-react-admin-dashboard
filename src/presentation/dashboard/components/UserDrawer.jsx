@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Camera01Icon, UserIcon } from '@hugeicons/core-free-icons';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { RefreshIcon, Upload04Icon, UserIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { InputGroupAddon, InputGroupButton } from '@/components/ui/input-group';
 import {
   Sheet,
   SheetContent,
@@ -14,18 +14,28 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { FileUpload, FileUploadTrigger } from '@/components/file-upload';
 import { PasswordInput } from '@/components/password-input';
 import { Form, FormField, useWatch } from '@/components/form';
 import { cn } from '@/lib/utils';
 import { useGetTeamsByCompanyQuery, useUploadImageMutation } from '../../../services/api';
 import OptionCombobox from './OptionCombobox';
+import { initialsOf } from './AccountParts';
 
 const EMAIL_RULES = [
   { required: true, message: 'Enter an email address' },
   { type: 'email', message: 'Enter a valid email address' },
 ];
-const PASSWORD_RULES = [{ required: true, message: 'Enter a password' }];
+const PASSWORD_RULES = [{ required: true, message: 'Enter a password or generate one' }];
+
+const PASSWORD_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+const generatePassword = () =>
+  Array.from(
+    { length: 12 },
+    () => PASSWORD_CHARS[Math.floor(Math.random() * PASSWORD_CHARS.length)]
+  ).join('');
 
 const getCreatedCompanyId = createdCompany =>
   createdCompany?.id ||
@@ -33,45 +43,46 @@ const getCreatedCompanyId = createdCompany =>
   createdCompany?.data?.data?.id ||
   createdCompany?._id;
 
-/** The profile photo: a round preview and a button that uploads a new one. */
-function ProfilePhotoPicker({ photoUrl, isUploading, disabled, onPick }) {
-  const fileInputRef = useRef(null);
-
+/**
+ * The profile photo: a round preview (initials until there is one) and an Upload / Replace
+ * button. Clicking either opens the file dialog.
+ */
+function ProfilePhotoPicker({ photoUrl, initials, isUploading, disabled, onPick }) {
   return (
-    <div className="flex items-center gap-4">
-      <Avatar className="size-16">
-        {photoUrl && <AvatarImage src={photoUrl} alt="" />}
-        <AvatarFallback className="bg-muted text-muted-foreground">
-          <HugeiconsIcon icon={UserIcon} strokeWidth={2} className="size-6" />
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex flex-col items-start gap-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || isUploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {isUploading ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <HugeiconsIcon icon={Camera01Icon} strokeWidth={2} data-icon="inline-start" />
-          )}
-          {isUploading ? 'Uploading…' : photoUrl ? 'Change photo' : 'Add photo'}
-        </Button>
-        <p className="text-xs text-muted-foreground">Optional. A square image works best.</p>
+    <FileUpload
+      beforeUpload={() => false}
+      onChange={onPick}
+      accept="image/*"
+      disabled={disabled || isUploading}
+    >
+      <div className="flex items-center gap-4">
+        {isUploading ? (
+          <Skeleton className="size-16 shrink-0 rounded-full" />
+        ) : (
+          <FileUploadTrigger
+            aria-label={photoUrl ? 'Replace profile photo' : 'Upload profile photo'}
+            className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground ring-1 ring-foreground/10 transition-shadow duration-150 ease-out-quad outline-none hover:ring-foreground/25 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed"
+          >
+            {photoUrl ? (
+              <img alt="" src={photoUrl} className="size-full object-cover" />
+            ) : initials === '?' ? (
+              <HugeiconsIcon icon={UserIcon} strokeWidth={2} className="size-6" />
+            ) : (
+              <span className="text-base font-semibold text-primary">{initials}</span>
+            )}
+          </FileUploadTrigger>
+        )}
+        <div className="flex min-w-0 flex-col items-start gap-1.5">
+          <FileUploadTrigger asChild>
+            <Button type="button" variant="outline" size="sm" disabled={disabled || isUploading}>
+              <HugeiconsIcon icon={Upload04Icon} strokeWidth={2} data-icon="inline-start" />
+              {isUploading ? 'Uploading…' : photoUrl ? 'Replace' : 'Upload'}
+            </Button>
+          </FileUploadTrigger>
+          <p className="text-xs text-muted-foreground">Optional. A square image works best.</p>
+        </div>
       </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={onPick}
-      />
-    </div>
+    </FileUpload>
   );
 }
 
@@ -97,6 +108,9 @@ function UserDrawer({
 }) {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
   const selectedCompanyId = useWatch('company', form);
+  const firstName = useWatch('firstName', form);
+  const lastName = useWatch('lastName', form);
+  const email = useWatch('username', form);
   const { data: teamsResponse, isLoading: isLoadingTeams } = useGetTeamsByCompanyQuery(
     selectedCompanyId,
     { skip: !open || !selectedCompanyId }
@@ -123,8 +137,7 @@ function UserDrawer({
   const displayPicture =
     profilePhotoUrl || (isEditing ? userData?.picture || userData?.profilePhoto : '');
 
-  const handleFileChange = async event => {
-    const file = event.target.files?.[0];
+  const handleFileChange = async ({ file }) => {
     if (!file) return;
     try {
       const formData = new FormData();
@@ -146,7 +159,6 @@ function UserDrawer({
     } catch (error) {
       toast.error(error?.data?.message || "Couldn't upload the photo");
     }
-    event.target.value = '';
   };
 
   // A new company means the team has to be picked again.
@@ -171,12 +183,15 @@ function UserDrawer({
         if (!next) onClose();
       }}
     >
-      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+      <SheetContent
+        onOpenAutoFocus={event => event.preventDefault()}
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+      >
         <SheetHeader className="border-b pe-14">
           <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">{title}</SheetTitle>
           <SheetDescription>
             {isEditing
-              ? 'Update their details, company and team. The email address stays the same.'
+              ? 'Update their name, photo, password, company and team.'
               : 'Give someone a login to the dashboard, then place them in a company and team.'}
           </SheetDescription>
         </SheetHeader>
@@ -201,17 +216,18 @@ function UserDrawer({
 
                 <ProfilePhotoPicker
                   photoUrl={displayPicture}
+                  initials={initialsOf(`${firstName ?? ''} ${lastName ?? ''}`, email)}
                   isUploading={isUploadingImage}
                   disabled={isBusy}
                   onPick={handleFileChange}
                 />
 
-                <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-x-3 gap-y-7 sm:grid-cols-2">
                   <FormField name="firstName" label="First name">
-                    <Input placeholder="e.g. Jane" disabled={isBusy} />
+                    <Input placeholder="e.g. Jane" autoComplete="off" disabled={isBusy} />
                   </FormField>
                   <FormField name="lastName" label="Last name">
-                    <Input placeholder="e.g. Smith" disabled={isBusy} />
+                    <Input placeholder="e.g. Smith" autoComplete="off" disabled={isBusy} />
                   </FormField>
                 </div>
 
@@ -219,9 +235,23 @@ function UserDrawer({
                   name="username"
                   label="Email"
                   rules={isEditing ? [EMAIL_RULES[0]] : EMAIL_RULES}
-                  description={isEditing ? 'The email address can’t be changed.' : undefined}
+                  description={
+                    isEditing
+                      ? 'They sign in with this. It can’t be changed.'
+                      : 'They sign in with this.'
+                  }
                 >
-                  <Input type="email" placeholder="name@company.com" disabled={isEditing} />
+                  <Input
+                    type="email"
+                    placeholder="name@company.com"
+                    autoComplete="off"
+                    readOnly={isEditing}
+                    className={
+                      isEditing
+                        ? 'bg-muted/50 text-muted-foreground focus-visible:ring-0'
+                        : undefined
+                    }
+                  />
                 </FormField>
 
                 <FormField
@@ -229,10 +259,27 @@ function UserDrawer({
                   label={isEditing ? 'New password' : 'Password'}
                   rules={isEditing ? undefined : PASSWORD_RULES}
                   description={
-                    isEditing ? 'Leave blank to keep their current password.' : undefined
+                    isEditing
+                      ? 'Leave blank to keep their current password.'
+                      : 'Share it with them; you can change it here later.'
                   }
                 >
-                  <PasswordInput autoComplete="new-password" disabled={isBusy} />
+                  <PasswordInput autoComplete="new-password" disabled={isBusy}>
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        className="text-primary"
+                        disabled={isBusy}
+                        onClick={() => form.setFieldValue('password', generatePassword())}
+                      >
+                        <HugeiconsIcon
+                          icon={RefreshIcon}
+                          strokeWidth={2}
+                          data-icon="inline-start"
+                        />
+                        Generate
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  </PasswordInput>
                 </FormField>
 
                 <FormField name="company" label="Company">
@@ -260,6 +307,7 @@ function UserDrawer({
                     loading={isLoadingTeams}
                     allowClear
                     emptyText="No teams in this company"
+                    unknownLabel="Not in this company"
                     disabled={!selectedCompanyId || isBusy || (isEditing && isSubmitting)}
                   />
                 </FormField>
@@ -272,7 +320,11 @@ function UserDrawer({
           <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="button" onClick={() => form.submit()} disabled={isSubmitting || isBusy}>
+          <Button
+            type="button"
+            onClick={() => form.submit()}
+            disabled={isSubmitting || isBusy || isUploadingImage}
+          >
             {isSubmitting && <Spinner data-icon="inline-start" />}
             {isEditing ? 'Save changes' : 'Add user'}
           </Button>

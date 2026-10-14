@@ -44,8 +44,8 @@ function AccountsToolbar({
 
   const filtersContent = (
     <div className="max-w-[640px]">
-      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2 sm:w-56">
+      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-3">
+        <div className="flex flex-col gap-2">
           <h5 className={FILTER_LABEL_CLASS}>Company</h5>
           <OptionCombobox
             placeholder="Company"
@@ -58,7 +58,7 @@ function AccountsToolbar({
             loading={isLoadingCompanies}
           />
         </div>
-        <div className="flex flex-col gap-2 sm:w-56">
+        <div className="flex flex-col gap-2">
           <h5 className={FILTER_LABEL_CLASS}>Team</h5>
           <OptionCombobox
             placeholder={isCompanySelected ? 'Team' : 'Pick a company first'}
@@ -69,7 +69,7 @@ function AccountsToolbar({
             disabled={!isCompanySelected}
           />
         </div>
-        <div className="flex items-end justify-start sm:col-span-2">
+        <div className="flex items-end justify-start">
           <Button type="button" variant="outline" onClick={onResetFilters}>
             <HugeiconsIcon icon={RefreshIcon} strokeWidth={2} data-icon="inline-start" />
             Reset filters
@@ -107,7 +107,7 @@ function AccountsToolbar({
       <PageToolbarSpacer />
 
       {countLabel && (
-        <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+        <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
           {countLabel}
         </p>
       )}

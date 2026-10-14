@@ -45,6 +45,7 @@ The admin went through the same shadcn and Tailwind revamp as the Bridged portal
 
 - Compose with Tailwind utilities at the call site, using tokens only (no hex). Brand surfaces use `bg-primary text-primary-foreground`.
 - **Radius:**
+  - fields (inputs, selects, comboboxes, date pickers, search) `rounded-sm`, from the kit;
   - surfaces `rounded-lg`;
   - nested pieces `rounded-md`;
   - dialogs `rounded-xl`;

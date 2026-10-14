@@ -22,11 +22,11 @@ function TaskRow({ task, completed = false, meta, badge, onOpen, onEdit, onDelet
   const title = task?.title || 'Untitled task';
 
   return (
-    <li className="flex items-start gap-3 px-5 py-3.5">
+    <li className="group/task flex items-start gap-3 px-5 py-3.5 transition-colors duration-150 ease-out-quad hover:bg-muted/40">
       <span
         className={cn(
           'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md',
-          completed ? 'bg-emerald-500/10 text-success' : 'bg-primary/10 text-primary'
+          completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
         )}
       >
         <HugeiconsIcon
@@ -61,7 +61,7 @@ function TaskRow({ task, completed = false, meta, badge, onOpen, onEdit, onDelet
         )}
       </div>
 
-      <div className="-me-1.5 inline-flex shrink-0 items-center gap-0.5">
+      <div className="-me-1.5 inline-flex shrink-0 items-center gap-0.5 opacity-70 transition-opacity duration-150 ease-out-quad group-focus-within/task:opacity-100 group-hover/task:opacity-100">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

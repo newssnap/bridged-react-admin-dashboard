@@ -9,7 +9,7 @@ import CreditBalanceSummary from './CreditBalanceSummary';
 import CreditEntryFields, { toCreditEntryPayload } from './CreditEntryFields';
 import EditLedgerEntrySheet from './EditLedgerEntrySheet';
 import LedgerTable from './LedgerTable';
-import { CreditSheetHeader, SheetSection, sheetContentClasses } from './SheetParts';
+import { CreditSheetHeader, DiscardButton, SheetSection, sheetContentClasses } from './SheetParts';
 
 /**
  * A team's credits in one sheet: balance and usage, a form to assign or deduct credits, and
@@ -52,7 +52,11 @@ const ManageCreditsDrawer = ({
         if (!next) onClose();
       }}
     >
-      <SheetContent className={sheetContentClasses('lg')}>
+      <SheetContent
+        className={sheetContentClasses('lg')}
+        // Several fields: nothing is focused or selected on open.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <CreditSheetHeader
           title="Manage credits"
           description={teamData ? [teamName, companyName].filter(Boolean).join(' · ') : null}
@@ -70,13 +74,7 @@ const ManageCreditsDrawer = ({
             title="Adjust credits"
             description="Assign or deduct credits. The entry is added to the ledger."
           >
-            <Form
-              form={form}
-              onFinish={handleFinish}
-              requiredMark="optional"
-              scrollToFirstError
-              autoComplete="off"
-            >
+            <Form form={form} onFinish={handleFinish} scrollToFirstError autoComplete="off">
               <CreditEntryFields />
             </Form>
           </SheetSection>
@@ -93,9 +91,9 @@ const ManageCreditsDrawer = ({
           </SheetSection>
         </div>
         <SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <DiscardButton form={form} onDiscard={onClose} disabled={isSubmitting}>
             Close
-          </Button>
+          </DiscardButton>
           <Button type="button" onClick={() => form.submit()} disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}
             {isSubmitting ? 'Saving…' : 'Save adjustment'}

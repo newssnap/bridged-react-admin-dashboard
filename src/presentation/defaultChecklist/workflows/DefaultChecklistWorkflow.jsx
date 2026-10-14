@@ -36,6 +36,7 @@ import ChecklistDrawer from '../components/ChecklistDrawer';
 import TaskManagementDrawer from '../components/TaskManagementDrawer';
 import TaskFormDrawer from '../components/TaskFormDrawer';
 import { ChecklistTableSkeleton } from '../components/ChecklistSkeletons';
+import ChecklistEmptyState from '../components/ChecklistEmptyState';
 import { plural } from '../components/TaskRow';
 
 const PAGE_SIZE = 15;
@@ -257,8 +258,10 @@ const DefaultChecklistWorkflow = () => {
     );
   }, [defaultChecklists, debouncedValue]);
 
-  const searching = Boolean(debouncedValue.trim());
   const hasError = Boolean(error) && !isFetching;
+  // The first-run empty state carries the add action; the header holds it otherwise.
+  const showCreateButton =
+    isLoading || hasError || defaultChecklists.length > 0 || Boolean(inputQuery.trim());
 
   const columns = [
     {
@@ -290,115 +293,84 @@ const DefaultChecklistWorkflow = () => {
     {
       id: 'tasks',
       header: 'Tasks',
-      meta: { width: '180px' },
+      meta: { width: '160px' },
       cell: ({ row }) => {
         const count = row.original?.tasks?.length || 0;
-        return (
-          <button
-            type="button"
-            onClick={event => {
-              event.stopPropagation();
-              handleOpenTaskDrawer(row.original);
-            }}
-            className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-foreground tabular-nums outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
-          >
-            {count ? (
-              plural(count, 'task')
-            ) : (
-              <span className="text-muted-foreground">No tasks</span>
-            )}
-            <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5" />
-          </button>
+        return count ? (
+          <span className="font-medium text-foreground tabular-nums">{plural(count, 'task')}</span>
+        ) : (
+          <span className="text-muted-foreground">None</span>
         );
       },
     },
     {
       id: 'actions',
       header: <span className="sr-only">Actions</span>,
-      meta: { align: 'right', width: '96px' },
+      meta: { align: 'right', width: '120px', pin: 'end' },
       cell: ({ row }) => {
         const record = row.original;
         const name = record.title || 'this checklist';
         const deleting = deletingChecklistId === record._id;
         return (
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <div className="inline-flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-muted-foreground hover:text-foreground"
-                  aria-label={`Rename ${name}`}
-                  onClick={() => handleEditChecklist(record)}
-                >
-                  <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Rename</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <ConfirmPopover
-                title="Delete this checklist?"
-                description={`"${name}" will no longer be given to new accounts. This can't be undone.`}
-                confirmText="Delete"
-                confirmVariant="destructive"
-                align="end"
-                onConfirm={() => handleDeleteChecklist(record._id)}
-              >
+          <div className="flex items-center justify-end gap-1">
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div className="inline-flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`Delete ${name}`}
-                    disabled={deleting}
-                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/15"
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={`Rename ${name}`}
+                    onClick={() => handleEditChecklist(record)}
                   >
-                    {deleting ? <Spinner /> : <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />}
+                    <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
                   </Button>
                 </TooltipTrigger>
-              </ConfirmPopover>
-              <TooltipContent>Delete</TooltipContent>
-            </Tooltip>
+                <TooltipContent>Rename</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <ConfirmPopover
+                  title="Delete this checklist?"
+                  description={`"${name}" will no longer be given to new accounts. This can't be undone.`}
+                  confirmText="Delete"
+                  confirmVariant="destructive"
+                  align="end"
+                  onConfirm={() => handleDeleteChecklist(record._id)}
+                >
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Delete ${name}`}
+                      disabled={deleting}
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/15"
+                    >
+                      {deleting ? (
+                        <Spinner />
+                      ) : (
+                        <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                </ConfirmPopover>
+                <TooltipContent>Delete</TooltipContent>
+              </Tooltip>
+            </div>
+            {/* The row opens the checklist's tasks; the chevron says so. */}
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              strokeWidth={2}
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
           </div>
         );
       },
     },
   ];
-
-  const emptyState = (
-    <Empty className="py-12">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HugeiconsIcon icon={CheckListIcon} strokeWidth={2} />
-        </EmptyMedia>
-        <EmptyTitle>
-          {searching
-            ? `No checklists match "${debouncedValue.trim()}"`
-            : 'No default checklists yet'}
-        </EmptyTitle>
-        <EmptyDescription>
-          {searching
-            ? 'Try another name.'
-            : 'Add a checklist, then fill it with the tasks new accounts should complete.'}
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        {searching ? (
-          <Button type="button" variant="outline" onClick={() => inputHandler('')}>
-            Clear search
-          </Button>
-        ) : (
-          <Button type="button" variant="outline" onClick={handleAddChecklist}>
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add checklist
-          </Button>
-        )}
-      </EmptyContent>
-    </Empty>
-  );
 
   const renderContent = () => {
     if (isLoading) return <ChecklistTableSkeleton />;
@@ -420,6 +392,17 @@ const DefaultChecklistWorkflow = () => {
         </Empty>
       );
     }
+    if (filteredChecklists.length === 0) {
+      return (
+        <ChecklistEmptyState
+          searchQuery={debouncedValue}
+          title="No default checklists yet"
+          description="Add a checklist, then fill it with the tasks every new account should complete."
+          actionLabel="Add checklist"
+          onAction={handleAddChecklist}
+        />
+      );
+    }
     return (
       <div className="min-w-0 animate-in fade-in-0 duration-300 ease-out-quad">
         <DataTable
@@ -428,11 +411,10 @@ const DefaultChecklistWorkflow = () => {
           getRowId={(record, index) => record?._id || String(index)}
           onRowClick={record => handleOpenTaskDrawer(record)}
           loading={isFetching && !isLoading}
-          emptyState={emptyState}
           pagination={filteredChecklists.length > PAGE_SIZE}
           initialState={{ pagination: { pageIndex: 0, pageSize: PAGE_SIZE } }}
           paginationProps={{ align: 'start', showSizeChanger: false }}
-          minWidth={560}
+          minWidth={600}
         />
       </div>
     );
@@ -444,30 +426,26 @@ const DefaultChecklistWorkflow = () => {
         title="Default checklist"
         description="The checklists and tasks every new account starts with."
         actions={
-          <Button type="button" onClick={handleAddChecklist}>
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add checklist
-          </Button>
+          showCreateButton && (
+            <Button type="button" onClick={handleAddChecklist} disabled={isLoading}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add checklist
+            </Button>
+          )
         }
       />
 
-      <div className="flex flex-col gap-6">
-        <PageToolbar>
-          <PageToolbarSpacer />
-          {!isLoading && !hasError && (
-            <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-              {plural(filteredChecklists.length, 'checklist')}
-            </p>
-          )}
-          <ToolbarSearch
-            value={inputQuery}
-            onChange={inputHandler}
-            placeholder="Search checklists"
-          />
-        </PageToolbar>
+      <PageToolbar>
+        <PageToolbarSpacer />
+        {!isLoading && !hasError && (
+          <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
+            {plural(filteredChecklists.length, 'checklist')}
+          </p>
+        )}
+        <ToolbarSearch value={inputQuery} onChange={inputHandler} placeholder="Search checklists" />
+      </PageToolbar>
 
-        {renderContent()}
-      </div>
+      {renderContent()}
 
       <ChecklistDrawer
         isOpen={isDrawerOpen}

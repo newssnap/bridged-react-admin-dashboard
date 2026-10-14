@@ -96,7 +96,17 @@ const RULES = [
     id: 'radius-scale',
     level: 'warn',
     test: (l, f) => !f.startsWith('src/components/ui/') && /\brounded-(2xl|3xl|\[\d+px\])/.test(l),
-    msg: 'Off the radius scale: surfaces rounded-lg, nested pieces rounded-md, dialogs/palette rounded-xl, pills rounded-full.',
+    msg: 'Off the radius scale: fields rounded-sm, surfaces rounded-lg, nested pieces rounded-md, dialogs/palette rounded-xl, pills rounded-full.',
+  },
+  {
+    id: 'field-radius',
+    level: 'warn',
+    test: (l, f) =>
+      !f.startsWith('src/components/') &&
+      /\bbg-input\b/.test(l) &&
+      /\b(min-)?h-(8|9|10)\b/.test(l) &&
+      /\brounded-(lg|md|xl)\b/.test(l),
+    msg: 'Field-like controls (bg-input) use rounded-sm, like the kit inputs, not rounded-lg/md.',
   },
   {
     id: 'select-popper',

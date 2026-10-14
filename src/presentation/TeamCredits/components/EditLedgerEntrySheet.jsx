@@ -48,19 +48,17 @@ function EditLedgerEntrySheet({ open, record, teamId, onClose, onSubmit, isSubmi
         if (!next) handleClose();
       }}
     >
-      <SheetContent className={sheetContentClasses('sm')}>
+      <SheetContent
+        className={sheetContentClasses('sm')}
+        // Several fields: nothing is focused or selected on open.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
         <CreditSheetHeader
           title="Edit ledger entry"
           description="Corrects this entry in the team's ledger."
         />
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6">
-          <Form
-            form={form}
-            onFinish={handleFinish}
-            requiredMark="optional"
-            scrollToFirstError
-            autoComplete="off"
-          >
+          <Form form={form} onFinish={handleFinish} scrollToFirstError autoComplete="off">
             <CreditEntryFields />
           </Form>
         </div>

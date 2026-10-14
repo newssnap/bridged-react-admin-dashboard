@@ -28,7 +28,7 @@ You review UI changes in the Bridged admin dashboard (React 19, JSX, Tailwind 4,
      - Or does it hand-build something one of them already provides?
      - Does it use the shadcn kit composition (`Dialog`/`DialogContent`, `Sheet`, `Select`/`SelectTrigger`, `Field`)?
    - **Page anatomy and toolbar order:** ViewToggle → quick switch → filters → spacer → count → search → actions. The Create action sits in the PageHeader, and there is at most one primary action.
-   - **Radius scale:** surfaces `rounded-lg`, nested pieces `rounded-md`, dialogs and palette `rounded-xl`, pills `rounded-full`. Cards are flat (ring, no shadow).
+   - **Radius scale:** fields (inputs, selects, comboboxes, date pickers, search) `rounded-sm` from the kit, surfaces `rounded-lg`, nested pieces `rounded-md`, dialogs and palette `rounded-xl`, pills `rounded-full`. Cards are flat (ring, no shadow).
    - **Tokens only.**
      - No hex colours or raw palette colours (`bg-purple-500`) for brand or neutral surfaces.
      - Text on brand surfaces is `text-primary-foreground`.

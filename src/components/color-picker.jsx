@@ -397,12 +397,12 @@ function ColorPicker({
             aria-label="Pick a colour"
             disabled={disabled}
             className={cn(
-              'inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-input/50 p-1 align-middle transition-[box-shadow,border-color,background-color] duration-150 ease-out-quad outline-none hover:bg-input/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/30',
+              'inline-flex size-8 shrink-0 items-center justify-center rounded-sm border border-transparent bg-input/50 p-1 align-middle transition-[box-shadow,border-color,background-color] duration-150 ease-out-quad outline-none hover:bg-input/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/30',
               className
             )}
             {...props}
           >
-            <Swatch color={color} className="size-full rounded-md" />
+            <Swatch color={color} className="size-full rounded-xs" />
           </button>
         )}
       </PopoverTrigger>
