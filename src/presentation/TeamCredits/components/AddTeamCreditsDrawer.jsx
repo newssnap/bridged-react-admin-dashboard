@@ -1,23 +1,17 @@
 import React, { useEffect } from 'react';
-import {
-  Drawer,
-  Form,
-  InputNumber,
-  Select,
-  Input,
-  DatePicker,
-  Button,
-  Space,
-  Alert,
-  Divider,
-  Table,
-  Typography,
-} from 'antd';
 import dayjs from 'dayjs';
-import formatDate from '../../../utils/formatting/formateDate';
-
-const { TextArea } = Input;
-const { Text } = Typography;
+import { HugeiconsIcon } from '@hugeicons/react';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Form, FormField, useForm } from '@/components/form';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetFooter } from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
+import CreditBalanceSummary from './CreditBalanceSummary';
+import CreditEntryFields, { toCreditEntryPayload } from './CreditEntryFields';
+import LedgerTable from './LedgerTable';
+import { CreditSheetHeader, DiscardButton, SheetSection, sheetContentClasses } from './SheetParts';
+import TeamCombobox from './TeamCombobox';
 
 const AddTeamCreditsDrawer = ({
   open,
@@ -31,7 +25,7 @@ const AddTeamCreditsDrawer = ({
   isSubmitting,
   onTeamSelect,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = useForm();
 
   useEffect(() => {
     if (open) {
@@ -52,214 +46,85 @@ const AddTeamCreditsDrawer = ({
   }, [selectedTeamId, selectedTeamData, form]);
 
   const handleFinish = values => {
-    const submitData = {
-      teamId: values.teamId,
-      amount: values.amount,
-      purchaseType: values.purchaseType,
-      reason: values.reason || null,
-      notes: values.notes || null,
-      purchaseDate: values.purchaseDate
-        ? values.purchaseDate.toISOString()
-        : new Date().toISOString(),
-    };
-    onSubmit(submitData);
+    onSubmit({ teamId: values.teamId, ...toCreditEntryPayload(values) });
   };
 
-  const handleTeamChange = value => {
-    onTeamSelect(value);
-  };
-
-  const historyColumns = [
-    {
-      title: 'Date',
-      dataIndex: 'purchaseDate',
-      key: 'date',
-      render: value => <span>{value ? formatDate(value) : '--'}</span>,
-    },
-    {
-      title: 'Change',
-      dataIndex: 'amount',
-      key: 'change',
-      align: 'center',
-      render: (amount, record) => {
-        const isDeduct = record.purchaseType === 'deduct';
-        return (
-          <Text style={{ color: isDeduct ? '#ff4d4f' : '#52c41a' }}>
-            {isDeduct ? '-' : '+'}
-            {amount?.toLocaleString() || 0}
-          </Text>
-        );
-      },
-    },
-    {
-      title: 'Reason',
-      dataIndex: 'reason',
-      key: 'reason',
-      render: value => <span>{value || '--'}</span>,
-    },
-    {
-      title: 'Notes',
-      dataIndex: 'notes',
-      key: 'notes',
-      render: value => <span>{value || '--'}</span>,
-    },
-  ];
-
-  const historyTableData = historyData?.history || [];
   const hasSelectedTeam = !!selectedTeamId;
 
   return (
-    <Drawer
-      title="Add Team Credits"
-      placement="right"
-      onClose={onClose}
+    <Sheet
       open={open}
-      width={600}
-      footer={
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose} size="large">
-            Cancel
-          </Button>
-          <Button type="primary" size="large" onClick={() => form.submit()} loading={isSubmitting}>
-            Submit
-          </Button>
-        </Space>
-      }
+      onOpenChange={next => {
+        if (!next) onClose();
+      }}
     >
-      <Alert
-        title="Information"
-        description="Once credits are added to a team, credit usage and reporting will be enabled for that team."
-        type="info"
-        showIcon
-        style={{ marginBottom: '24px' }}
-      />
+      <SheetContent className={sheetContentClasses('md')}>
+        <CreditSheetHeader
+          title="Add credits"
+          description="Assign credits to a team, or deduct them."
+        />
+        <div className="min-h-0 flex-1 overflow-y-auto" data-flat="true">
+          <SheetSection>
+            <Alert className="rounded-lg border-transparent bg-primary/[0.07] *:[svg]:text-primary">
+              <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} />
+              <AlertTitle>Credits turn on usage and reporting</AlertTitle>
+              <AlertDescription>
+                Once a team has credits, its credit usage and reports are switched on.
+              </AlertDescription>
+            </Alert>
 
-      <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
-        <Form.Item
-          label="Team"
-          name="teamId"
-          rules={[
-            {
-              required: true,
-              message: 'Please select a team',
-            },
-          ]}
-        >
-          <Select
-            size="large"
-            placeholder="Select a team"
-            onChange={handleTeamChange}
-            showSearch
-            filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-          >
-            {teamsData?.map(team => (
-              <Select.Option
-                key={team.teamId}
-                value={team.teamId}
-                label={`${team.teamName} - ${team.companyName}`}
-              >
-                {team.teamName} - {team.companyName}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+            <Form
+              form={form}
+              onFinish={handleFinish}
+              requiredMark="optional"
+              scrollToFirstError
+              autoComplete="off"
+            >
+              <div className="flex flex-col gap-5">
+                <FormField
+                  label="Team"
+                  name="teamId"
+                  bind="valueChange"
+                  rules={[{ required: true, message: 'Choose a team' }]}
+                >
+                  {control => (
+                    <TeamCombobox teams={teamsData} control={control} onChange={onTeamSelect} />
+                  )}
+                </FormField>
 
-        {hasSelectedTeam && selectedTeamData && (
-          <Alert
-            message={
-              <div>
-                <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                  {selectedTeamData.teamName || '--'}
-                </div>
-                <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
-                  {selectedTeamData.companyName || '--'}
-                </div>
-                <div style={{ fontSize: '14px', marginTop: '8px' }}>
-                  <strong>Current Balance:</strong>{' '}
-                  {selectedTeamData.creditBalance?.toLocaleString() || 0}
-                </div>
+                {hasSelectedTeam && (
+                  <div className="rounded-lg bg-muted/40 p-4">
+                    <CreditBalanceSummary
+                      balance={historyData?.creditBalance ?? selectedTeamData?.creditBalance}
+                      history={historyData?.history}
+                      loading={isLoadingHistory && !historyData}
+                    />
+                  </div>
+                )}
+
+                <CreditEntryFields />
               </div>
-            }
-            type="info"
-            style={{ marginBottom: '15px' }}
-          />
-        )}
+            </Form>
+          </SheetSection>
 
-        <Form.Item
-          label="Amount"
-          name="amount"
-          rules={[
-            {
-              required: true,
-              message: 'Please enter the amount',
-            },
-            {
-              type: 'number',
-              min: 1,
-              message: 'Amount must be greater than 0',
-            },
-          ]}
-        >
-          <InputNumber size="large" placeholder="Enter amount" style={{ width: '100%' }} min={1} />
-        </Form.Item>
-
-        <Form.Item
-          label="Type"
-          name="purchaseType"
-          rules={[
-            {
-              required: true,
-              message: 'Please select a type',
-            },
-          ]}
-        >
-          <Select size="large" placeholder="Select type">
-            <Select.Option value="assign">Assign</Select.Option>
-            <Select.Option value="deduct">Deduct</Select.Option>
-          </Select>
-        </Form.Item>
-
-        <Form.Item label="Reason" name="reason">
-          <Input size="large" placeholder="Enter reason (optional)" />
-        </Form.Item>
-
-        <Form.Item label="Note" name="notes">
-          <TextArea rows={4} placeholder="Enter notes (optional)" size="large" />
-        </Form.Item>
-
-        <Form.Item
-          label="Date Input"
-          name="purchaseDate"
-          rules={[
-            {
-              required: true,
-              message: 'Please select a date',
-            },
-          ]}
-        >
-          <DatePicker size="large" style={{ width: '100%' }} format="YYYY-MM-DD HH:mm" showTime />
-        </Form.Item>
-      </Form>
-
-      {hasSelectedTeam && (
-        <>
-          <Divider style={{ margin: '24px 0' }}>Ledger History</Divider>
-
-          <Table
-            dataSource={historyTableData}
-            columns={historyColumns}
-            loading={isLoadingHistory}
-            pagination={false}
-            rowKey={(record, index) => index}
-            locale={{
-              emptyText: 'No history found',
-            }}
-          />
-        </>
-      )}
-    </Drawer>
+          {hasSelectedTeam && (
+            <SheetSection
+              title="Ledger"
+              description="Credits already assigned to or deducted from this team."
+            >
+              <LedgerTable history={historyData?.history || []} loading={isLoadingHistory} />
+            </SheetSection>
+          )}
+        </div>
+        <SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+          <DiscardButton form={form} onDiscard={onClose} disabled={isSubmitting} />
+          <Button type="button" onClick={() => form.submit()} disabled={isSubmitting}>
+            {isSubmitting && <Spinner data-icon="inline-start" />}
+            {isSubmitting ? 'Adding…' : 'Add credits'}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Form, notification } from 'antd';
+import { toast } from 'sonner';
+import { useForm } from '@/components/form';
 import { useAddTeamMemberMutation, useLazyGetUsersWithNoTeamQuery } from '../../../services/api';
 
 export const useAddMembersDrawerHandler = ({ existingMemberUserIds, teamId, onSuccess }) => {
-  const [form] = Form.useForm();
+  const [form] = useForm();
   const [open, setOpen] = useState(false);
   const [addTeamMember, { isLoading: isSubmitting }] = useAddTeamMemberMutation();
 
@@ -51,10 +52,7 @@ export const useAddMembersDrawerHandler = ({ existingMemberUserIds, teamId, onSu
     async values => {
       const memberIds = values?.memberIds ?? [];
       if (!teamId) {
-        notification.error({
-          message: 'Team ID is missing',
-          placement: 'bottomRight',
-        });
+        toast.error("Couldn't find the team to add members to");
         return;
       }
       if (!memberIds.length) return;
@@ -73,22 +71,12 @@ export const useAddMembersDrawerHandler = ({ existingMemberUserIds, teamId, onSu
       const succeeded = results.length - failed;
 
       if (failed === 0) {
-        notification.success({
-          message:
-            succeeded === 1
-              ? 'Member added successfully'
-              : `${succeeded} members added successfully`,
-          placement: 'bottomRight',
-        });
+        toast.success(succeeded === 1 ? 'Member added' : `${succeeded} members added`);
       } else if (succeeded === 0) {
-        notification.error({
-          message: 'Failed to add members',
-          placement: 'bottomRight',
-        });
+        toast.error(results.length === 1 ? "Couldn't add the member" : "Couldn't add the members");
       } else {
-        notification.warning({
-          message: `Added ${succeeded} of ${results.length} members. ${failed} failed.`,
-          placement: 'bottomRight',
+        toast.warning(`Added ${succeeded} of ${results.length} members`, {
+          description: `${failed} couldn't be added. Try them again.`,
         });
       }
 

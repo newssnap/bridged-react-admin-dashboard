@@ -1,113 +1,40 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Form, FormField, useForm, useWatch } from '@/components/form';
+import { MultiSelect } from '@/components/multi-select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  Drawer,
-  Form,
-  Input,
-  Select,
-  Switch,
-  Button,
-  Space,
-  Alert,
-  ColorPicker,
-  notification,
-  Typography,
-  Collapse,
-  Card,
-  Tag,
-  InputNumber,
-  Row,
-  Col,
-  Checkbox,
-  Dropdown,
-} from 'antd';
-import {
-  PictureOutlined,
-  LinkOutlined,
-  SyncOutlined,
-  CheckCircleOutlined,
-  DownOutlined,
-} from '@ant-design/icons';
-import { useCrawlBrandingMutation, useUploadImageMutation } from '../../../services/api';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import useAssignPlaybookDrawer from '../../dashboard/controllers/useAssignPlaybookDrawer';
 import PlaybookSelectionList from '../../dashboard/components/PlaybookSelectionList';
-import Icon from '../../../utils/components/Icon';
+import BrandSettings from './BrandSettings';
+import CompanyCombobox from './CompanyCombobox';
+import CrawlBrandingSheet from './CrawlBrandingSheet';
+import { DrawerSection } from './SettingParts';
+import UserCombobox from './UserCombobox';
 
-const { Text } = Typography;
 const defaultBrandSyncTheme = 'light';
 
-const CRAWL_PREVIEW_FIELDS = [
-  { key: 'primaryColor', label: 'Primary Color', whitelabeling: true, brandSync: true },
-  { key: 'accentColour', label: 'Accent Color', whitelabeling: false, brandSync: true },
-  { key: 'logo', label: 'Logo', whitelabeling: true, brandSync: true },
-  { key: 'theme', label: 'Theme', whitelabeling: false, brandSync: true },
-  { key: 'fontName', label: 'Font Name', whitelabeling: false, brandSync: true },
-  { key: 'baseFontScale', label: 'Base Font Scale', whitelabeling: false, brandSync: true },
-  { key: 'borderRadius', label: 'Border Radius', whitelabeling: false, brandSync: true },
-];
+const PLAYBOOK_RULES = [{ type: 'array', min: 1, message: 'Select at least one playbook' }];
 
-const ALL_CRAWL_FIELD_KEYS = CRAWL_PREVIEW_FIELDS.map(field => field.key);
-
-const crawlImportMenuItems = [
-  { key: 'whitelabeling', label: 'Import to Whitelabeling' },
-  { key: 'brandSync', label: 'Import to BrandSync' },
-  { key: 'both', label: 'Import to Both' },
-];
-
-const PlaybooksCollapseField = ({
-  value = [],
-  onChange,
-  playbooks = [],
-  playbookAgentLabelMap = {},
-  isLoadingPlaybooks = false,
-}) => {
-  const handleToggle = (playbookValue, checked) => {
-    const nextValue = checked
-      ? [...new Set([...value, playbookValue])]
-      : value.filter(item => item !== playbookValue);
-    onChange?.(nextValue);
-  };
-
+function PlaybooksSkeleton() {
   return (
-    <Collapse
-      size="small"
-      className="playbookCollapse"
-      style={{ backgroundColor: 'transparent' }}
-      expandIconPosition="end"
-      expandIcon={({ isActive }) => (
-        <Icon
-          name="ArrowRightOutlined"
-          color="primary"
-          style={{
-            transition: 'transform 0.2s',
-            width: 6,
-            transform: isActive ? 'rotate(270deg)' : 'rotate(90deg)',
-          }}
-        />
-      )}
-      items={[
-        {
-          key: 'playbooks',
-          label: (
-            <Space size={8}>
-              <Text>Playbooks</Text>
-              {value.length > 0 ? <Text type="secondary">({value.length})</Text> : null}
-            </Space>
-          ),
-          children: isLoadingPlaybooks ? (
-            <Text type="secondary">Loading playbooks...</Text>
-          ) : (
-            <PlaybookSelectionList
-              playbooks={playbooks}
-              playbookAgentLabelMap={playbookAgentLabelMap}
-              selectedPlaybooks={value}
-              onToggle={handleToggle}
-            />
-          ),
-        },
-      ]}
-    />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-hidden="true">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton key={index} className="h-20 rounded-lg" />
+      ))}
+    </div>
   );
-};
+}
 
 const AddTeamDrawer = ({
   open,
@@ -124,22 +51,8 @@ const AddTeamDrawer = ({
   onSubmit,
   isSubmitting,
 }) => {
-  const [form] = Form.useForm();
-  const fileInputRef = useRef(null);
-  const brandSyncFileInputRef = useRef(null);
-
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const [brandSyncLogoPreviewUrl, setBrandSyncLogoPreviewUrl] = useState('');
-  const [isBrandSyncDragging, setIsBrandSyncDragging] = useState(false);
-
+  const [form] = useForm();
   const [isCrawlDrawerOpen, setIsCrawlDrawerOpen] = useState(false);
-  const [crawlUrl, setCrawlUrl] = useState('');
-  const [crawledBrandData, setCrawledBrandData] = useState(null);
-  const [selectedCrawlFields, setSelectedCrawlFields] = useState([]);
-
-  const [uploadImage, { isLoading: isUploadingLogo }] = useUploadImageMutation();
-  const [crawlBranding, { isLoading: isCrawlingBranding }] = useCrawlBrandingMutation();
 
   const { playbooks, playbookAgentLabelMap, isLoadingPlaybooks } = useAssignPlaybookDrawer({
     form,
@@ -168,244 +81,7 @@ const AddTeamDrawer = ({
       brandSyncBaseFontScale: undefined,
       brandSyncBorderRadius: undefined,
     });
-
-    setLogoPreviewUrl('');
-    setBrandSyncLogoPreviewUrl('');
-    setIsCrawlDrawerOpen(false);
-    setCrawlUrl('');
-    setCrawledBrandData(null);
-    setSelectedCrawlFields([]);
   }, [open, form]);
-
-  const allCrawlFieldsSelected =
-    ALL_CRAWL_FIELD_KEYS.length > 0 &&
-    ALL_CRAWL_FIELD_KEYS.every(key => selectedCrawlFields.includes(key));
-
-  const handleToggleCrawlField = (fieldKey, checked) => {
-    setSelectedCrawlFields(prev =>
-      checked ? [...new Set([...prev, fieldKey])] : prev.filter(key => key !== fieldKey)
-    );
-  };
-
-  const handleToggleAllCrawlFields = () => {
-    setSelectedCrawlFields(allCrawlFieldsSelected ? [] : [...ALL_CRAWL_FIELD_KEYS]);
-  };
-
-  const renderCrawledFieldValue = (fieldKey, value) => {
-    if (fieldKey === 'primaryColor' || fieldKey === 'accentColour') {
-      return value ? (
-        <Space size={8}>
-          <ColorPicker defaultValue={value} showText disabled={true} />
-        </Space>
-      ) : (
-        <Text type="secondary">--</Text>
-      );
-    }
-
-    if (fieldKey === 'logo' && value) {
-      return (
-        <Space size={8}>
-          <img
-            src={value}
-            alt="Crawled logo"
-            style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4 }}
-          />
-          <Text type="secondary" className="singleLine" style={{ maxWidth: 280 }}>
-            {value}
-          </Text>
-        </Space>
-      );
-    }
-
-    return <Text type="secondary">{value ?? '--'}</Text>;
-  };
-
-  const processUploadedFile = async ({ file, onSetValue, onSetPreview }) => {
-    if (!file || !file.type?.startsWith('image/')) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await uploadImage(formData).unwrap();
-      if (response?.success && response?.data) {
-        const url = typeof response.data === 'string' ? response.data : response.data?.url;
-        if (url) {
-          onSetValue(url);
-          onSetPreview(url);
-        } else {
-          notification.error({
-            message: 'Upload failed',
-            description: 'Invalid response from server',
-          });
-        }
-      } else {
-        notification.error({
-          message: 'Error uploading image',
-          description: response?.message || 'Upload failed',
-        });
-      }
-    } catch (error) {
-      notification.error({
-        message: 'Error uploading image',
-        description: error?.data?.message || 'Something went wrong',
-      });
-    }
-  };
-
-  const handleLogoFileChange = async event => {
-    const file = event.target.files?.[0];
-    if (file) {
-      await processUploadedFile({
-        file,
-        onSetValue: url => form.setFieldValue('logoUrl', url),
-        onSetPreview: setLogoPreviewUrl,
-      });
-    }
-    event.target.value = '';
-  };
-
-  const handleBrandSyncLogoFileChange = async event => {
-    const file = event.target.files?.[0];
-    if (file) {
-      await processUploadedFile({
-        file,
-        onSetValue: url => form.setFieldValue('brandSyncLogo', url),
-        onSetPreview: setBrandSyncLogoPreviewUrl,
-      });
-    }
-    event.target.value = '';
-  };
-
-  const handleCrawlBranding = async () => {
-    const trimmedUrl = crawlUrl?.trim();
-    if (!trimmedUrl) {
-      notification.warning({
-        message: 'Please enter a website URL',
-        placement: 'bottomRight',
-      });
-      return;
-    }
-
-    try {
-      const response = await crawlBranding({ url: trimmedUrl }).unwrap();
-      if (!response?.success || !response?.data) {
-        notification.error({
-          message: response?.errorObject?.userErrorText || 'Failed to fetch branding data',
-          placement: 'bottomRight',
-        });
-        return;
-      }
-
-      setCrawledBrandData({
-        primaryColor: response.data.primaryColor || '',
-        accentColour: response.data.accentColour || '',
-        logo: response.data.logo || '',
-        theme: response.data.theme || defaultBrandSyncTheme,
-        fontName: response.data.fontName || '',
-        baseFontScale: response.data.baseFontScale ?? undefined,
-        borderRadius: response.data.borderRadius || '',
-      });
-      setSelectedCrawlFields([...ALL_CRAWL_FIELD_KEYS]);
-      notification.success({
-        message: 'Crawled data is ready',
-        placement: 'bottomRight',
-      });
-    } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || error?.data?.message || 'Crawl failed',
-        placement: 'bottomRight',
-      });
-    }
-  };
-
-  const handleImportCrawledSettings = target => {
-    if (!crawledBrandData) return;
-
-    if (!selectedCrawlFields.length) {
-      notification.warning({
-        message: 'Select at least one field to import',
-        placement: 'bottomRight',
-      });
-      return;
-    }
-
-    const applyToWhitelabeling = target === 'whitelabeling' || target === 'both';
-    const applyToBrandSync = target === 'brandSync' || target === 'both';
-    const isSelected = fieldKey => selectedCrawlFields.includes(fieldKey);
-
-    let importedCount = 0;
-
-    if (applyToWhitelabeling) {
-      if (isSelected('primaryColor')) {
-        form.setFieldValue('primaryColor', crawledBrandData.primaryColor || '#753fd0');
-        importedCount += 1;
-      }
-      if (isSelected('logo') && crawledBrandData.logo) {
-        form.setFieldValue('logoUrl', crawledBrandData.logo);
-        setLogoPreviewUrl(crawledBrandData.logo);
-        importedCount += 1;
-      }
-    }
-
-    if (applyToBrandSync) {
-      const brandSyncUpdates = {};
-
-      if (isSelected('primaryColor')) {
-        brandSyncUpdates.brandSyncPrimaryColor = crawledBrandData.primaryColor || undefined;
-      }
-      if (isSelected('accentColour')) {
-        brandSyncUpdates.brandSyncAccentColour = crawledBrandData.accentColour || undefined;
-      }
-      if (isSelected('logo') && crawledBrandData.logo) {
-        brandSyncUpdates.brandSyncLogo = crawledBrandData.logo;
-        setBrandSyncLogoPreviewUrl(crawledBrandData.logo);
-      }
-      if (isSelected('theme')) {
-        brandSyncUpdates.brandSyncTheme = crawledBrandData.theme || defaultBrandSyncTheme;
-      }
-      if (isSelected('fontName')) {
-        brandSyncUpdates.brandSyncFontName = crawledBrandData.fontName || undefined;
-      }
-      if (isSelected('baseFontScale')) {
-        brandSyncUpdates.brandSyncBaseFontScale = crawledBrandData.baseFontScale;
-      }
-      if (isSelected('borderRadius')) {
-        brandSyncUpdates.brandSyncBorderRadius = crawledBrandData.borderRadius || undefined;
-      }
-
-      if (Object.keys(brandSyncUpdates).length) {
-        form.setFieldsValue(brandSyncUpdates);
-        importedCount += Object.keys(brandSyncUpdates).length;
-      }
-    }
-
-    if (importedCount === 0) {
-      notification.warning({
-        message: 'No applicable fields for this destination',
-        description: 'The selected fields are not used in the chosen import target.',
-        placement: 'bottomRight',
-      });
-      return;
-    }
-
-    if (applyToWhitelabeling) {
-      form.setFieldValue('isWhitelabelingEnabled', true);
-    }
-    if (applyToBrandSync) {
-      form.setFieldValue('isBrandSyncEnabled', true);
-    }
-
-    notification.success({
-      message:
-        target === 'both'
-          ? 'Imported into Whitelabeling and BrandSync'
-          : target === 'whitelabeling'
-            ? 'Imported into Whitelabeling'
-            : 'Imported into BrandSync',
-      placement: 'bottomRight',
-    });
-    setIsCrawlDrawerOpen(false);
-  };
 
   const handleFinish = values => {
     const assignedPlaybookTypes = values.assignedPlaybooks ?? [];
@@ -414,10 +90,7 @@ const AddTeamDrawer = ({
       .filter(Boolean);
 
     if (playbookIds.length === 0) {
-      notification.error({
-        message: 'Please select at least one playbook',
-        placement: 'bottomRight',
-      });
+      toast.error('Select at least one playbook');
       return;
     }
 
@@ -455,632 +128,175 @@ const AddTeamDrawer = ({
     });
   };
 
-  const isWhitelabelingEnabled = Form.useWatch('isWhitelabelingEnabled', form);
-  const isBrandSyncEnabled = Form.useWatch('isBrandSyncEnabled', form);
-  const selectedTeamOwnerId = Form.useWatch('teamOwnerId', form);
+  const selectedTeamOwnerId = useWatch('teamOwnerId', form);
+  const assignedPlaybooks = useWatch('assignedPlaybooks', form);
   const memberOptions = (userOptions ?? []).filter(opt => opt.value !== selectedTeamOwnerId);
+
+  const clearPeople = companyId => {
+    form.setFieldValue('teamOwnerId', undefined);
+    form.setFieldValue('memberIds', undefined);
+    onCompanyChange(companyId);
+  };
+
+  const playbookCount = assignedPlaybooks?.length ?? 0;
 
   return (
     <>
-      <Drawer
-        title="Add Team"
-        placement="right"
-        onClose={onClose}
+      <Sheet
         open={open}
-        width={980}
-        footer={
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={onClose} size="large">
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              size="large"
-              onClick={() => form.submit()}
-              loading={isSubmitting}
-            >
-              Create Team
-            </Button>
-          </Space>
-        }
+        onOpenChange={next => {
+          if (!next) onClose();
+        }}
       >
-        <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="Team Name"
-                name="teamName"
-                rules={[{ required: true, message: 'Please enter team name' }]}
-              >
-                <Input size="large" placeholder="Enter team name" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Company"
-                name="companyId"
-                rules={[{ required: true, message: 'Please select a company' }]}
-              >
-                <Select
-                  size="large"
-                  placeholder="Select company"
-                  options={companyOptions}
-                  showSearch
-                  loading={isLoadingCompanies}
-                  optionFilterProp="label"
-                  filterOption={false}
-                  allowClear
-                  onChange={companyId => {
-                    form.setFieldValue('teamOwnerId', undefined);
-                    form.setFieldValue('memberIds', undefined);
-                    onCompanyChange(companyId);
-                  }}
-                  onSearch={onCompanySearch}
-                  onBlur={() => onCompanySearch?.('')}
-                  notFoundContent={
-                    !isLoadingCompanies && companySearchText?.trim() ? (
-                      <div
-                        style={{
-                          borderRadius: 8,
-                          padding: 24,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minHeight: 120,
+        <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]">
+          <SheetHeader className="border-b px-6 py-4 pe-14">
+            <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
+              Create team
+            </SheetTitle>
+            <SheetDescription>
+              Set up the team, its owner and members, the playbooks it can use and its branding.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div
+            data-flat="true"
+            className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6 [--flat-gutter:--spacing(6)]"
+          >
+            <Form
+              form={form}
+              onFinish={handleFinish}
+              requiredMark={false}
+              scrollToFirstError
+              autoComplete="off"
+            >
+              <DrawerSection title="Team details">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    label="Team name"
+                    name="teamName"
+                    rules={[{ required: true, message: 'Enter a team name' }]}
+                  >
+                    <Input placeholder="e.g. Acme newsroom" />
+                  </FormField>
+                  <FormField
+                    label="Company"
+                    name="companyId"
+                    bind="valueChange"
+                    rules={[{ required: true, message: 'Select a company' }]}
+                  >
+                    {control => (
+                      <CompanyCombobox
+                        id={control.id}
+                        aria-invalid={control['aria-invalid']}
+                        aria-describedby={control['aria-describedby']}
+                        value={control.value}
+                        onValueChange={companyId => {
+                          control.onValueChange(companyId);
+                          clearPeople(companyId);
                         }}
-                      >
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 14,
-                            marginBottom: 20,
-                            textAlign: 'center',
-                          }}
-                        >
-                          No companies found.
-                        </div>
-                        <Button
-                          type="primary"
-                          size="middle"
-                          style={{ minWidth: 140 }}
-                          onClick={async () => {
-                            const createdCompanyId = await onCreateCompany?.({
-                              name: companySearchText ?? '',
-                            });
-                            if (!createdCompanyId) return;
+                        options={companyOptions}
+                        loading={isLoadingCompanies}
+                        searchText={companySearchText}
+                        onSearch={onCompanySearch}
+                        onCreate={onCreateCompany}
+                        isCreating={isCreatingCompany}
+                      />
+                    )}
+                  </FormField>
+                </div>
+              </DrawerSection>
 
-                            form.setFieldValue('companyId', createdCompanyId);
-                            form.setFieldValue('teamOwnerId', undefined);
-                            form.setFieldValue('memberIds', undefined);
-                            onCompanyChange(createdCompanyId);
-                          }}
-                          loading={isCreatingCompany}
-                        >
-                          Create "{companySearchText || 'company'}"
-                        </Button>
-                      </div>
-                    ) : null
-                  }
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16} style={{ marginBottom: '8px' }}>
-            <Col span={12}>
-              <Form.Item
-                label="Team Owner"
-                name="teamOwnerId"
-                rules={[{ required: true, message: 'Please select team owner' }]}
+              <DrawerSection
+                title="People"
+                description="The owner manages the team. You can add members later too."
               >
-                <Select
-                  size="large"
-                  placeholder="Select team owner"
-                  options={userOptions}
-                  showSearch
-                  optionFilterProp="label"
-                  loading={isUsersLoading}
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Members (Optional)" name="memberIds">
-                <Select
-                  size="large"
-                  mode="multiple"
-                  placeholder="Select members"
-                  options={memberOptions}
-                  showSearch
-                  optionFilterProp="label"
-                  loading={isUsersLoading}
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+                <FormField
+                  label="Team owner"
+                  name="teamOwnerId"
+                  bind="valueChange"
+                  rules={[{ required: true, message: 'Select a team owner' }]}
+                >
+                  {control => (
+                    <UserCombobox
+                      id={control.id}
+                      aria-invalid={control['aria-invalid']}
+                      aria-describedby={control['aria-describedby']}
+                      value={control.value}
+                      onValueChange={control.onValueChange}
+                      options={userOptions}
+                      loading={isUsersLoading}
+                      placeholder="Select the team owner"
+                    />
+                  )}
+                </FormField>
+                <FormField label="Members" name="memberIds" bind="valueChange">
+                  {control => (
+                    <MultiSelect
+                      id={control.id}
+                      aria-invalid={control['aria-invalid']}
+                      options={memberOptions}
+                      value={control.value ?? []}
+                      onValueChange={values => control.onValueChange(values)}
+                      placeholder="Select members (optional)"
+                      loading={isUsersLoading}
+                      allowClear
+                    />
+                  )}
+                </FormField>
+              </DrawerSection>
 
-          <Form.Item
-            name="assignedPlaybooks"
-            style={{ marginBottom: '22px' }}
-            initialValue={[]}
-            rules={[
-              {
-                type: 'array',
-                min: 1,
-                message: 'Please select at least one playbook',
-              },
-            ]}
-          >
-            <PlaybooksCollapseField
-              playbooks={playbooks}
-              playbookAgentLabelMap={playbookAgentLabelMap}
-              isLoadingPlaybooks={isLoadingPlaybooks}
-            />
-          </Form.Item>
-
-          <Card
-            size="small"
-            title={
-              <Space>
-                <PictureOutlined />
-                <Text strong>Brand Configuration</Text>
-              </Space>
-            }
-          >
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-              <Alert
-                type="info"
-                showIcon
-                message="Configure manually or import from website"
-                description="Use crawl to fetch brand style and import it into Whitelabeling or BrandSync."
-                action={
-                  <Button
-                    type="primary"
-                    size="small"
-                    icon={<LinkOutlined />}
-                    onClick={() => setIsCrawlDrawerOpen(true)}
-                  >
-                    Crawl From Website
-                  </Button>
+              <DrawerSection
+                title="Playbooks"
+                description={
+                  playbookCount
+                    ? `${playbookCount} selected. The team can use these playbooks.`
+                    : 'Pick at least one playbook the team can use.'
                 }
-              />
+              >
+                <FormField name="assignedPlaybooks" initialValue={[]} rules={PLAYBOOK_RULES}>
+                  {control =>
+                    isLoadingPlaybooks ? (
+                      <PlaybooksSkeleton />
+                    ) : (
+                      <PlaybookSelectionList
+                        playbooks={playbooks}
+                        playbookAgentLabelMap={playbookAgentLabelMap}
+                        selectedPlaybooks={control.value ?? []}
+                        onToggle={(playbookValue, checked) => {
+                          const current = control.value ?? [];
+                          const nextValue = checked
+                            ? [...new Set([...current, playbookValue])]
+                            : current.filter(item => item !== playbookValue);
+                          control.onChange(nextValue);
+                        }}
+                      />
+                    )
+                  }
+                </FormField>
+              </DrawerSection>
 
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Card
-                    size="small"
-                    className={`brand-section-card${isWhitelabelingEnabled ? ' is-expanded' : ''}`}
-                    title="Whitelabeling"
-                    extra={
-                      <Form.Item
-                        name="isWhitelabelingEnabled"
-                        valuePropName="checked"
-                        style={{ marginBottom: 0 }}
-                      >
-                        <Switch />
-                      </Form.Item>
-                    }
-                  >
-                    <div
-                      className={`brand-section-collapse${isWhitelabelingEnabled ? ' is-open' : ''}`}
-                    >
-                      <div className="brand-section-collapse-inner">
-                    <Form.Item
-                      label="Primary Color"
-                      name="primaryColor"
-                      getValueFromEvent={color => color?.toHexString?.() ?? color}
-                    >
-                      <ColorPicker format="hex" showText />
-                    </Form.Item>
+              <BrandSettings form={form} onOpenCrawl={() => setIsCrawlDrawerOpen(true)} />
+            </Form>
+          </div>
 
-                    <Form.Item label="Logo" name="logoUrl">
-                      <div>
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => fileInputRef.current?.click()}
-                          onKeyDown={event => event.key === 'Enter' && fileInputRef.current?.click()}
-                          onDragOver={event => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setIsDragging(true);
-                          }}
-                          onDragLeave={event => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setIsDragging(false);
-                          }}
-                          onDrop={event => {
-                            event.preventDefault();
-                            setIsDragging(false);
-                            const file = event.dataTransfer?.files?.[0];
-                            if (file) {
-                              processUploadedFile({
-                                file,
-                                onSetValue: url => form.setFieldValue('logoUrl', url),
-                                onSetPreview: setLogoPreviewUrl,
-                              });
-                            }
-                          }}
-                          style={{
-                            border: `1px dashed ${isDragging ? '#1890ff' : '#d9d9d9'}`,
-                            borderRadius: 8,
-                            padding: 24,
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            background: logoPreviewUrl
-                              ? `center/contain no-repeat url(${logoPreviewUrl})`
-                              : isDragging
-                                ? '#e6f7ff'
-                                : '#fafafa',
-                            minHeight: 120,
-                          }}
-                        >
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={handleLogoFileChange}
-                            disabled={isUploadingLogo}
-                          />
-                          {!logoPreviewUrl ? (
-                            <>
-                              <PictureOutlined
-                                style={{ fontSize: 32, color: '#bfbfbf', marginBottom: 8 }}
-                              />
-                              <div style={{ color: '#8c8c8c' }}>
-                                Click or drag file here to upload logo
-                              </div>
-                              {isUploadingLogo ? (
-                                <div style={{ marginTop: 8, color: '#1890ff' }}>Uploading...</div>
-                              ) : null}
-                            </>
-                          ) : null}
-                        </div>
-                        {logoPreviewUrl ? (
-                          <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                            <Button
-                              type="primary"
-                              size="middle"
-                              onClick={() => fileInputRef.current?.click()}
-                              loading={isUploadingLogo}
-                              style={{ flex: 1 }}
-                            >
-                              Change
-                            </Button>
-                            <Button
-                              type="default"
-                              size="middle"
-                              onClick={() => {
-                                form.setFieldValue('logoUrl', undefined);
-                                setLogoPreviewUrl('');
-                              }}
-                              style={{ flex: 1 }}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </Form.Item>
-                      </div>
-                    </div>
-                  </Card>
-                </Col>
-
-                <Col span={12}>
-                  <Card
-                    size="small"
-                    className={`brand-section-card${isBrandSyncEnabled ? ' is-expanded' : ''}`}
-                    title="BrandSync"
-                    extra={
-                      <Form.Item
-                        name="isBrandSyncEnabled"
-                        valuePropName="checked"
-                        style={{ marginBottom: 0 }}
-                      >
-                        <Switch />
-                      </Form.Item>
-                    }
-                  >
-                    <div
-                      className={`brand-section-collapse${isBrandSyncEnabled ? ' is-open' : ''}`}
-                    >
-                      <div className="brand-section-collapse-inner">
-                    <Row gutter={12}>
-                      <Col span={12}>
-                        <Form.Item
-                          label="Primary Color"
-                          name="brandSyncPrimaryColor"
-                          getValueFromEvent={color => color?.toHexString?.() ?? color}
-                        >
-                          <ColorPicker format="hex" showText />
-                        </Form.Item>
-                      </Col>
-                      <Col span={12}>
-                        <Form.Item
-                          label="Accent Color"
-                          name="brandSyncAccentColour"
-                          getValueFromEvent={color => color?.toHexString?.() ?? color}
-                        >
-                          <ColorPicker format="hex" showText />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-
-                    <Row gutter={12}>
-                      <Col span={12}>
-                        <Form.Item label="Theme" name="brandSyncTheme">
-                          <Select
-                            size="large"
-                            options={[
-                              { value: 'light', label: 'Light' },
-                              { value: 'dark', label: 'Dark' },
-                            ]}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={12}>
-                        <Form.Item label="Font Name" name="brandSyncFontName">
-                          <Input size="large" placeholder="Inter" />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-
-                    <Row gutter={12}>
-                      <Col span={12}>
-                        <Form.Item label="Base Font Scale" name="brandSyncBaseFontScale">
-                          <InputNumber size="large" style={{ width: '100%' }} min={1} max={12} />
-                        </Form.Item>
-                      </Col>
-                      <Col span={12}>
-                        <Form.Item label="Border Radius" name="brandSyncBorderRadius">
-                          <Input size="large" placeholder="0px" />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-
-                    <Form.Item label="Logo" name="brandSyncLogo">
-                      <div>
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => brandSyncFileInputRef.current?.click()}
-                          onKeyDown={event =>
-                            event.key === 'Enter' && brandSyncFileInputRef.current?.click()
-                          }
-                          onDragOver={event => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setIsBrandSyncDragging(true);
-                          }}
-                          onDragLeave={event => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setIsBrandSyncDragging(false);
-                          }}
-                          onDrop={event => {
-                            event.preventDefault();
-                            setIsBrandSyncDragging(false);
-                            const file = event.dataTransfer?.files?.[0];
-                            if (file) {
-                              processUploadedFile({
-                                file,
-                                onSetValue: url => form.setFieldValue('brandSyncLogo', url),
-                                onSetPreview: setBrandSyncLogoPreviewUrl,
-                              });
-                            }
-                          }}
-                          style={{
-                            border: `1px dashed ${isBrandSyncDragging ? '#1890ff' : '#d9d9d9'}`,
-                            borderRadius: 8,
-                            padding: 24,
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            background: brandSyncLogoPreviewUrl
-                              ? `center/contain no-repeat url(${brandSyncLogoPreviewUrl})`
-                              : isBrandSyncDragging
-                                ? '#e6f7ff'
-                                : '#fafafa',
-                            minHeight: 120,
-                          }}
-                        >
-                          <input
-                            ref={brandSyncFileInputRef}
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={handleBrandSyncLogoFileChange}
-                            disabled={isUploadingLogo}
-                          />
-                          {!brandSyncLogoPreviewUrl ? (
-                            <>
-                              <PictureOutlined
-                                style={{ fontSize: 32, color: '#bfbfbf', marginBottom: 8 }}
-                              />
-                              <div style={{ color: '#8c8c8c' }}>
-                                Click or drag file here to upload BrandSync logo
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
-                        {brandSyncLogoPreviewUrl ? (
-                          <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                            <Button
-                              type="primary"
-                              size="middle"
-                              onClick={() => brandSyncFileInputRef.current?.click()}
-                              loading={isUploadingLogo}
-                              style={{ flex: 1 }}
-                            >
-                              Change
-                            </Button>
-                            <Button
-                              type="default"
-                              size="middle"
-                              onClick={() => {
-                                form.setFieldValue('brandSyncLogo', undefined);
-                                setBrandSyncLogoPreviewUrl('');
-                              }}
-                              style={{ flex: 1 }}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </Form.Item>
-                      </div>
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-            </Space>
-          </Card>
-        </Form>
-      </Drawer>
-
-      <Drawer
-        title="Crawl From Website"
-        placement="right"
-        width={720}
-        open={isCrawlDrawerOpen}
-        onClose={() => setIsCrawlDrawerOpen(false)}
-        footer={
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button size="large" onClick={() => setIsCrawlDrawerOpen(false)}>
+          <SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Dropdown
-              menu={{
-                items: crawlImportMenuItems,
-                onClick: ({ key }) => handleImportCrawledSettings(key),
-              }}
-              trigger={['click']}
-              disabled={!crawledBrandData || selectedCrawlFields.length === 0}
-            >
-              <Button
-                type="primary"
-                size="large"
-                disabled={!crawledBrandData || selectedCrawlFields.length === 0}
-              >
-                Import settings <DownOutlined />
-              </Button>
-            </Dropdown>
-          </Space>
-        }
-      >
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Alert
-            type="info"
-            showIcon
-            message="Paste a website URL and crawl its branding"
-            description="Select the fields you want, then choose an import destination from the Import settings menu."
-          />
-
-          <Space.Compact style={{ width: '100%' }}>
-            <Input
-              placeholder="https://stg-blog.bridged.media"
-              value={crawlUrl}
-              onChange={event => setCrawlUrl(event.target.value)}
-              onPressEnter={handleCrawlBranding}
-              size="large"
-            />
-            <Button
-              type="primary"
-              icon={<SyncOutlined />}
-              loading={isCrawlingBranding}
-              onClick={handleCrawlBranding}
-              size="large"
-            >
-              Crawl
+            <Button type="button" onClick={() => form.submit()} disabled={isSubmitting}>
+              {isSubmitting && <Spinner data-icon="inline-start" />}
+              {isSubmitting ? 'Creating…' : 'Create team'}
             </Button>
-          </Space.Compact>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-          {crawledBrandData ? (
-            <Card
-              size="small"
-              type="inner"
-              title={
-                <Space>
-                  <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                  <Text strong>Crawled Data Preview</Text>
-                  <Text type="secondary">({selectedCrawlFields.length} selected)</Text>
-                </Space>
-              }
-              extra={
-                <Button type="link" size="small" onClick={handleToggleAllCrawlFields}>
-                  {allCrawlFieldsSelected ? 'Deselect all' : 'Select all'}
-                </Button>
-              }
-            >
-              <Space direction="vertical" size={0} style={{ width: '100%' }}>
-                {CRAWL_PREVIEW_FIELDS.map((field, index) => {
-                  const value = crawledBrandData[field.key];
-                  const isChecked = selectedCrawlFields.includes(field.key);
-
-                  return (
-                    <div
-                      key={field.key}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 12,
-                        padding: '12px 0',
-                        borderBottom:
-                          index < CRAWL_PREVIEW_FIELDS.length - 1
-                            ? '1px solid var(--primary-Color-Opacity)'
-                            : 'none',
-                      }}
-                    >
-                      <Checkbox
-                        checked={isChecked}
-                        onChange={event => handleToggleCrawlField(field.key, event.target.checked)}
-                        style={{ marginTop: 2 }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <Space
-                          style={{
-                            width: '100%',
-                            justifyContent: 'space-between',
-                            marginBottom: 4,
-                          }}
-                          align="start"
-                        >
-                          <Text strong>{field.label}</Text>
-                          <Space size={4} wrap>
-                            {field.whitelabeling ? (
-                              <Tag color="blue" style={{ margin: 0 }}>
-                                Whitelabeling
-                              </Tag>
-                            ) : null}
-                            {field.brandSync ? (
-                              <Tag color="purple" style={{ margin: 0 }}>
-                                BrandSync
-                              </Tag>
-                            ) : null}
-                          </Space>
-                        </Space>
-                        {renderCrawledFieldValue(field.key, value)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </Space>
-            </Card>
-          ) : (
-            <Alert
-              type="warning"
-              showIcon
-              message="No crawled data yet"
-              description="Run crawl to see preview."
-            />
-          )}
-        </Space>
-      </Drawer>
+      <CrawlBrandingSheet
+        open={isCrawlDrawerOpen}
+        onOpenChange={setIsCrawlDrawerOpen}
+        form={form}
+        resetWhen={open}
+      />
     </>
   );
 };

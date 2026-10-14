@@ -1,0 +1,447 @@
+/*
+ * shadcn/ui global stylesheet (Tailwind CSS 4, Qweek "radix-luma" style).
+ * components.json points here: `npx shadcn@latest add <component>` writes theme
+ * variables into this file. Brand: --primary follows --primary-Color (white-label).
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/* "container" appears in JS identifiers; never generate the utility from them. */
+@source not inline('container');
+
+/* Satoshi (Fontshare), self-hosted: one variable file covers weights 300-900. */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('../assets/fonts/satoshi/Satoshi-Variable.ttf') format('truetype');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('../assets/fonts/satoshi/Satoshi-VariableItalic.ttf') format('truetype');
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: 'Satoshi', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Satoshi', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-serif: 'Satoshi', ui-serif, Georgia, serif;
+  /* Screen screenshots and live previews (`aspect-screen`); mirrors SCREEN_PREVIEW_FRAME. */
+  --aspect-screen: 1024 / 745;
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-height: cubic-bezier(0.25, 1, 0.5, 1);
+  --animate-disclosure-down: disclosure-down 250ms var(--ease-height);
+  --animate-disclosure-up: disclosure-up 200ms var(--ease-out-quad);
+  --animate-check-draw: check-draw 200ms var(--ease-out-quad) both;
+  --animate-pop: pop 300ms var(--ease-out-expo);
+  /* Pages rise 8px and fade in once on load. */
+  --animate-page-in: page-in 700ms var(--ease-out-expo) both;
+  /* Raised pills: the active nav item, segmented options, primary buttons. */
+  --shadow-pill: 0 1px 2px rgb(0 0 0 / 6%), 0 1px 1px rgb(0 0 0 / 4%);
+  --shadow-float: 0 24px 48px -12px rgb(10 10 10 / 18%), 0 8px 16px -8px rgb(10 10 10 / 10%);
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  /* AIBorder: gradient sweep along the ring; duration comes from the component (--duration). */
+  --animate-ai-shine: ai-shine var(--duration, 14s) linear infinite;
+  /* Media list: "used as reference" icon glow. */
+  --animate-reference-glow: reference-glow 2s infinite;
+
+  @keyframes ai-shine {
+    0% {
+      background-position: -150% 0;
+    }
+    50% {
+      background-position: 150% 0;
+    }
+    100% {
+      background-position: -150% 0;
+    }
+  }
+
+  @keyframes reference-glow {
+    0% {
+      filter: drop-shadow(0 0 0px rgb(58, 247, 1));
+    }
+    100% {
+      filter: drop-shadow(0 0 18px rgb(167, 245, 98));
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      scale: 0.85;
+    }
+    50% {
+      scale: 1.12;
+    }
+    100% {
+      scale: 1;
+    }
+  }
+
+  @keyframes check-draw {
+    from {
+      stroke-dashoffset: 21;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes disclosure-down {
+    from {
+      height: 0;
+      opacity: 0;
+    }
+    to {
+      height: var(--disclosure-height);
+      opacity: 1;
+    }
+  }
+
+  @keyframes disclosure-up {
+    from {
+      height: var(--disclosure-height);
+      opacity: 1;
+    }
+    to {
+      height: 0;
+      opacity: 0;
+    }
+  }
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Brand: --primary follows --primary-Color, which applyBrandingCss sets at runtime
+ * (Bridged purple by default, the tenant colour when white-label branding is on).
+ */
+:root {
+  /* Bridged design system (Qweek Site standard): white panel, neutral greys, brand colour for actions. */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  /* White-label brand colour; applyBrandingCss overrides it on <html> at runtime. */
+  --primary-Color: #753fd0;
+  --primary: var(--primary-Color, #753fd0);
+  /* Contrast-safe text on brand fills; applyBrandingCss picks near-white or near-black. */
+  --primary-foreground: var(--primary-Color-foreground, #fbf9ff);
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #e40014;
+  --success: #047857;
+  --warning: #b45309;
+  --info: #0369a1;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: var(--primary);
+  --chart-1: color-mix(in oklch, var(--primary) 35%, white);
+  --chart-2: color-mix(in oklch, var(--primary) 60%, white);
+  --chart-3: color-mix(in oklch, var(--primary) 80%, white);
+  --chart-4: var(--primary);
+  --chart-5: color-mix(in oklch, var(--primary) 75%, black);
+  --radius: 1rem;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: var(--primary);
+  /* Highlight shine ring (Help button). Fixed hues, picked for >=3:1 against the page
+     background, so the ring reads with any white-label brand colour. */
+  --shine-1: #db2777;
+  --shine-2: #ea580c;
+  --shine-3: #7c3aed;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --popover: #171717;
+  --popover-foreground: #fafafa;
+  --primary: color-mix(in oklch, var(--primary-Color, #753fd0) 82%, white);
+  --primary-foreground: var(--primary-Color-foreground-dark, #fbf9ff);
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a1a1a1;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #ff6568;
+  --success: #6ee7b7;
+  --warning: #fcd34d;
+  --info: #7dd3fc;
+  --border: #ffffff1a;
+  --input: #ffffff26;
+  --ring: var(--primary);
+  --sidebar: #171717;
+  --sidebar-foreground: #fafafa;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #ffffff1a;
+  --sidebar-ring: var(--primary);
+  --shine-1: #fe8fb5;
+  --shine-2: #ffbe7b;
+  --shine-3: #c4b5fd;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans antialiased;
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+}
+
+/* Paints only the padding box of an element: a gradient ring (AIBorder). */
+@utility ai-ring-mask {
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Inline content revealed by a toggle (switch panels, conditional fields): a short drop-in. */
+@utility reveal-in {
+  animation: reveal-in 200ms var(--ease-out-quad) backwards;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes reveal-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* Card grids and lists: children rise and fade in one after another (first 12 staggered). */
+@utility stagger-in {
+  & > * {
+    animation: rise-in 500ms var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--stagger-index, 12), 12) * 40ms);
+  }
+  & > :nth-child(1) { --stagger-index: 0; }
+  & > :nth-child(2) { --stagger-index: 1; }
+  & > :nth-child(3) { --stagger-index: 2; }
+  & > :nth-child(4) { --stagger-index: 3; }
+  & > :nth-child(5) { --stagger-index: 4; }
+  & > :nth-child(6) { --stagger-index: 5; }
+  & > :nth-child(7) { --stagger-index: 6; }
+  & > :nth-child(8) { --stagger-index: 7; }
+  & > :nth-child(9) { --stagger-index: 8; }
+  & > :nth-child(10) { --stagger-index: 9; }
+  & > :nth-child(11) { --stagger-index: 10; }
+  & > :nth-child(12) { --stagger-index: 11; }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* Reduced motion: menus and overlays fade, without scaling or sliding. */
+@media (prefers-reduced-motion: reduce) {
+  [data-slot$='menu-content'],
+  [data-slot$='menu-sub-content'],
+  [data-slot='navigation-menu-viewport'],
+  [data-slot='dialog-content'],
+  [data-slot='alert-dialog-content'],
+  [data-slot='sheet-content'],
+  [data-slot='popover-content'],
+  [data-slot='hover-card-content'],
+  [data-slot='tooltip-content'],
+  [data-slot='combobox-content'] {
+    --tw-enter-scale: 1;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+    --tw-enter-opacity: 0;
+    --tw-exit-opacity: 0;
+  }
+}
+
+/* Reduced motion: accordions and collapsibles fade instead of changing height. */
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='accordion-content'][data-state='open'],
+  [data-slot='collapsible-content'][data-state='open'] {
+    animation: disclosure-fade-in 150ms ease;
+  }
+  [data-slot='accordion-content'][data-state='closed'],
+  [data-slot='collapsible-content'][data-state='closed'] {
+    animation: disclosure-fade-out 150ms ease;
+  }
+}
+
+@keyframes disclosure-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes disclosure-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Calendar month changes (DayPicker's `animate`): a short directional crossfade. */
+@keyframes calendar-enter {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--calendar-slide) * var(--calendar-dir, 1)));
+    filter: blur(2px);
+  }
+}
+@keyframes calendar-exit {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--calendar-slide) * var(--calendar-dir, 1)));
+    filter: blur(2px);
+  }
+}
+.calendar-weeks-before-enter,
+.calendar-weeks-after-enter,
+.calendar-caption-before-enter,
+.calendar-caption-after-enter {
+  animation: calendar-enter 250ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+.calendar-weeks-before-exit,
+.calendar-weeks-after-exit,
+.calendar-caption-before-exit,
+.calendar-caption-after-exit {
+  animation: calendar-exit 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+.calendar-weeks-before-enter,
+.calendar-weeks-before-exit {
+  --calendar-slide: -24px;
+}
+.calendar-weeks-after-enter,
+.calendar-weeks-after-exit {
+  --calendar-slide: 24px;
+}
+.calendar-caption-before-enter,
+.calendar-caption-before-exit {
+  --calendar-slide: -8px;
+}
+.calendar-caption-after-enter,
+.calendar-caption-after-exit {
+  --calendar-slide: 8px;
+}
+[dir='rtl'] [data-slot='calendar'] {
+  --calendar-dir: -1;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='calendar'] * {
+    --calendar-slide: 0px !important;
+  }
+}
+
+/* Theme switch reveal (useThemeTransition): the new theme is revealed by an expanding circle. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}

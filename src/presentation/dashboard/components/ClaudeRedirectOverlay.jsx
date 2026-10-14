@@ -1,132 +1,108 @@
-import { useEffect, useMemo } from 'react';
-import { Spin, Typography } from 'antd';
-import { CheckCircleFilled } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
-const { Title, Text } = Typography;
+const PIECE_TONES = [
+  'bg-primary',
+  'bg-success',
+  'bg-warning',
+  'bg-chart-2',
+  'bg-chart-4',
+  'bg-sky-500',
+];
 
-const CONFETTI_COLORS = ['#722ed1', '#52c41a', '#1677ff', '#faad14', '#eb2f96', '#13c2c2', '#f5222d'];
+const CARD_SPRING = { type: 'spring', duration: 0.35, bounce: 0 };
 
-function createConfettiPieces(count = 48) {
+function createPieces(count = 36) {
   return Array.from({ length: count }, (_, index) => {
-    const left = Math.random() * 100;
-    const delay = Math.random() * 0.35;
-    const duration = 1.8 + Math.random() * 1.4;
-    const size = 6 + Math.random() * 8;
-    const color = CONFETTI_COLORS[index % CONFETTI_COLORS.length];
-    const rotate = Math.random() * 360;
-    const drift = (Math.random() - 0.5) * 120;
-
-    return { id: index, left, delay, duration, size, color, rotate, drift };
+    // Spread across the width (vw from the centre), drift a little, fall past the bottom edge.
+    const x = Math.round((Math.random() - 0.5) * 100);
+    const drift = Math.round((Math.random() - 0.5) * 16);
+    return {
+      id: index,
+      tone: PIECE_TONES[index % PIECE_TONES.length],
+      fromX: `${x}vw`,
+      toX: `${x + drift}vw`,
+      rotate: Math.round(Math.random() * 360),
+      spin: Math.round(360 + Math.random() * 360),
+      delay: Math.random() * 0.35,
+      duration: 1.8 + Math.random() * 1.2,
+      wide: index % 3 === 0,
+    };
   });
 }
 
-function ClaudeRedirectOverlay({ open }) {
-  const confettiPieces = useMemo(() => (open ? createConfettiPieces() : []), [open]);
-
-  useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
-
-    const styleId = 'claude-party-popper-style';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-        @keyframes claude-confetti-fall {
-          0% {
-            opacity: 1;
-            transform: translate3d(0, -12vh, 0) rotate(0deg);
-          }
-          100% {
-            opacity: 0;
-            transform: translate3d(var(--claude-drift), 110vh, 0) rotate(720deg);
-          }
-        }
-        @keyframes claude-popper-burst {
-          0% { transform: scale(0.6); opacity: 0; }
-          40% { transform: scale(1.15); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    return undefined;
-  }, [open]);
-
-  if (!open) {
-    return null;
-  }
-
+/** A short confetti burst from the top edge; transforms and opacity only. */
+function Confetti() {
+  const [pieces] = useState(createPieces);
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 2000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(15, 23, 42, 0.55)',
-        backdropFilter: 'blur(2px)',
-        overflow: 'hidden',
-      }}
-    >
-      {confettiPieces.map(piece => (
-        <span
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {pieces.map(piece => (
+        <motion.span
           key={piece.id}
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: `${piece.left}%`,
-            width: piece.size,
-            height: piece.size * 0.45,
-            borderRadius: 2,
-            backgroundColor: piece.color,
-            '--claude-drift': `${piece.drift}px`,
-            transform: `rotate(${piece.rotate}deg)`,
-            animation: `claude-confetti-fall ${piece.duration}s ease-out ${piece.delay}s forwards`,
-            pointerEvents: 'none',
+          className={cn(
+            'absolute top-0 start-1/2 h-1.5 rounded-xs',
+            piece.wide ? 'w-3' : 'w-2',
+            piece.tone
+          )}
+          initial={{ x: piece.fromX, y: '-10vh', rotate: piece.rotate, opacity: 1 }}
+          animate={{
+            x: piece.toX,
+            y: '110vh',
+            rotate: piece.rotate + piece.spin,
+            opacity: 0,
           }}
+          transition={{ duration: piece.duration, delay: piece.delay, ease: [0.16, 1, 0.3, 1] }}
         />
       ))}
-
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: 12,
-          padding: '36px 40px',
-          maxWidth: 420,
-          width: '90%',
-          textAlign: 'center',
-          boxShadow: '0 16px 48px rgba(0, 0, 0, 0.18)',
-          position: 'relative',
-          zIndex: 1,
-          animation: 'claude-popper-burst 0.45s ease-out',
-        }}
-      >
-        <CheckCircleFilled
-          style={{
-            fontSize: 40,
-            color: '#52c41a',
-            marginBottom: 16,
-          }}
-        />
-        <Title level={3} style={{ marginBottom: 8, fontWeight: 500 }}>
-          Authentication done
-        </Title>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 40, fontSize: 15 }}>
-          Redirecting you back to Claude…
-        </Text>
-        <div style={{ marginTop: 8 }}>
-          <Spin size="large" />
-        </div>
-      </div>
     </div>
+  );
+}
+
+/**
+ * Full-screen hand-off shown after a Claude connection is authorised, while the browser is
+ * sent back to Claude. Confetti plays once, and not at all with reduced motion.
+ */
+function ClaudeRedirectOverlay({ open }) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="claude-redirect"
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {!reduceMotion && <Confetti />}
+          <motion.div
+            className="relative flex w-full max-w-[420px] flex-col items-center gap-5 rounded-xl bg-card px-8 py-9 text-center shadow-float ring-1 ring-foreground/10"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={reduceMotion ? { duration: 0.15 } : CARD_SPRING}
+          >
+            <span className="flex size-12 items-center justify-center rounded-xl bg-success/10 text-success">
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} className="size-6" />
+            </span>
+            <div className="flex flex-col gap-1.5">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                Connected to Claude
+              </h2>
+              <p className="text-sm text-muted-foreground">Taking you back to Claude…</p>
+            </div>
+            <Spinner className="size-5 text-muted-foreground" />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

@@ -1,31 +1,44 @@
-import React from 'react';
-import { useState, useMemo } from 'react';
-import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
+import React, { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Space,
-  Typography,
-  Table,
-  Button,
-  Form,
-  Input,
-  Flex,
-  message,
-  Popconfirm,
-  Tooltip,
-} from 'antd';
+  Add01Icon,
+  ArrowRight01Icon,
+  CheckListIcon,
+  CloudOffIcon,
+  Delete02Icon,
+  PencilEdit02Icon,
+} from '@hugeicons/core-free-icons';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import { DataTable } from '@/components/data-table';
+import { useForm } from '@/components/form';
+import {
+  PageHeader,
+  PageToolbar,
+  PageToolbarSpacer,
+  ToolbarSearch,
+} from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Spinner } from '@/components/ui/spinner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
+import formatDate from '../../../utils/formatting/formateDate';
 import { useDefaultChecklistHandler } from '../controllers/useDefaultChecklistHandler';
-import { CheckCircleOutlined } from '@ant-design/icons';
-import { EditOutlined, DeleteOutlined, PlusOutlined, OrderedListOutlined } from '@ant-design/icons';
-import { render } from '@testing-library/react';
-
-// Import new drawer components
 import ChecklistDrawer from '../components/ChecklistDrawer';
 import TaskManagementDrawer from '../components/TaskManagementDrawer';
 import TaskFormDrawer from '../components/TaskFormDrawer';
-import Icon from '../../../utils/components/Icon';
+import { ChecklistTableSkeleton } from '../components/ChecklistSkeletons';
+import { plural } from '../components/TaskRow';
 
-const { Title } = Typography;
-const { Search } = Input;
+const PAGE_SIZE = 15;
 
 const DefaultChecklistWorkflow = () => {
   const {
@@ -37,7 +50,6 @@ const DefaultChecklistWorkflow = () => {
     handleAddDefaultChecklist,
     isAddingDefaultChecklist,
     handleDeleteDefaultChecklist,
-    isDeletingDefaultChecklist,
     deletingChecklistId,
     handleUpdateDefaultChecklist,
     isUpdatingDefaultChecklist,
@@ -46,14 +58,13 @@ const DefaultChecklistWorkflow = () => {
     handleCreateTask,
     isCreatingTask,
     handleDeleteTask,
-    isDeletingTask,
     deletingTaskId,
     handleUpdateTask,
     isUpdatingTask,
   } = useDefaultChecklistHandler();
-  const [form] = Form.useForm();
-  const [taskForm] = Form.useForm();
-  const [searchText, setSearchText] = useState('');
+  const [form] = useForm();
+  const [taskForm] = useForm();
+  const { inputQuery, debouncedValue, inputHandler } = useDebouncedInput('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -63,7 +74,6 @@ const DefaultChecklistWorkflow = () => {
   const [selectedChecklist, setSelectedChecklist] = useState(null);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const getIcon = name => <Icon name={name} size={20} />;
 
   // Task form drawer states
   const [isTaskFormDrawerOpen, setIsTaskFormDrawerOpen] = useState(false);
@@ -95,14 +105,12 @@ const DefaultChecklistWorkflow = () => {
   const handleFormSubmit = async values => {
     try {
       if (isEditing) {
-        // Handle edit logic here
         handleUpdateDefaultChecklist(
           editingRecord._id,
           { title: values.title, tasks: values.tasks, isDefault: true },
           handleDrawerClose
         );
       } else {
-        // Handle add logic here
         handleAddDefaultChecklist(
           { title: values.title, tasks: [], isDefault: true },
           handleDrawerClose
@@ -110,13 +118,11 @@ const DefaultChecklistWorkflow = () => {
       }
       refetch(); // Refresh the data
     } catch (error) {
-      message.error('Something went wrong');
+      toast.error(isEditing ? "Couldn't rename the checklist" : "Couldn't add the checklist");
     }
   };
 
-  const handleDeleteChecklist = id => {
-    handleDeleteDefaultChecklist(id, handleDrawerClose);
-  };
+  const handleDeleteChecklist = id => handleDeleteDefaultChecklist(id, handleDrawerClose);
 
   // Task management handlers
   const handleOpenTaskDrawer = checklist => {
@@ -164,21 +170,20 @@ const DefaultChecklistWorkflow = () => {
       const uploadedFile = await handleUploadImage(file);
       if (uploadedFile) {
         setUploadedFiles(prev => [...prev, uploadedFile]);
-        message.success('File uploaded successfully');
+        toast.success('Image uploaded');
       }
     } catch (error) {
-      message.error('Failed to upload file');
+      toast.error("Couldn't upload the image");
     }
   };
 
   const handleRemoveFile = fileToRemove => {
     setUploadedFiles(prev => prev.filter(file => file.url !== fileToRemove.url));
-    message.success('File removed');
   };
 
   const handleDeleteTaskButton = taskId => {
     const updatedTasks = selectedChecklist.tasks.filter(task => task._id !== taskId);
-    handleDeleteTask(taskId, () => {
+    return handleDeleteTask(taskId, () => {
       // Update local state
       setSelectedChecklist({
         ...selectedChecklist,
@@ -240,158 +245,230 @@ const DefaultChecklistWorkflow = () => {
       }
     } catch (error) {
       console.log('error', error);
-      message.error('Something went wrong');
+      toast.error(isEditingTask ? "Couldn't update the task" : "Couldn't add the task");
     }
   };
 
-  // Task table columns
-  const taskColumns = [
-    {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-      width: 300,
-    },
-    {
-      title: 'Attachments',
-      dataIndex: 'attachments',
-      key: 'attachments',
-      width: 150,
-      render: attachments => <span>{attachments?.length || 0} files</span>,
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: 120,
-      fixed: 'right',
-      align: 'center',
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Edit Task">
-            <Button
-              type="text"
-              shape="circle"
-              icon={getIcon('EditOutlined')}
-              onClick={() => handleEditTask(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Are you sure you want to delete this task?"
-            onConfirm={() => handleDeleteTaskButton(record._id)}
-          >
-            <Tooltip title="Delete Task">
-              <Button
-                type="text"
-                shape="circle"
-                icon={getIcon('DeleteOutlined')}
-                loading={deletingTaskId === record._id}
-              />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  const filteredChecklists = useMemo(() => {
+    const term = debouncedValue.trim().toLowerCase();
+    if (!term) return defaultChecklists;
+    return defaultChecklists.filter(checklist =>
+      (checklist.title || '').toLowerCase().includes(term)
+    );
+  }, [defaultChecklists, debouncedValue]);
+
+  const searching = Boolean(debouncedValue.trim());
+  const hasError = Boolean(error) && !isFetching;
 
   const columns = [
     {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-      width: '200px',
+      accessorKey: 'title',
+      id: 'title',
+      header: 'Checklist',
+      meta: { ellipsis: true },
+      cell: ({ row }) => {
+        const checklist = row.original;
+        return (
+          <div className="flex max-w-full min-w-0 items-center gap-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <HugeiconsIcon icon={CheckListIcon} strokeWidth={2} className="size-4" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate font-medium text-foreground" title={checklist.title}>
+                {checklist.title || 'Untitled checklist'}
+              </span>
+              {checklist.createdDate && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  Added {formatDate(checklist.createdDate)}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
-      title: 'Tasks',
-      dataIndex: 'tasks',
-      key: 'tasks',
-      width: '150px',
-      render: (_, record) => (
-        <Space>{record.tasks.length > 0 ? record.tasks.length + ' tasks' : 'No tasks'}</Space>
-      ),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: '10%',
-      fixed: 'right',
-      align: 'center',
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Edit Tasklist Name">
-            <Button
-              type="text"
-              shape="circle"
-              icon={getIcon('EditOutlined')}
-              onClick={() => handleEditChecklist(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Are you sure you want to delete this tasklist?"
-            onConfirm={() => handleDeleteChecklist(record._id)}
+      id: 'tasks',
+      header: 'Tasks',
+      meta: { width: '180px' },
+      cell: ({ row }) => {
+        const count = row.original?.tasks?.length || 0;
+        return (
+          <button
+            type="button"
+            onClick={event => {
+              event.stopPropagation();
+              handleOpenTaskDrawer(row.original);
+            }}
+            className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-foreground tabular-nums outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <Tooltip title="Delete Tasklist">
-              <Button
-                type="text"
-                shape="circle"
-                icon={getIcon('DeleteOutlined')}
-                loading={deletingChecklistId === record._id}
-              />
+            {count ? (
+              plural(count, 'task')
+            ) : (
+              <span className="text-muted-foreground">No tasks</span>
+            )}
+            <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="size-3.5" />
+          </button>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: <span className="sr-only">Actions</span>,
+      meta: { align: 'right', width: '96px' },
+      cell: ({ row }) => {
+        const record = row.original;
+        const name = record.title || 'this checklist';
+        const deleting = deletingChecklistId === record._id;
+        return (
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <div className="inline-flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label={`Rename ${name}`}
+                  onClick={() => handleEditChecklist(record)}
+                >
+                  <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Rename</TooltipContent>
             </Tooltip>
-          </Popconfirm>
-          <Tooltip title="Manage Tasks">
-            <Button
-              type="text"
-              shape="circle"
-              icon={getIcon('Tasks')}
-              onClick={() => handleOpenTaskDrawer(record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
+            <Tooltip>
+              <ConfirmPopover
+                title="Delete this checklist?"
+                description={`"${name}" will no longer be given to new accounts. This can't be undone.`}
+                confirmText="Delete"
+                confirmVariant="destructive"
+                align="end"
+                onConfirm={() => handleDeleteChecklist(record._id)}
+              >
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Delete ${name}`}
+                    disabled={deleting}
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/15"
+                  >
+                    {deleting ? <Spinner /> : <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />}
+                  </Button>
+                </TooltipTrigger>
+              </ConfirmPopover>
+              <TooltipContent>Delete</TooltipContent>
+            </Tooltip>
+          </div>
+        );
+      },
     },
   ];
-  const filteredChecklists = useMemo(() => {
-    if (!searchText) return defaultChecklists;
-    return defaultChecklists.filter(checklist =>
-      checklist.title.toLowerCase().includes(searchText.toLowerCase())
-    );
-  }, [defaultChecklists, searchText]);
-  return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Title level={2} style={{ fontWeight: 300 }}>
-        Default Tasklists
-      </Title>
-      <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-        <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleAddChecklist}>
-          <PlusOutlined />
-          Add Tasklist
-        </Button>
-        <Input
-          placeholder="Search by title"
-          allowClear
-          size="large"
-          onChange={e => setSearchText(e.target.value)}
-          style={{ maxWidth: '400px' }}
+
+  const emptyState = (
+    <Empty className="py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <HugeiconsIcon icon={CheckListIcon} strokeWidth={2} />
+        </EmptyMedia>
+        <EmptyTitle>
+          {searching
+            ? `No checklists match "${debouncedValue.trim()}"`
+            : 'No default checklists yet'}
+        </EmptyTitle>
+        <EmptyDescription>
+          {searching
+            ? 'Try another name.'
+            : 'Add a checklist, then fill it with the tasks new accounts should complete.'}
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        {searching ? (
+          <Button type="button" variant="outline" onClick={() => inputHandler('')}>
+            Clear search
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" onClick={handleAddChecklist}>
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+            Add checklist
+          </Button>
+        )}
+      </EmptyContent>
+    </Empty>
+  );
+
+  const renderContent = () => {
+    if (isLoading) return <ChecklistTableSkeleton />;
+    if (hasError) {
+      return (
+        <Empty className="rounded-lg border border-dashed bg-muted/30 py-16">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <HugeiconsIcon icon={CloudOffIcon} strokeWidth={2} />
+            </EmptyMedia>
+            <EmptyTitle>Couldn't load checklists</EmptyTitle>
+            <EmptyDescription>Check your connection and try again.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button type="button" variant="outline" onClick={refetch}>
+              Try again
+            </Button>
+          </EmptyContent>
+        </Empty>
+      );
+    }
+    return (
+      <div className="min-w-0 animate-in fade-in-0 duration-300 ease-out-quad">
+        <DataTable
+          columns={columns}
+          data={filteredChecklists}
+          getRowId={(record, index) => record?._id || String(index)}
+          onRowClick={record => handleOpenTaskDrawer(record)}
+          loading={isFetching && !isLoading}
+          emptyState={emptyState}
+          pagination={filteredChecklists.length > PAGE_SIZE}
+          initialState={{ pagination: { pageIndex: 0, pageSize: PAGE_SIZE } }}
+          paginationProps={{ align: 'start', showSizeChanger: false }}
+          minWidth={560}
         />
-      </Flex>
-      <Table
-        dataSource={filteredChecklists}
-        loading={isLoading}
-        columns={columns}
-        bordered
-        pagination={{
-          position: ['bottomLeft'],
-          showSizeChanger: false,
-          showQuickJumper: false,
-        }}
-        locale={{
-          emptyText: searchText
-            ? `No tasklists found matching "${searchText}"`
-            : 'No default tasklists available',
-        }}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Default checklist"
+        description="The checklists and tasks every new account starts with."
+        actions={
+          <Button type="button" onClick={handleAddChecklist}>
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+            Add checklist
+          </Button>
+        }
       />
 
-      {/* Checklist Drawer Component */}
+      <div className="flex flex-col gap-6">
+        <PageToolbar>
+          <PageToolbarSpacer />
+          {!isLoading && !hasError && (
+            <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+              {plural(filteredChecklists.length, 'checklist')}
+            </p>
+          )}
+          <ToolbarSearch
+            value={inputQuery}
+            onChange={inputHandler}
+            placeholder="Search checklists"
+          />
+        </PageToolbar>
+
+        {renderContent()}
+      </div>
+
       <ChecklistDrawer
         isOpen={isDrawerOpen}
         onClose={handleDrawerClose}
@@ -401,17 +478,16 @@ const DefaultChecklistWorkflow = () => {
         isLoading={isAddingDefaultChecklist || isUpdatingDefaultChecklist}
       />
 
-      {/* Task Management Drawer Component */}
       <TaskManagementDrawer
         isOpen={isTaskDrawerOpen}
         onClose={handleCloseTaskDrawer}
         selectedChecklist={selectedChecklist}
-        taskColumns={taskColumns}
-        isLoading={isLoading}
         onAddTask={handleAddTask}
+        onEditTask={handleEditTask}
+        onDeleteTask={handleDeleteTaskButton}
+        deletingTaskId={deletingTaskId}
       />
 
-      {/* Task Form Drawer Component */}
       <TaskFormDrawer
         isOpen={isTaskFormDrawerOpen}
         onClose={handleCloseTaskFormDrawer}
@@ -423,8 +499,9 @@ const DefaultChecklistWorkflow = () => {
         onFileUpload={handleFileUpload}
         uploadedFiles={uploadedFiles}
         onRemoveFile={handleRemoveFile}
+        checklistTitle={selectedChecklist?.title}
       />
-    </Space>
+    </div>
   );
 };
 
