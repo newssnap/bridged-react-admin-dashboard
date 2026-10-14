@@ -42,17 +42,76 @@ function ComboboxClear({ className, ...props }) {
     </ComboboxPrimitive.Clear>
   );
 }
+const isEditKey = event =>
+  !event.metaKey &&
+  !event.ctrlKey &&
+  !event.altKey &&
+  !event.nativeEvent?.isComposing &&
+  (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete');
+
+/**
+ * Typing replaces the selected label instead of appending to it. The text in the input is
+ * either the user's own query or a label the combobox put there (the selected item); for a
+ * label, focusing selects it all and the first keystroke (or Backspace) starts a new search.
+ */
+function useReplaceSelectedLabel({ onFocus, onMouseUp, onInput, onKeyDown }) {
+  const typedRef = React.useRef(null);
+  const justFocusedRef = React.useRef(false);
+  const isLabel = el => el.value !== '' && el.value !== typedRef.current;
+
+  return {
+    onFocus: event => {
+      onFocus?.(event);
+      const el = event.currentTarget;
+      justFocusedRef.current = true;
+      if (isLabel(el)) {
+        requestAnimationFrame(() => {
+          if (document.activeElement === el) el.select();
+        });
+      }
+    },
+    // A click that focused the input would otherwise drop the caret and undo the selection.
+    onMouseUp: event => {
+      onMouseUp?.(event);
+      if (justFocusedRef.current && isLabel(event.currentTarget)) event.preventDefault();
+      justFocusedRef.current = false;
+    },
+    onInput: event => {
+      onInput?.(event);
+      typedRef.current = event.currentTarget.value;
+    },
+    onKeyDown: event => {
+      onKeyDown?.(event);
+      justFocusedRef.current = false;
+      const el = event.currentTarget;
+      if (!event.defaultPrevented && isEditKey(event) && isLabel(el)) {
+        const allSelected = el.selectionStart === 0 && el.selectionEnd === el.value.length;
+        if (!allSelected) el.select();
+      }
+    },
+  };
+}
+
 function ComboboxInput({
   className,
   children,
   disabled = false,
   showTrigger = true,
   showClear = false,
+  onFocus,
+  onMouseUp,
+  onInput,
+  onKeyDown,
   ...props
 }) {
+  const replaceLabelHandlers = useReplaceSelectedLabel({ onFocus, onMouseUp, onInput, onKeyDown });
   return (
     <InputGroup className={cn('w-auto', className)}>
-      <ComboboxPrimitive.Input render={<InputGroupInput disabled={disabled} />} {...props} />
+      <ComboboxPrimitive.Input
+        render={<InputGroupInput disabled={disabled} />}
+        {...props}
+        {...replaceLabelHandlers}
+      />
       <InputGroupAddon align="inline-end">
         {showTrigger && (
           <InputGroupButton

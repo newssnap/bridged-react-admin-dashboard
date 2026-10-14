@@ -80,7 +80,8 @@ function TeamsToolbar({
 
   const filtersContent = (
     <div className="max-w-[640px]">
-      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-3">
+      {/* Domains are long hosts, so Domain gets the widest column. */}
+      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto]">
         <div className="flex flex-col gap-2">
           <h5 className={filterLabelClass}>Company</h5>
           <FilterCombobox
@@ -121,7 +122,11 @@ function TeamsToolbar({
             </Button>
           </PopoverTrigger>
         </CountBadge>
-        <PopoverContent {...keepMounted.contentProps} align="start" className="w-auto">
+        <PopoverContent
+          {...keepMounted.contentProps}
+          align="start"
+          className="w-[min(640px,calc(100vw-2rem))]"
+        >
           <PopoverHeader>
             <PopoverTitle>Filters</PopoverTitle>
           </PopoverHeader>
