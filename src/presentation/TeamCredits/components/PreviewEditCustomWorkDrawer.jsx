@@ -103,7 +103,7 @@ const PreviewEditCustomWorkDrawer = ({
         workProject: hasValue(initialRecord.workProject) ? initialRecord.workProject : undefined,
         category: hasValue(initialRecord.category) ? initialRecord.category : undefined,
         creditsUsed: initialRecord.creditsUsed,
-        status: hasValue(initialRecord.status) ? initialRecord.status : undefined,
+        status: hasValue(initialRecord.status) ? initialRecord.status : 'pending',
         dateFrom: initialRecord.startDate ? dayjs(initialRecord.startDate) : null,
         dateTo: initialRecord.endDate ? dayjs(initialRecord.endDate) : null,
         notes: initialRecord.notes ?? undefined,

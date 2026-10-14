@@ -33,6 +33,7 @@ const ManageCreditsDrawer = ({
     if (open) {
       form.resetFields();
       form.setFieldsValue({
+        purchaseType: 'assign',
         purchaseDate: dayjs(),
       });
     }

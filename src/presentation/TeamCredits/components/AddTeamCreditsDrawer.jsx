@@ -32,6 +32,7 @@ const AddTeamCreditsDrawer = ({
       form.resetFields();
       form.setFieldsValue({
         teamId: undefined,
+        purchaseType: 'assign',
         purchaseDate: dayjs(),
       });
     }

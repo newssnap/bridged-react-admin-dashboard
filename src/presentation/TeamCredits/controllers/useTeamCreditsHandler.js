@@ -103,6 +103,7 @@ export const useTeamCreditsHandler = searchValue => {
         refetchHistory();
         form.resetFields();
         form.setFieldsValue({
+          purchaseType: 'assign',
           purchaseDate: dayjs(),
         });
       } else {

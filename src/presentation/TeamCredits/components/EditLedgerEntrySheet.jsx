@@ -16,7 +16,7 @@ function EditLedgerEntrySheet({ open, record, teamId, onClose, onSubmit, isSubmi
       form.resetFields();
       form.setFieldsValue({
         amount: record?.amount,
-        purchaseType: record?.purchaseType,
+        purchaseType: record?.purchaseType || 'assign',
         reason: record?.reason || undefined,
         notes: record?.notes || undefined,
         purchaseDate: record?.purchaseDate ? dayjs(record.purchaseDate) : dayjs(),

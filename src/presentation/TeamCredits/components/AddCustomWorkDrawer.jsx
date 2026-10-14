@@ -17,6 +17,7 @@ const AddCustomWorkDrawer = ({ open, onClose, teamsData, onSubmit, isSubmitting 
     if (open) {
       form.resetFields();
       form.setFieldsValue({
+        status: 'pending',
         dateFrom: dayjs(),
         dateTo: dayjs(),
       });
