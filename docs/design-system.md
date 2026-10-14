@@ -401,7 +401,7 @@ const [form] = useForm();
 - **Inputs are filled**: `bg-input/50`, no visible border, `rounded-sm` (~10px), `h-9`. `InputGroupInput` stays transparent inside its group. A hand-built field-like trigger uses the same `rounded-sm`, never `rounded-lg`.
 - **Selects** open item-aligned. Don't set `position="popper"` on `SelectContent`.
 - **Choice controls**:
-  - a small set uses `SegmentedControl` or `ToggleGroup`;
+  - two or three exclusive options in a form (Assign/Deduct, a status) use a full-width `SegmentedControl` bound through `FormField bind="valueChange"`, `className="h-9 w-full *:h-7 *:flex-1"` so it lines up with the inputs beside it, and a `layoutId` made unique with `useId()` (reference: admin `TeamCredits/components/CreditEntryFields.jsx`);
   - a large set, or one with disabled options, uses `Select` or `Combobox`;
   - multiple values use `MultiSelect`;
   - a tree uses `TreeSelect`.
@@ -673,8 +673,8 @@ Copy from these. **Admin pages first** (in this repo); for patterns the admin do
 | --- | --- | --- |
 | `PageTabs` | Page-level views, only in `PageHeader tabs` | Each tab is a route or a large panel. Mount panels lazily, then keep them mounted with `hidden` (`presentation/setting/integrations/workflows/IntegrationsWorkflow.jsx`). |
 | `ui/tabs` | Mode switches inside editors and drawers that swap a whole panel | `TabsList className="w-full sm:w-fit"`, `TabsTrigger className="sm:min-w-28"`, often in a `border-b p-3` header |
-| `SegmentedControl` | Toolbar quick filters and the view switch | Not for form values |
-| `ToggleGroup` | A small value choice inside a form row (AND/OR, Website/Agent), or the desktop/mobile preview switch | `variant="outline"` |
+| `SegmentedControl` | Toolbar quick filters and the view switch; two or three exclusive options in a form (Assign/Deduct, In execution/Completed) | In forms: full width at input height (§7) |
+| `ToggleGroup` | Multi-select toggles, compact inline choices inside a dense row (AND/OR), or the desktop/mobile preview switch | `variant="outline"`; not for a form's main either/or field |
 | Radio choice cards | Choosing between options that need a description or icon | `ChoiceCards` (`presentation/agents/create/reusable/components/ChoiceCards.jsx`) |
 
 Tab state stays local. It is not in the URL, unless the tabs are routes.

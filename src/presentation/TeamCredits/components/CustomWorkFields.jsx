@@ -4,7 +4,7 @@ import { FormField } from '@/components/form';
 import { NumberInput } from '@/components/number-input';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { SegmentedControl } from '@/components/page-header';
 import { CUSTOM_WORK_STATUS_OPTIONS } from '../constants/customWork';
 import CategoryCombobox from './CategoryCombobox';
 import TeamCombobox from './TeamCombobox';
@@ -17,6 +17,7 @@ const DATE_FORMAT = 'D MMM YYYY';
  * read-only (an edit is always saved against the entry's own team).
  */
 function CustomWorkFields({ teams, categoryOptions, onAddCategory, notesName, teamLocked }) {
+  const statusLayoutId = `custom-work-status-${React.useId()}`;
   return (
     <div className="@container flex flex-col gap-5">
       <FormField
@@ -67,15 +68,19 @@ function CustomWorkFields({ teams, categoryOptions, onAddCategory, notesName, te
           label="Status"
           name="status"
           description="Work that ended in the past is saved as completed."
+          bind="valueChange"
           rules={[{ required: true, message: 'Choose a status' }]}
         >
-          <ToggleGroup type="single" variant="outline" className="w-full">
-            {CUSTOM_WORK_STATUS_OPTIONS.map(option => (
-              <ToggleGroupItem key={option.value} value={option.value} className="flex-1">
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          {control => (
+            <SegmentedControl
+              label="Status"
+              layoutId={statusLayoutId}
+              options={CUSTOM_WORK_STATUS_OPTIONS}
+              value={control.value}
+              onValueChange={control.onValueChange}
+              className="h-9 w-full *:h-7 *:flex-1"
+            />
+          )}
         </FormField>
       </div>
 

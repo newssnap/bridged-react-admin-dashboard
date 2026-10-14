@@ -1,12 +1,16 @@
 import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MinusSignIcon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { DatePicker } from '@/components/date-picker';
 import { FormField } from '@/components/form';
 import { NumberInput } from '@/components/number-input';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { SegmentedControl } from '@/components/page-header';
+
+const TYPE_OPTIONS = [
+  { value: 'assign', label: 'Assign', icon: PlusSignIcon },
+  { value: 'deduct', label: 'Deduct', icon: MinusSignIcon },
+];
 
 const AMOUNT_RULES = [
   { required: true, message: 'Enter an amount' },
@@ -19,6 +23,8 @@ const AMOUNT_RULES = [
  * container is wide enough.
  */
 function CreditEntryFields() {
+  // Unique per mounted copy: the adjust and edit sheets can be open together.
+  const typeLayoutId = `credit-type-${React.useId()}`;
   return (
     <div className="@container flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-x-4 gap-y-5 @sm:grid-cols-2">
@@ -28,18 +34,19 @@ function CreditEntryFields() {
         <FormField
           label="Type"
           name="purchaseType"
+          bind="valueChange"
           rules={[{ required: true, message: 'Choose assign or deduct' }]}
         >
-          <ToggleGroup type="single" variant="outline" className="w-full">
-            <ToggleGroupItem value="assign" className="flex-1">
-              <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} data-icon="inline-start" />
-              Assign
-            </ToggleGroupItem>
-            <ToggleGroupItem value="deduct" className="flex-1">
-              <HugeiconsIcon icon={MinusSignIcon} strokeWidth={2} data-icon="inline-start" />
-              Deduct
-            </ToggleGroupItem>
-          </ToggleGroup>
+          {control => (
+            <SegmentedControl
+              label="Type"
+              layoutId={typeLayoutId}
+              options={TYPE_OPTIONS}
+              value={control.value}
+              onValueChange={control.onValueChange}
+              className="h-9 w-full *:h-7 *:flex-1"
+            />
+          )}
         </FormField>
       </div>
       <FormField
