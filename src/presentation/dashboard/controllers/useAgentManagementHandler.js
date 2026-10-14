@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import { notification } from 'antd';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AUTOMATE_PACK_OPTIONS,
   ENGAGE_PACK_OPTIONS,
   MONETIZE_PACK_OPTIONS,
   AGENT_TYPES,
-  AGENT_ACCESS_OPTIONS,
 } from '../../../constants/agents';
 
 const DEA_VALUE = 'DEA';
@@ -15,12 +14,6 @@ const QUALIFICATION_VALUE = 'qualification';
 // Helper function to filter agents by type
 const filterAgentsByType = (agents, type) => {
   return agents.filter(agent => agent.type === type).map(agent => agent.value);
-};
-
-// Helper function to get all agent values by type from selected values
-const getAgentValuesByType = (selectedValues, allAgents, type) => {
-  const agentsOfType = allAgents.filter(agent => agent.type === type);
-  return selectedValues.filter(value => agentsOfType.some(agent => agent.value === value));
 };
 
 export const useAgentManagementHandler = () => {
@@ -97,9 +90,8 @@ export const useAgentManagementHandler = () => {
       setAllowedAgents(selected);
     } catch (error) {
       setAllowedAgents([...CAMPAIGN_ACCESS_VALUES, DEA_VALUE, QUALIFICATION_VALUE]);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to load user agent configuration. Defaulted to full access.',
+      toast.error("Couldn't load the user's agent access", {
+        description: 'Defaulted to full access.',
       });
     }
   };

@@ -3,12 +3,14 @@ import {
   useGetUserAdminPaginationMutation,
   useSetCompanyUsersMutation,
 } from '../../../services/api';
-import { notification, Tag, Tooltip } from 'antd';
+import { toast } from 'sonner';
 import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
 
 const useManageUsersDrawerHandler = companyId => {
   const [userIds, setUserIds] = useState([]);
   const [users, setUsers] = useState([]);
+  // Set when the last users request failed, so the drawer can offer "Try again".
+  const [isUsersError, setIsUsersError] = useState(false);
   const hasInitializedSelection = useRef(false);
   const previousCompanyId = useRef(null);
   const userHasManuallyChangedSelection = useRef(false);
@@ -58,6 +60,7 @@ const useManageUsersDrawerHandler = companyId => {
         }).unwrap();
 
         const usersData = response?.data?.data || response?.data || [];
+        setIsUsersError(false);
         setUsers(usersData);
 
         // Update pagination if total is provided
@@ -70,12 +73,9 @@ const useManageUsersDrawerHandler = companyId => {
           }));
         }
       } catch (error) {
-        notification.error({
-          message: 'Failed to fetch users',
-          placement: 'bottomRight',
-        });
+        // Shown inline in the drawer ("Couldn't load users" + Try again) rather than as a toast.
+        setIsUsersError(true);
         setUsers([]);
-      } finally {
       }
     },
     [_GET_USERS, debouncedSearch, filters.sort, filters.status, pagination.limit]
@@ -111,25 +111,16 @@ const useManageUsersDrawerHandler = companyId => {
 
   const handleSubmit = async () => {
     if (!companyId) {
-      notification.error({
-        message: 'Company ID is required',
-        placement: 'bottomRight',
-      });
+      toast.error("Couldn't find this company");
       return;
     }
 
     try {
       await _SET_COMPANY_USERS({ id: companyId, userIds }).unwrap();
-      notification.success({
-        message: 'Users updated successfully',
-        placement: 'bottomRight',
-      });
+      toast.success('Users updated');
       return true;
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to update users',
-        placement: 'bottomRight',
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't update the users");
       return false;
     }
   };
@@ -161,6 +152,7 @@ const useManageUsersDrawerHandler = companyId => {
       userHasManuallyChangedSelection.current = false;
 
       setUsers([]);
+      setIsUsersError(false);
       setUserIds([]);
       setFilters({ status: 'all', sort: 'lastLogin_DESC' });
       setPagination({ pageNumber: 1, limit: 10, total: 0 });
@@ -216,52 +208,6 @@ const useManageUsersDrawerHandler = companyId => {
     }
   }, [companyId, debouncedSearch, fetchUsers, pagination.limit]);
 
-  const columns = [
-    {
-      title: 'User Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: email => <span style={{ fontSize: '14px' }}>{email || '--'}</span>,
-    },
-    {
-      title: 'Full Name',
-      dataIndex: 'fullname',
-      key: 'fullname',
-      width: 200,
-      render: fullname => <span style={{ fontSize: '14px' }}>{fullname || '--'}</span>,
-    },
-    {
-      title: 'Role',
-      dataIndex: 'role',
-      key: 'role',
-      width: 200,
-      render: (_, record) => {
-        if (record?.teamId) {
-          return (
-            <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
-              {record.isTeamOwner ? 'Team Owner' : 'Member'}
-            </Tag>
-          );
-        } else {
-          return (
-            <Tooltip title="This user is not part of a team, if you login with this account, a team will be created for them.">
-              <Tag color="orange" style={{ textAlign: 'center' }}>
-                Not Set
-              </Tag>
-            </Tooltip>
-          );
-        }
-      },
-    },
-    {
-      title: 'Company',
-      dataIndex: 'company',
-      key: 'company',
-      width: 200,
-      render: company => <span style={{ fontSize: '14px' }}>{company?.name || '--'}</span>,
-    },
-  ];
-
   const rowSelection = {
     selectedRowKeys: userIds,
     onChange: handleRowSelectionChange,
@@ -270,7 +216,7 @@ const useManageUsersDrawerHandler = companyId => {
   return {
     users,
     isUsersLoading,
-    columns,
+    isUsersError,
     dataSource,
     userIds,
     rowSelection,

@@ -1,8 +1,11 @@
-# Use a Node.js base image
-FROM node:20-alpine
+# Use a Node.js base image (Node 22 required by some transitive deps)
+FROM node:22-alpine
 
 # Set the working directory
 WORKDIR /app
+
+# Enable Corepack so Yarn matches the repo lockfile format
+RUN corepack enable && corepack prepare yarn@4.17.0 --activate
 
 # Set build arguments for api_URL and iframe_URL
 ARG api_URL
@@ -11,13 +14,13 @@ ARG iframe_URL
 # Set environment variables for api_URL and iframe_URL
 ENV REACT_APP_API_URL=$api_URL
 ENV REACT_APP_IFRAME_URL=$iframe_URL
+ENV HUSKY=0
 
-# Copy package.json and yarn.lock to the container
-COPY package*.json ./
-COPY yarn.lock ./
+# Copy package manifests and Yarn config before install for better layer caching
+COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install dependencies
-RUN yarn install
+RUN yarn install --immutable
 
 # Copy the rest of the application code to the container
 COPY . .

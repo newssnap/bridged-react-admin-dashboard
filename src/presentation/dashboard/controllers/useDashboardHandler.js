@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import { useAddUserMutation, useGenerateUserTokenMutation } from '../../../services/api';
 import { useState } from 'react';
 
@@ -14,27 +14,14 @@ export const useDashboardHandler = () => {
     try {
       const response = await addUser(userData).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'User added successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('User added');
         handleCloseDrawer();
       } else {
-        notification.error({
-          message: response.errorObject.userErrorText
-            ? response.errorObject.userErrorText
-            : 'Failed to add user',
-          placement: 'bottomRight',
-        });
+        toast.error(response?.errorObject?.userErrorText || "Couldn't add the user");
       }
     } catch (error) {
       console.error('Error adding user:', error);
-      notification.error({
-        message: error.data.errorObject.userErrorText
-          ? error.data.errorObject.userErrorText
-          : 'Failed to add user',
-        placement: 'bottomRight',
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't add the user");
     }
   };
 
@@ -44,19 +31,18 @@ export const useDashboardHandler = () => {
     try {
       const response = await generateUserToken(data).unwrap();
       if (response.success) {
-        return response.data.jwtToken;
+        return {
+          accessToken: response.data.jwtToken,
+          refreshToken: response.data.refreshToken,
+        };
       } else {
-        notification.error({
-          message: response.errorObject.userErrorText
-            ? response.errorObject.userErrorText
-            : 'Failed to generate user token',
-          placement: 'bottomRight',
-        });
+        toast.error(response?.errorObject?.userErrorText || "Couldn't sign in as this user");
         setGenerateTokenIDLogin(null);
         return null;
       }
     } catch (error) {
       console.log(error);
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't sign in as this user");
       setTokenType(null);
       setGenerateTokenIDLogin(null);
       return null;

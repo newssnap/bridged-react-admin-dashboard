@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import AuthPageLayout from './layouts/AuthPageLayout';
 import { useSelector } from 'react-redux';
 import NonAuthPageLayout from './layouts/NonAuthPageLayout';
+import { buildLoginPath } from './utils/controllers/oauthRedirect';
 
 function ProtectedRoute({ children, isProtected, HeaderComp }) {
   // Check if the user is authenticated by getting the state from Redux
@@ -10,12 +11,7 @@ function ProtectedRoute({ children, isProtected, HeaderComp }) {
 
   // If the route is protected and the user is not authenticated, navigate to the login page
   if (isProtected && !isAuth) {
-    const searchParams = new URLSearchParams(location.search);
-    const oauthRedirect = searchParams.get('oauth_redirect');
-    const redirectQuery = oauthRedirect
-      ? `oauth_redirect=${encodeURIComponent(oauthRedirect)}`
-      : `oauth_redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`;
-    return <Navigate to={`/login?${redirectQuery}`} replace />;
+    return <Navigate to={buildLoginPath(location.search)} replace />;
   }
 
   // If the route is protected, wrap the children in the AuthPageLayout

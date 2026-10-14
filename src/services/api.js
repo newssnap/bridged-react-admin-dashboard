@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_URL } from '../config/Config';
+import { buildLoginPath } from '../utils/controllers/oauthRedirect';
 
 // Create a base query with common settings
 const baseQuery = fetchBaseQuery({
@@ -32,13 +33,8 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 
-    // Redirect to login page
-    const searchParams = new URLSearchParams(window.location.search);
-    const oauthRedirect = searchParams.get('oauth_redirect');
-    const redirectQuery = oauthRedirect
-      ? `oauth_redirect=${encodeURIComponent(oauthRedirect)}`
-      : `oauth_redirect=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
-    window.location.href = `/login?${redirectQuery}`;
+    // Preserve Claude OAuth context only when it's a real authorize URL
+    window.location.href = buildLoginPath(window.location.search);
   }
 
   return result;

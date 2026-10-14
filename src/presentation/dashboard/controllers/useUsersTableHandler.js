@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import {
   useGetUserAdminPaginationMutation,
   useActivateUserMutation,
@@ -12,7 +12,7 @@ const useUsersTableHandler = (searchValue, companyId, teamId, status, sort) => {
   const [page, setPage] = useState(1);
   const [limit] = useState(PAGE_SIZE);
 
-  const [_GET_USERS, { data: response, isLoading, isError, error }] =
+  const [_GET_USERS, { data: response, isLoading, isError, error, isUninitialized }] =
     useGetUserAdminPaginationMutation();
 
   const [_ACTIVATE_USER, { isLoading: isActivatingUser, error: activateError }] =
@@ -38,22 +38,14 @@ const useUsersTableHandler = (searchValue, companyId, teamId, status, sort) => {
     if (status === 'activate') {
       const response = await _ACTIVATE_USER(userId).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'User activated successfully',
-          placement: 'bottomRight',
-          showProgress: true,
-        });
+        toast.success('User activated');
         // Refetch users to update the status in UI
         refetchUsers();
       }
     } else {
       const response = await _DEACTIVATE_USER(userId).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'User deactivated successfully',
-          placement: 'bottomRight',
-          showProgress: true,
-        });
+        toast.success('User deactivated');
         // Refetch users to update the status in UI
         refetchUsers();
       }
@@ -62,13 +54,11 @@ const useUsersTableHandler = (searchValue, companyId, teamId, status, sort) => {
 
   useEffect(() => {
     if (deactivateError || activateError) {
-      notification.error({
-        message:
-          deactivateError?.data?.errorObject?.userErrorText ||
-          activateError?.data?.errorObject?.userErrorText,
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.error(
+        deactivateError?.data?.errorObject?.userErrorText ||
+          activateError?.data?.errorObject?.userErrorText ||
+          "Couldn't update the user's status"
+      );
     }
   }, [deactivateError, activateError]);
 
@@ -104,16 +94,6 @@ const useUsersTableHandler = (searchValue, companyId, teamId, status, sort) => {
     setPage(1);
   }, [searchValue, sort, companyId, teamId]);
 
-  useEffect(() => {
-    if (isError && error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to fetch users',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
-    }
-  }, [isError, error]);
-
   const handlePageChange = newPage => {
     setPage(newPage);
   };
@@ -127,8 +107,11 @@ const useUsersTableHandler = (searchValue, companyId, teamId, status, sort) => {
     // table controls
     handlePageChange,
     refetchUsers,
-    // loading and actions
-    isLoading,
+    // loading and actions (the first request goes out after mount: count that as loading too)
+    isLoading: isLoading || isUninitialized,
+    // A failed load shows the table's "Couldn't load users" state (with Try again).
+    isError,
+    loadError: error,
     handleUpdateUserStatus,
     isStatusLoading: isActivatingUser || isDeactivatingUser,
   };

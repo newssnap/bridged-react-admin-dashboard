@@ -11,7 +11,8 @@ function Dashboard() {
       localStorage.setItem('accessToken', queryAccessToken);
       const params = new URLSearchParams(search);
       params.delete('accessToken');
-      window.history.replaceState({}, document.title, pathname + params.toString());
+      const rest = params.toString();
+      window.history.replaceState({}, document.title, rest ? `${pathname}?${rest}` : pathname);
       window.location.reload();
     }
   }, [queryAccessToken, search, pathname]);

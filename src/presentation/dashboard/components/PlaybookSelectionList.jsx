@@ -1,207 +1,167 @@
 import React from 'react';
-import { Typography, Row, Col, Popover, Checkbox, theme, Empty } from 'antd';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { AiNetworkIcon, BookOpen01Icon } from '@hugeicons/core-free-icons';
+import { Badge } from '@/components/badge';
+import {
+  CardIconTile,
+  CardSelectCheck,
+  SELECT_CARD_BACKDROP,
+  selectCardClasses,
+} from '@/components/card-parts';
+import { DotBackdrop } from '@/components/dot-backdrop';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const { Text } = Typography;
+const GRID_CLASSES = 'grid grid-cols-1 gap-3 @lg:grid-cols-2';
 
-const AgentsPopoverContent = ({ agents }) => (
-  <div
-    style={{
-      minWidth: 220,
-      maxWidth: 320,
-    }}
-  >
-    <div
-      style={{
-        padding: '12px 8px 10px',
-        borderBottom: '1px solid var(--primary-Color-Opacity)',
-        marginBottom: 8,
-      }}
-    >
-      <Text
-        strong
-        style={{
-          fontSize: 12,
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
-          color: 'var(--secondary-Color)',
-        }}
-      >
-        Playbook Agents
-      </Text>
-    </div>
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        maxHeight: 240,
-        overflowY: 'auto',
-        padding: '0 8px 12px',
-      }}
-    >
-      {agents.map((agent, idx) => (
-        <div
-          key={idx}
-          style={{
-            padding: '8px 6px',
-            borderRadius: 8,
-            backgroundColor: 'var(--primary-Color-Opacity)',
-            border: '1px solid var(--primary-Color-Opacity)',
-          }}
+/** The agents a playbook runs, listed in a hover card behind an "N agents" chip. */
+function PlaybookAgents({ agents }) {
+  if (!agents.length) return null;
+  return (
+    <HoverCard openDelay={150} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <Badge
+          variant="outline"
+          tabIndex={0}
+          className="cursor-default"
+          onClick={event => event.stopPropagation()}
+          onKeyDown={event => event.stopPropagation()}
         >
-          <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 2 }}>
-            {agent.label}
-          </Text>
-          {agent.description && (
-            <Text
-              type="secondary"
-              style={{
-                fontSize: 12,
-                lineHeight: 1.4,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}
-            >
-              {agent.description}
-            </Text>
-          )}
-        </div>
-      ))}
-    </div>
-  </div>
-);
+          <HugeiconsIcon icon={AiNetworkIcon} strokeWidth={2} data-icon="inline-start" />
+          {agents.length === 1 ? '1 agent' : `${agents.length} agents`}
+        </Badge>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="flex max-w-72 flex-col gap-2 p-3">
+        <p className="text-xs font-medium text-muted-foreground">Agents in this playbook</p>
+        <ul className="flex max-h-60 flex-col gap-2 overflow-y-auto">
+          {agents.map(agent => (
+            <li key={agent.value} className="rounded-md bg-muted/60 px-2.5 py-2">
+              <p className="text-[13px] font-medium text-foreground">{agent.label}</p>
+              {agent.description && (
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                  {agent.description}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
 
+/** Loading stand-in for the picker: the same grid of card shells. */
+export function PlaybookSelectionSkeleton({ count = 4 }) {
+  return (
+    <div className="@container" aria-busy="true" aria-label="Loading playbooks">
+      <div className={GRID_CLASSES}>
+        {Array.from({ length: count }, (_, index) => (
+          <div
+            key={index}
+            className="flex flex-col gap-3 rounded-lg bg-card p-4 ring-1 ring-foreground/10"
+          >
+            <div className="flex items-start justify-between">
+              <Skeleton className="size-9 rounded-md" />
+              <Skeleton className="size-5 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-3/4" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Playbooks as picker cards: the whole card toggles it (click, Enter or Space), the corner
+ * check and a brand ring show what's picked. `onToggle(value, checked)`.
+ */
 const PlaybookSelectionList = ({
   playbooks = [],
   playbookAgentLabelMap = {},
   selectedPlaybooks = [],
   onToggle,
-  emptyDescription = 'No active playbooks found',
+  emptyDescription = 'Only active playbooks can be assigned, and there are none right now.',
 }) => {
-  const { token } = theme.useToken();
-  const { colorBgContainer, colorBorderSecondary, colorPrimary } = token;
-
   if (playbooks.length === 0) {
-    return <Empty description={emptyDescription} />;
+    return (
+      <Empty className="py-10">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <HugeiconsIcon icon={BookOpen01Icon} strokeWidth={2} />
+          </EmptyMedia>
+          <EmptyTitle>No active playbooks</EmptyTitle>
+          <EmptyDescription>{emptyDescription}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
   }
 
   return (
-    <Row gutter={[12, 12]}>
-      {playbooks.map(playbook => {
-        const IconComp = playbook.icon;
-        const isChecked = selectedPlaybooks.includes(playbook.value);
-        const playbookAgents = (playbook.agentTypes || []).map(agentType => ({
-          value: agentType,
-          label: playbookAgentLabelMap[agentType] || agentType,
-          description: playbook.agentDescriptions?.[agentType] || '',
-        }));
+    <div className="@container">
+      <div role="group" aria-label="Playbooks" className={GRID_CLASSES}>
+        {playbooks.map(playbook => {
+          const isChecked = selectedPlaybooks.includes(playbook.value);
+          const agents = (playbook.agentTypes || []).map(agentType => ({
+            value: agentType,
+            label: playbookAgentLabelMap[agentType] || agentType,
+            description: playbook.agentDescriptions?.[agentType] || '',
+          }));
+          const toggle = () => onToggle?.(playbook.value, !isChecked);
 
-        return (
-          <Col key={playbook.value} xs={24} sm={24} md={24} lg={24} xl={24}>
+          return (
             <div
-              role="button"
+              key={playbook.value}
+              role="checkbox"
+              aria-checked={isChecked}
               tabIndex={0}
-              onClick={() => onToggle(playbook.value, !isChecked)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onToggle(playbook.value, !isChecked);
+              onClick={toggle}
+              onKeyDown={event => {
+                if (event.target !== event.currentTarget) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  toggle();
                 }
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: 'var(--mpr-2)',
-                borderRadius: 'var(--mpr-3)',
-                backgroundColor: colorBgContainer,
-                border: `1px solid ${isChecked ? colorPrimary : colorBorderSecondary}`,
-                boxShadow: isChecked ? `0 0 0 1px ${colorPrimary}33` : undefined,
-                cursor: 'pointer',
-              }}
+              className={selectCardClasses({ selectable: true, selected: isChecked })}
             >
-              <Checkbox
-                checked={isChecked}
-                onChange={event => onToggle(playbook.value, event.target.checked)}
-                onClick={event => event.stopPropagation()}
-              />
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  flexShrink: 0,
-                  borderRadius: 8,
-                  background: `${colorPrimary}14`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {IconComp ? <IconComp style={{ fontSize: 20, color: colorPrimary }} /> : null}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    marginBottom: 2,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      minWidth: 0,
-                      flex: 1,
-                    }}
-                  >
-                    <Text strong style={{ fontSize: 15 }} className="singleLine">
-                      {playbook.title}
-                    </Text>
-                  </div>
-                  {playbookAgents.length > 0 && (
-                    <Popover
-                      trigger="hover"
-                      placement="top"
-                      overlayInnerStyle={{ padding: 0 }}
-                      content={<AgentsPopoverContent agents={playbookAgents} />}
-                    >
-                      <span
-                        role="presentation"
-                        onClick={e => e.stopPropagation()}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '2px 8px',
-                          borderRadius: 6,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          backgroundColor: `${colorPrimary}14`,
-                          color: colorPrimary,
-                          cursor: 'pointer',
-                          flexShrink: 0,
-                          border: `1px solid ${colorPrimary}30`,
-                        }}
-                      >
-                        {playbookAgents.length} agents
-                      </span>
-                    </Popover>
+              <DotBackdrop active={isChecked} className={SELECT_CARD_BACKDROP} />
+              <div className="flex h-full flex-col gap-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <CardIconTile icon={playbook.icon} />
+                  <CardSelectCheck selected={isChecked} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <h3 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+                    {playbook.title}
+                  </h3>
+                  {playbook.shortDescription && (
+                    <p className="line-clamp-2 text-[13px] text-muted-foreground">
+                      {playbook.shortDescription}
+                    </p>
                   )}
                 </div>
-                <Text type="secondary" style={{ fontSize: 12 }} className="secondLine">
-                  {playbook.shortDescription}
-                </Text>
+                {agents.length > 0 && (
+                  <div className="mt-auto pt-1">
+                    <PlaybookAgents agents={agents} />
+                  </div>
+                )}
               </div>
             </div>
-          </Col>
-        );
-      })}
-    </Row>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 

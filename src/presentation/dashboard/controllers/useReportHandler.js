@@ -11,7 +11,7 @@ import {
   useGetBacklinkUsageDataMutation,
 } from '../../../services/api';
 import { useState } from 'react';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 export const useReportHandler = () => {
   const [generateTokenID, setGenerateTokenID] = useState(null);
   const [generateUserToken, { isLoading: isGeneratingToken }] = useGenerateUserTokenMutation();
@@ -77,18 +77,12 @@ export const useReportHandler = () => {
           filteredCampaigns: response.data.filteredCampaigns,
           allTimeAllCampaigns: response.data.allTimeAllCampaigns,
         };
-        notification.success({
-          message: 'Report Generated',
-          description: 'Your report has been generated successfully.',
-          placement: 'bottomRight',
-        });
+        toast.success('Customer report downloaded');
         exportCustomerFacingExcel(formattedData, data);
       } else {
-        notification.error({
-          message: 'Report Generation Failed',
-          description: 'Failed to generate report. Please try again.',
-          placement: 'bottomRight',
-        });
+        toast.error(
+          response?.errorObject?.userErrorText || "Couldn't generate the customer report"
+        );
         throw new Error(response.errorObject.userErrorText);
       }
     } catch (error) {
@@ -175,36 +169,15 @@ export const useReportHandler = () => {
       });
 
       if (successfulResponses.length === requestConfigs.length) {
-        notification.success({
-          message: 'Productivity report generated',
-          description: 'All report data sources were fetched successfully.',
-          placement: 'bottomRight',
-        });
+        toast.success('Productivity report downloaded');
       } else if (successfulResponses.length > 0) {
-        notification.warning({
-          message: 'Productivity report generated with partial data',
-          description: `${successfulResponses.length}/${requestConfigs.length} data sources succeeded.`,
-          placement: 'bottomRight',
-        });
-        failedRequests.forEach(errorText => {
-          notification.error({
-            message: 'Some report sources failed',
-            description: errorText,
-            placement: 'bottomRight',
-          });
+        // One toast for the whole report: what loaded, then which sources failed and why.
+        toast.warning('Productivity report downloaded with partial data', {
+          description: `${successfulResponses.length} of ${requestConfigs.length} sources loaded. ${failedRequests.join(' · ')}`,
         });
       } else {
-        notification.error({
-          message: 'Report generation failed',
-          description: 'All report data sources failed.',
-          placement: 'bottomRight',
-        });
-        failedRequests.forEach(errorText => {
-          notification.error({
-            message: 'Report source failed',
-            description: errorText,
-            placement: 'bottomRight',
-          });
+        toast.error("Couldn't generate the productivity report", {
+          description: failedRequests.join(' · '),
         });
         return;
       }
@@ -213,11 +186,7 @@ export const useReportHandler = () => {
       exportProductivityExcell(combinedData, data);
     } catch (error) {
       console.log('Error in handleUsageReport:', error);
-      notification.error({
-        message: 'Report generation failed',
-        description: 'Unexpected error while generating productivity report.',
-        placement: 'bottomRight',
-      });
+      toast.error("Couldn't generate the productivity report");
     }
   };
 
@@ -250,12 +219,12 @@ export const useReportHandler = () => {
     wsData.push([]); // Empty row for spacing
 
     for (let serviceName of serviceNames) {
-      var filteredData = flattenedData.filter(s => s.serviceName == serviceName);
+      var filteredData = flattenedData.filter(s => s.serviceName === serviceName);
       if (filteredData.length < 1) continue;
 
       // Service name
       let serviceNameCell = [capitalize(serviceName)];
-      if (serviceName == 'seoAgentV4') serviceNameCell = ['Pro SEO Agent'];
+      if (serviceName === 'seoAgentV4') serviceNameCell = ['Pro SEO Agent'];
       wsData.push(serviceNameCell);
       for (let item of filteredData) {
         let email = [item.email ? item.email : 'No Email'];
@@ -400,6 +369,5 @@ export const useReportHandler = () => {
     handleGetAllUserDomains,
     userDomains,
     generateTokenID,
-    isGeneratingToken,
   };
 };

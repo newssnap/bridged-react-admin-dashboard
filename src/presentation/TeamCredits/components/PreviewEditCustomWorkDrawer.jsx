@@ -1,95 +1,128 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Drawer,
-  Form,
-  InputNumber,
-  Select,
-  Input,
-  DatePicker,
-  Button,
-  Space,
-  Descriptions,
-  Typography,
-  Tag,
-  Divider,
-} from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { PencilEdit02Icon } from '@hugeicons/core-free-icons';
+import { Form, useForm } from '@/components/form';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetFooter } from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  addCategoryOption,
+  DEFAULT_CATEGORY_OPTIONS,
+  getCategoryLabel,
+} from '../constants/customWork';
+import { formatDateRange, formatNumber, hasValue } from '../utils/creditFormat';
 import { resolveCustomWorkStatusForSubmit } from '../utils/resolveCustomWorkStatusForSubmit';
+import CustomWorkFields from './CustomWorkFields';
+import CustomWorkStatusBadge from './CustomWorkStatusBadge';
+import { CreditSheetHeader, DiscardButton, sheetContentClasses } from './SheetParts';
+import TeamIdentity from './TeamIdentity';
 
-const { TextArea } = Input;
-const { Text } = Typography;
+/** The read view, laid out like the portal's lead details: a hero block, then the notes. */
+function CustomWorkDetails({ record }) {
+  const title = hasValue(record.workProject) ? record.workProject : 'Untitled work';
+  return (
+    <div className="flex w-full flex-col">
+      <div className="flex flex-col gap-5 border-b p-6">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Work or project</span>
+          <h4 className="min-w-0 text-[17px] font-semibold tracking-[-0.01em] break-words">
+            {title}
+          </h4>
+        </div>
+        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-2.5 text-[13.5px]">
+          <dt className="text-muted-foreground">Team</dt>
+          <dd className="min-w-0">
+            <TeamIdentity teamName={record.teamName} companyName={record.companyName} />
+          </dd>
+          <dt className="text-muted-foreground">Category</dt>
+          <dd className="min-w-0 break-words">
+            {hasValue(record.category) ? getCategoryLabel(record.category) : '—'}
+          </dd>
+          <dt className="text-muted-foreground">Credits used</dt>
+          <dd className="font-medium tabular-nums">{formatNumber(Number(record.creditsUsed))}</dd>
+          <dt className="text-muted-foreground">Status</dt>
+          <dd>
+            <CustomWorkStatusBadge status={record.status} />
+          </dd>
+          <dt className="text-muted-foreground">Dates</dt>
+          <dd className="tabular-nums">{formatDateRange(record.startDate, record.endDate)}</dd>
+        </dl>
+      </div>
 
-const DEFAULT_CATEGORY_OPTIONS = [
-  { label: 'Custom Features', value: 'Custom Feature' },
-  { label: 'Data Integration', value: 'Data Integration' },
-  { label: 'Enablement & Support', value: 'Enablement & Support' },
-  { label: 'Quality Assurance', value: 'Quality Assurance' },
-];
+      <div className="flex flex-col gap-2 p-6">
+        <span className="text-xs font-medium text-muted-foreground">Notes</span>
+        {hasValue(record.notes) ? (
+          <p className="text-[13.5px] break-words whitespace-pre-wrap">{record.notes}</p>
+        ) : (
+          <div className="rounded-lg bg-muted/60 px-4 py-6 text-center text-[13.5px] text-muted-foreground">
+            No notes were added to this entry.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-const STATUS_OPTIONS = [
-  { label: 'In Execution', value: 'pending' },
-  { label: 'Completed', value: 'completed' },
-];
-
-const getCategoryLabel = value =>
-  DEFAULT_CATEGORY_OPTIONS.find(o => o.value === value)?.label ?? value ?? '—';
-const getStatusLabel = value => STATUS_OPTIONS.find(o => o.value === value)?.label ?? value ?? '—';
-const formatDate = d => (d ? dayjs(d).format('YYYY-MM-DD') : '—');
-
+/**
+ * One sheet for a custom work entry: read view first (with an outline Edit), then the edit
+ * form in the same sheet. `mode` is 'preview' | 'edit'; `onEdit` switches to edit and
+ * `onPreview` back to the read view.
+ */
 const PreviewEditCustomWorkDrawer = ({
   open,
   onClose,
   mode,
-  initialRecord,
+  initialRecord: recordProp,
   teamsData,
   onSubmit,
   isSubmitting,
+  onEdit,
+  onPreview,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = useForm();
+  // Keep showing the last entry while the sheet animates out (the record is cleared on close).
+  const lastRecord = useRef(recordProp);
+  if (recordProp) lastRecord.current = recordProp;
+  const initialRecord = recordProp ?? (open ? null : lastRecord.current);
   const isPreview = mode === 'preview';
   const [categoryOptions, setCategoryOptions] = useState(() => [...DEFAULT_CATEGORY_OPTIONS]);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const categoryInputRef = useRef(null);
+  // Whether edit was opened from the read view, so Cancel goes back to it.
+  const cameFromPreview = useRef(false);
 
   useEffect(() => {
-    if (open && initialRecord) {
+    if (!open) cameFromPreview.current = false;
+    else if (isPreview) cameFromPreview.current = true;
+  }, [open, isPreview]);
+
+  useEffect(() => {
+    if (open && initialRecord && !isPreview) {
+      form.resetFields();
       form.setFieldsValue({
         teamId: initialRecord.teamId,
-        workProject: initialRecord.workProject,
-        category: initialRecord.category,
+        workProject: hasValue(initialRecord.workProject) ? initialRecord.workProject : undefined,
+        category: hasValue(initialRecord.category) ? initialRecord.category : undefined,
         creditsUsed: initialRecord.creditsUsed,
-        status: initialRecord.status,
+        status: hasValue(initialRecord.status) ? initialRecord.status : 'pending',
         dateFrom: initialRecord.startDate ? dayjs(initialRecord.startDate) : null,
         dateTo: initialRecord.endDate ? dayjs(initialRecord.endDate) : null,
         notes: initialRecord.notes ?? undefined,
       });
     }
-  }, [open, initialRecord, form]);
+  }, [open, initialRecord, isPreview, form]);
 
   useEffect(() => {
     if (!open || !initialRecord || isPreview) return;
     const cat = initialRecord.category;
     const next = [...DEFAULT_CATEGORY_OPTIONS];
-    if (cat && cat !== '--') {
+    if (hasValue(cat)) {
       const exists = next.some(o => o.value.toLowerCase() === String(cat).toLowerCase());
       if (!exists) next.push({ label: cat, value: cat });
     }
     setCategoryOptions(next);
   }, [open, initialRecord, isPreview]);
 
-  const handleAddCategory = e => {
-    e?.preventDefault?.();
-    const trimmed = newCategoryName.trim();
-    if (!trimmed) return;
-    setCategoryOptions(prev => {
-      const exists = prev.some(o => o.value.toLowerCase() === trimmed.toLowerCase());
-      if (exists) return prev;
-      return [...prev, { label: trimmed, value: trimmed }];
-    });
-    setNewCategoryName('');
-    setTimeout(() => categoryInputRef.current?.focus?.(), 0);
-  };
+  const handleAddCategory = name => setCategoryOptions(prev => addCategoryOption(prev, name));
 
   const handleFinish = values => {
     const resolvedStatus = resolveCustomWorkStatusForSubmit(values.status, values.dateTo);
@@ -111,226 +144,77 @@ const PreviewEditCustomWorkDrawer = ({
     onSubmit(payload);
   };
 
-  const title = isPreview ? 'Preview Custom Work Entry' : 'Edit Custom Work Entry';
-
-  const renderPreviewContent = () => {
-    if (!initialRecord) return null;
-    const r = initialRecord;
-    const statusColor = r.status === 'completed' ? 'success' : 'processing';
-    return (
-      <>
-        <div
-          style={{
-            marginBottom: 24,
-            borderRadius: 8,
-            background: 'var(--ant-color-fill-quaternary)',
-            border: '1px solid var(--ant-color-border-secondary)',
-          }}
-        >
-          <Text strong style={{ fontSize: 15, display: 'block' }}>
-            {r.teamName || '—'}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            {r.companyName || '—'}
-          </Text>
-        </div>
-
-        <Descriptions
-          column={1}
-          size="middle"
-          bordered
-          labelStyle={{
-            fontWeight: 600,
-            width: 140,
-            background: 'var(--ant-color-fill-quaternary)',
-          }}
-          contentStyle={{ background: 'var(--ant-color-bg-container)' }}
-        >
-          <Descriptions.Item label="Work / Project">{r.workProject || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Category">{getCategoryLabel(r.category)}</Descriptions.Item>
-          <Descriptions.Item label="Credits Used">
-            <Text strong>{r.creditsUsed ?? '—'}</Text>
-          </Descriptions.Item>
-          <Descriptions.Item label="Status">
-            <Tag color={statusColor}>{getStatusLabel(r.status)}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Date From">{formatDate(r.startDate)}</Descriptions.Item>
-          <Descriptions.Item label="Date To">{formatDate(r.endDate)}</Descriptions.Item>
-          <Descriptions.Item label="Notes" span={1}>
-            {r.notes ? (
-              <Text style={{ whiteSpace: 'pre-wrap' }}>{r.notes}</Text>
-            ) : (
-              <Text type="secondary">—</Text>
-            )}
-          </Descriptions.Item>
-        </Descriptions>
-      </>
-    );
+  const handleCancelEdit = () => {
+    if (cameFromPreview.current && onPreview && initialRecord) onPreview(initialRecord);
+    else onClose();
   };
 
+  const workTitle = hasValue(initialRecord?.workProject) ? initialRecord.workProject : null;
+
   return (
-    <Drawer
-      title={title}
-      placement="right"
-      onClose={onClose}
+    <Sheet
       open={open}
-      width={650}
-      footer={
-        isPreview ? (
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={onClose} size="large">
-              Close
-            </Button>
-          </Space>
-        ) : (
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={onClose} size="large">
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              size="large"
-              onClick={() => form.submit()}
-              loading={isSubmitting}
-            >
-              Save
-            </Button>
-          </Space>
-        )
-      }
+      onOpenChange={next => {
+        if (!next) onClose();
+      }}
     >
-      {isPreview ? (
-        renderPreviewContent()
-      ) : (
-        <Form form={form} layout="vertical" onFinish={handleFinish} requiredMark={false}>
-          <Form.Item
-            label="Team"
-            name="teamId"
-            rules={[{ required: true, message: 'Please select a team' }]}
-          >
-            <Select
-              size="large"
-              placeholder="Select a team"
-              showSearch
-              optionLabelProp="label"
-              filterOption={(input, option) => {
-                const searchText = `${option?.label ?? ''} ${option?.companyName ?? ''}`;
-                return searchText.toLowerCase().includes(input.toLowerCase());
-              }}
-            >
-              {teamsData?.map(team => (
-                <Select.Option
-                  key={team.teamId}
-                  value={team.teamId}
-                  label={team.teamName}
-                  companyName={team.companyName}
-                >
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{team.teamName}</div>
-                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{team.companyName}</div>
-                  </div>
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+      <SheetContent
+        className={sheetContentClasses('md')}
+        // Nothing is focused on open: the read view opens on its content, the form has several fields.
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
+        <CreditSheetHeader
+          title={isPreview ? 'Custom work details' : 'Edit custom work'}
+          description={
+            isPreview
+              ? 'Work done for a team, and the credits it used.'
+              : (workTitle ?? 'Change the details of this entry.')
+          }
+        />
 
-          <Form.Item
-            label="Work / Project"
-            name="workProject"
-            rules={[{ required: true, message: 'Please enter work or project title' }]}
-          >
-            <Input size="large" placeholder="Enter work or project title" />
-          </Form.Item>
+        {isPreview ? (
+          <div className="min-h-0 flex-1 overflow-y-auto" data-flat="true">
+            {initialRecord ? <CustomWorkDetails record={initialRecord} /> : null}
+          </div>
+        ) : (
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6">
+            <Form form={form} onFinish={handleFinish} scrollToFirstError autoComplete="off">
+              <CustomWorkFields
+                teams={teamsData}
+                categoryOptions={categoryOptions}
+                onAddCategory={handleAddCategory}
+                notesName="notes"
+                teamLocked
+              />
+            </Form>
+          </div>
+        )}
 
-          <Form.Item
-            label="Category"
-            name="category"
-            rules={[{ required: true, message: 'Please select or add a category' }]}
-          >
-            <Select
-              size="large"
-              placeholder="Select or add a category"
-              showSearch
-              optionFilterProp="label"
-              options={categoryOptions}
-              popupRender={menu => (
-                <>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <Space style={{ padding: '0 8px 8px', width: '100%' }} align="start" wrap>
-                    <Input
-                      placeholder="New category name"
-                      ref={categoryInputRef}
-                      value={newCategoryName}
-                      onChange={e => setNewCategoryName(e.target.value)}
-                      onKeyDown={e => {
-                        e.stopPropagation();
-                        if (e.key === 'Enter') {
-                          handleAddCategory(e);
-                        }
-                      }}
-                    />
-                    <Button type="text" icon={<PlusOutlined />} onClick={handleAddCategory}>
-                      Add category
-                    </Button>
-                  </Space>
-                </>
-              )}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Credits Used"
-            name="creditsUsed"
-            rules={[
-              { required: true, message: 'Please enter credits used' },
-              { type: 'number', min: 0, message: 'Must be 0 or greater' },
-            ]}
-          >
-            <InputNumber
-              size="large"
-              placeholder="Enter credits used"
-              style={{ width: '100%' }}
-              min={0}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Status"
-            name="status"
-            rules={[{ required: true, message: 'Please select status' }]}
-          >
-            <Select size="large" placeholder="Select status">
-              {STATUS_OPTIONS.map(opt => (
-                <Select.Option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="Date From"
-            name="dateFrom"
-            rules={[{ required: true, message: 'Please select start date' }]}
-          >
-            <DatePicker size="large" style={{ width: '100%' }} format="YYYY-MM-DD" />
-          </Form.Item>
-
-          <Form.Item
-            label="Date To"
-            name="dateTo"
-            rules={[{ required: true, message: 'Please select end date' }]}
-          >
-            <DatePicker size="large" style={{ width: '100%' }} format="YYYY-MM-DD" />
-          </Form.Item>
-
-          <Form.Item label="Notes" name="notes">
-            <TextArea rows={4} placeholder="Enter notes (optional)" size="large" />
-          </Form.Item>
-        </Form>
-      )}
-    </Drawer>
+        <SheetFooter className="flex-row justify-end gap-2 border-t px-6 py-4">
+          {isPreview ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onEdit?.(initialRecord)}
+                disabled={!initialRecord || !onEdit}
+              >
+                <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} data-icon="inline-start" />
+                Edit
+              </Button>
+            </>
+          ) : (
+            <>
+              <DiscardButton form={form} onDiscard={handleCancelEdit} disabled={isSubmitting} />
+              <Button type="button" onClick={() => form.submit()} disabled={isSubmitting}>
+                {isSubmitting && <Spinner data-icon="inline-start" />}
+                {isSubmitting ? 'Saving…' : 'Save changes'}
+              </Button>
+            </>
+          )}
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { notification } from 'antd';
-import { Form } from 'antd';
+import { toast } from 'sonner';
+import { useForm } from '@/components/form';
 import { useLocation } from 'react-router-dom';
 import {
   useGetTeamsQuery,
@@ -17,13 +17,14 @@ import { useAddMembersDrawerHandler } from './useAddMembersDrawerHandler';
 import dayjs from 'dayjs';
 
 export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) => {
-  const [form] = Form.useForm();
+  const [form] = useForm();
   const { pathname } = useLocation();
 
   const {
     data,
     isLoading,
     isFetching,
+    isError,
     refetch: refetchTeams,
   } = useGetTeamsQuery(selectedDomain || undefined);
 
@@ -36,15 +37,15 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
   const [customWorkEditDrawerOpen, setCustomWorkEditDrawerOpen] = useState(false);
   const [selectedCustomWorkEntry, setSelectedCustomWorkEntry] = useState(null);
 
-  const rawTeams = data?.data ?? [];
+  const rawTeams = useMemo(() => data?.data ?? [], [data]);
 
   const tableData = useMemo(() => {
     return rawTeams.map((item, index) => ({
       key: item._id || index,
       _id: item._id,
-      teamName: item.title || '--',
-      companyName: item.companyName || '--',
-      ownerEmail: item.ownerEmail || '--',
+      teamName: item.title || '—',
+      companyName: item.companyName || '—',
+      ownerEmail: item.ownerEmail || '—',
       memberCount: item.memberCount ?? 0,
       creditBalance: item.creditBalance ?? 0,
       customWork: item.customWork ?? 0,
@@ -64,7 +65,7 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     const names = rawTeams.map(item => item.companyName?.trim()).filter(Boolean);
     const unique = [...new Set(names)].sort((a, b) => a.localeCompare(b));
     return [
-      { value: '', label: 'All Companies' },
+      { value: '', label: 'All companies' },
       ...unique.map(name => ({ value: name, label: name })),
     ];
   }, [rawTeams]);
@@ -77,7 +78,7 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
       .sort((a, b) => a.localeCompare(b));
     const uniqueHosts = [...new Set(hosts)];
     return [
-      { value: '', label: 'All Domains' },
+      { value: '', label: 'All domains' },
       ...uniqueHosts.map(host => ({ value: host, label: host })),
     ];
   }, [domainsResponse]);
@@ -115,7 +116,6 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     handleClose: handleEditClose,
     handleAfterOpenChange: handleEditAfterOpenChange,
     memberTableData: editMemberTableData,
-    columns: editColumns,
     isLoadingMembers: isLoadingEditMembers,
     isSubmitting: isEditSubmitting,
     isLoadingCompanies: isLoadingEditCompanies,
@@ -123,6 +123,12 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     handleCompanySearch: handleEditCompanySearch,
     createCompany: createEditCompany,
     isCreatingCompany: isCreatingEditCompany,
+    handleMenuClick: handleEditMemberMenuClick,
+    handleUpdateUserStatus: handleEditMemberStatus,
+    handleDeleteMember: handleEditDeleteMember,
+    deletingId: editDeletingMemberId,
+    generateTokenIDLogin: editMemberTokenUserId,
+    tokenType: editMemberTokenType,
   } = useEditTeamDrawerHandler(refetchTeams);
 
   const {
@@ -219,10 +225,7 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
         const response = await adjustTeamCredits(submitData).unwrap();
 
         if (response?.success) {
-          notification.success({
-            message: 'Team credits updated successfully',
-            placement: 'bottomRight',
-          });
+          toast.success('Credits updated');
 
           refetchTeams();
           creditHistoryRefetch();
@@ -231,19 +234,13 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
             purchaseDate: dayjs(),
           });
         } else {
-          notification.error({
-            message: response?.errorObject?.message || 'Failed to update team credits',
-            placement: 'bottomRight',
-          });
+          toast.error(response?.errorObject?.message || "Couldn't update the credits");
         }
       } catch (err) {
-        notification.error({
-          message: err?.data?.message || 'Something went wrong',
-          placement: 'bottomRight',
-        });
+        toast.error(err?.data?.message || "Couldn't update the credits");
       }
     },
-    [adjustTeamCredits, refetchTeams, closeManageCreditsDrawer]
+    [adjustTeamCredits, refetchTeams, creditHistoryRefetch, form]
   );
 
   const handleEditCreditsHistorySubmit = useCallback(
@@ -262,25 +259,16 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
         }).unwrap();
 
         if (response?.success) {
-          notification.success({
-            message: 'Credits history updated successfully',
-            placement: 'bottomRight',
-          });
+          toast.success('Credit history updated');
           creditHistoryRefetch();
           refetchTeams();
           return true;
         }
 
-        notification.error({
-          message: response?.errorObject?.message || 'Failed to update credits history',
-          placement: 'bottomRight',
-        });
+        toast.error(response?.errorObject?.message || "Couldn't update the credit history");
         return false;
       } catch (err) {
-        notification.error({
-          message: err?.data?.message || 'Something went wrong',
-          placement: 'bottomRight',
-        });
+        toast.error(err?.data?.message || "Couldn't update the credit history");
         return false;
       }
     },
@@ -307,15 +295,9 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
         if (payload.creditUsageId) {
           const response = await editCustomWork(payload).unwrap();
           if (response?.success) {
-            notification.success({
-              message: 'Custom work entry updated successfully',
-              placement: 'bottomRight',
-            });
+            toast.success('Custom work updated');
           } else {
-            notification.error({
-              message: response?.errorObject?.message || 'Failed to update team credits',
-              placement: 'bottomRight',
-            });
+            toast.error(response?.errorObject?.message || "Couldn't update the custom work");
           }
         } else {
           const response = await addCustomWork({
@@ -324,24 +306,15 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
             usageData: payload.usageData,
           }).unwrap();
           if (response?.success) {
-            notification.success({
-              message: 'Custom work entry added successfully',
-              placement: 'bottomRight',
-            });
+            toast.success('Custom work added');
             refetchTeams();
             closeCustomWorkEditDrawer();
           } else {
-            notification.error({
-              message: response?.errorObject?.message || 'Failed to update team credits',
-              placement: 'bottomRight',
-            });
+            toast.error(response?.errorObject?.message || "Couldn't add the custom work");
           }
         }
       } catch (err) {
-        notification.error({
-          message: err?.data?.message || 'Something went wrong',
-          placement: 'bottomRight',
-        });
+        toast.error(err?.data?.message || "Couldn't save the custom work");
       }
     },
     [editCustomWork, addCustomWork, refetchTeams, closeCustomWorkEditDrawer]
@@ -352,6 +325,9 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
   return {
     tableData: filteredData,
     isLoading: isTeamsTableLoading,
+    isInitialLoading: isLoading,
+    isError,
+    refetchTeams,
     companyOptions,
     domainOptions,
     isDomainsLoading,
@@ -366,7 +342,6 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     handleEditClose,
     handleEditAfterOpenChange,
     editMemberTableData,
-    editColumns,
     isLoadingEditMembers,
     isEditSubmitting,
     isLoadingEditCompanies,
@@ -374,6 +349,12 @@ export const useTeamsHandler = (searchValue, selectedCompany, selectedDomain) =>
     handleEditCompanySearch,
     createEditCompany,
     isCreatingEditCompany,
+    handleEditMemberMenuClick,
+    handleEditMemberStatus,
+    handleEditDeleteMember,
+    editDeletingMemberId,
+    editMemberTokenUserId,
+    editMemberTokenType,
 
     addMembersDrawerOpen,
     openAddMembersDrawer,

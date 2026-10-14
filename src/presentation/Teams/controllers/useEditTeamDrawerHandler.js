@@ -1,17 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Form,
-  message,
-  notification,
-  Typography,
-  Popconfirm,
-  Tooltip,
-  Button,
-  Space,
-  Dropdown,
-  Modal,
-} from 'antd';
-import { LoadingOutlined, ChromeOutlined, MoreOutlined } from '@ant-design/icons';
+import { toast } from 'sonner';
+import { useForm } from '@/components/form';
 import {
   useUpdateTeamMutation,
   useGetCompaniesQuery,
@@ -23,12 +12,9 @@ import {
 } from '../../../services/api';
 import { useDashboardHandler } from '../../dashboard/controllers/useDashboardHandler';
 import { openUserPortal } from '../../../utils/controllers/openUserPortal';
-import Icon from '../../../utils/components/Icon';
-
-const { Text } = Typography;
 
 export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
-  const [form] = Form.useForm();
+  const [form] = useForm();
   const [editTeamDrawerOpen, setEditTeamDrawerOpen] = useState(false);
   const [selectedTeamForEdit, setSelectedTeamForEdit] = useState(null);
   const [companySearchText, setCompanySearchText] = useState('');
@@ -42,7 +28,6 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   const [activateUser] = useActivateUserMutation();
   const [deactivateUser] = useDeactivateUserMutation();
   const [deletingId, setDeletingId] = useState(null);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const {
     handleGenerateUserTokenForLogin,
@@ -61,9 +46,9 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   );
   const [createCompanyMutation, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
-  const companiesList = companiesResponse?.data?.data ?? [];
+  const companiesList = useMemo(() => companiesResponse?.data?.data ?? [], [companiesResponse]);
   const companyOptions = useMemo(
-    () => (open ? companiesList.map(c => ({ value: c.id, label: c.name || '--' })) : []),
+    () => (open ? companiesList.map(c => ({ value: c.id, label: c.name || '—' })) : []),
     [open, companiesList]
   );
 
@@ -75,12 +60,11 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     skip: !open || !teamId,
   });
 
-  const members = membersData?.data ?? [];
+  const members = useMemo(() => membersData?.data ?? [], [membersData]);
 
   const closeEditDrawer = useCallback(() => {
     setEditTeamDrawerOpen(false);
     setCompanySearchText('');
-    setOpenDropdownId(null);
     setTimeout(() => setSelectedTeamForEdit(null), 300);
   }, []);
 
@@ -132,7 +116,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
   const handleSubmit = useCallback(
     async values => {
       if (!values?.teamId) {
-        message.error('Team ID is missing');
+        toast.error("Couldn't find the team to update");
         return;
       }
       try {
@@ -181,25 +165,16 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
         const response = await updateTeam(payload).unwrap();
         if (response?.success) {
-          notification.success({
-            message: 'Team updated successfully',
-            placement: 'bottomRight',
-          });
+          toast.success('Team updated');
           await refetchTeamMembers?.();
           closeEditDrawer();
           onSuccess?.();
         } else {
-          notification.error({
-            message: response?.data?.errorObject?.userErrorText || 'Failed to update team credits',
-            placement: 'bottomRight',
-          });
+          toast.error(response?.data?.errorObject?.userErrorText || "Couldn't update the team");
         }
       } catch (err) {
         console.log(err);
-        notification.error({
-          message: err?.data?.errorObject?.userErrorText || 'Something went wrong',
-          placement: 'bottomRight',
-        });
+        toast.error(err?.data?.errorObject?.userErrorText || "Couldn't update the team");
       }
     },
     [updateTeam, onSuccess, refetchTeamMembers, closeEditDrawer]
@@ -237,20 +212,14 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
       try {
         const result = await createCompanyMutation(companyName).unwrap();
-        notification.success({
-          message: 'Company created successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Company created');
 
         await refetchCompanies();
         setCompanySearchText('');
 
         return result?.id || result?.data?.id || result?.data?.data?.id || result?._id || null;
       } catch (error) {
-        notification.error({
-          message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
-          placement: 'bottomRight',
-        });
+        toast.error(error?.data?.errorObject?.userErrorText || "Couldn't create the company");
         return null;
       }
     },
@@ -259,17 +228,23 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
   const memberTableData = useMemo(
     () =>
-      members.map((m, index) => ({
-        key: m._id || m.userId || index,
-        _id: m.userId || m._id,
-        membershipId: m._id,
-        userId: m.userId,
-        name: m.name?.trim() || m.email || '—',
-        email: m.email || '—',
-        role: m.isOwner ? 'Owner' : 'Member',
-        profilePicture: m.profilePicture,
-        status: m.status,
-      })),
+      [...members]
+        .map((m, index) => ({
+          key: m._id || m.userId || index,
+          _id: m.userId || m._id,
+          membershipId: m._id,
+          userId: m.userId,
+          name: m.name?.trim() || m.email || '—',
+          email: m.email || '—',
+          role: m.isOwner ? 'Owner' : 'Member',
+          profilePicture: m.profilePicture,
+          status: m.status,
+        }))
+        .sort((a, b) => {
+          if (a.role === 'Owner' && b.role !== 'Owner') return -1;
+          if (a.role !== 'Owner' && b.role === 'Owner') return 1;
+          return 0;
+        }),
     [members]
   );
 
@@ -277,11 +252,11 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     async (key, record) => {
       if (!record?._id) return;
 
-      const token = await handleGenerateUserTokenForLogin({ _id: record._id }, key);
-      if (!token) return;
+      const tokens = await handleGenerateUserTokenForLogin({ _id: record._id }, key);
+      if (!tokens?.accessToken) return;
 
       if (key === 'portal') {
-        openUserPortal(token);
+        openUserPortal(tokens.accessToken, tokens.refreshToken);
       } else if (key === 'plugin') {
         const handlePluginStatus = event => {
           if (event.source !== window) return;
@@ -292,16 +267,12 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
           window.removeEventListener('message', handlePluginStatus);
 
           if (event.data?.payload?.status === 'success') {
-            notification.success({
-              message: 'Login Success',
-              description: 'You have been logged in successfully.',
-            });
+            toast.success('Signed in to the plugin');
             return;
           }
 
-          notification.error({
-            message: 'Login Failed',
-            description: 'Failed to login. Please try again.',
+          toast.error("Couldn't sign in to the plugin", {
+            description: 'Try again.',
           });
         };
 
@@ -311,7 +282,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
             source: 'qweek-website',
             payload: {
               type: 'LOGIN_TOKEN',
-              token,
+              token: tokens.accessToken,
             },
           },
           '*'
@@ -327,11 +298,7 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
         if (action === 'activate') {
           const response = await activateUser(userId).unwrap();
           if (response?.success) {
-            notification.success({
-              message: 'User activated successfully',
-              placement: 'bottomRight',
-              showProgress: true,
-            });
+            toast.success('User activated');
             refetchTeamMembers?.();
           }
           return;
@@ -339,251 +306,39 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
 
         const response = await deactivateUser(userId).unwrap();
         if (response?.success) {
-          notification.success({
-            message: 'User deactivated successfully',
-            placement: 'bottomRight',
-            showProgress: true,
-          });
+          toast.success('User deactivated');
           refetchTeamMembers?.();
         }
       } catch (err) {
-        notification.error({
-          message: err?.data?.errorObject?.userErrorText || 'Failed to update user status',
-          placement: 'bottomRight',
-          showProgress: true,
-        });
+        toast.error(err?.data?.errorObject?.userErrorText || "Couldn't update the user's status");
       }
     },
     [activateUser, deactivateUser, refetchTeamMembers]
   );
 
-  const showStatusConfirmModal = useCallback(
-    record => {
-      Modal.confirm({
-        title: record?.status === 'inactive' ? 'Activate user?' : 'Deactivate user?',
-        content:
-          record?.status === 'inactive'
-            ? 'Are you sure you want to activate this user?'
-            : 'Are you sure you want to deactivate this user?',
-        okText: record?.status === 'inactive' ? 'Activate' : 'Deactivate',
-        okButtonProps: {
-          danger: record?.status !== 'inactive',
-        },
-        cancelText: 'Cancel',
-        centered: true,
-        type: 'warning',
-        onOk: () => {
-          handleUpdateUserStatus(
-            record._id,
-            record?.status === 'inactive' ? 'activate' : 'deactivate'
-          );
-          setOpenDropdownId(null);
-        },
-      });
-    },
-    [handleUpdateUserStatus]
-  );
-
   const handleDeleteMember = useCallback(
     async record => {
       if (!record?.membershipId) {
-        notification.error({
-          message: 'Member id is missing',
-          placement: 'bottomRight',
-        });
+        toast.error("Couldn't find this member");
         return;
       }
       setDeletingId(record.membershipId);
       try {
         const response = await deleteTeamMember(record.membershipId).unwrap();
         if (response?.success) {
-          notification.success({
-            message: 'Member removed successfully',
-            placement: 'bottomRight',
-          });
+          toast.success('Member removed');
           await refetchTeamMembers?.();
           refetchTeams?.();
         } else {
-          notification.error({
-            message: response?.errorObject?.userErrorText || 'Failed to remove member',
-            placement: 'bottomRight',
-          });
+          toast.error(response?.errorObject?.userErrorText || "Couldn't remove the member");
         }
       } catch (err) {
-        notification.error({
-          message: err?.data?.errorObject?.userErrorText || 'Something went wrong',
-          placement: 'bottomRight',
-        });
+        toast.error(err?.data?.errorObject?.userErrorText || "Couldn't remove the member");
       } finally {
         setDeletingId(null);
       }
     },
     [deleteTeamMember, refetchTeamMembers, refetchTeams]
-  );
-
-  const columns = useMemo(
-    () => [
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        render: name => <Text>{name}</Text>,
-      },
-      {
-        title: 'Email',
-        dataIndex: 'email',
-        key: 'email',
-        render: value => <Text type="secondary">{value}</Text>,
-      },
-      {
-        title: 'Role',
-        dataIndex: 'role',
-        key: 'role',
-        render: role => (
-          <Text strong={role === 'Owner'} type={role === 'Owner' ? null : 'secondary'}>
-            {role}
-          </Text>
-        ),
-      },
-      {
-        title: 'Action',
-        key: 'action',
-        width: 60,
-        align: 'center',
-        render: (_, record) => {
-          const isDeleting = deletingId === record.membershipId;
-          const isOwner = record.role === 'Owner';
-          const menuItems = [
-            {
-              key: 'portal',
-              label: (
-                <Space>
-                  {isGeneratingTokenForLogin &&
-                  generateTokenIDLogin &&
-                  tokenType === 'portal' &&
-                  generateTokenIDLogin === record._id ? (
-                    <LoadingOutlined />
-                  ) : (
-                    <Icon name="ComputerOutlined" style={{ marginBottom: '-3px' }} />
-                  )}
-                  <span>Login to Portal</span>
-                </Space>
-              ),
-              onClick: () => {
-                handleMenuClick('portal', record);
-              },
-            },
-            {
-              key: 'plugin',
-              label: (
-                <Space>
-                  {isGeneratingTokenForLogin &&
-                  generateTokenIDLogin &&
-                  tokenType === 'plugin' &&
-                  generateTokenIDLogin === record._id ? (
-                    <LoadingOutlined />
-                  ) : (
-                    <ChromeOutlined style={{ fontSize: '15px' }} />
-                  )}
-                  <span>Login to Plugin</span>
-                </Space>
-              ),
-              onClick: () => {
-                handleMenuClick('plugin', record);
-              },
-            },
-            { type: 'divider' },
-            {
-              key: record?.status === 'inactive' ? 'activate' : 'deactivate',
-              label: (
-                <Space
-                  onClick={e => {
-                    e.stopPropagation();
-                    showStatusConfirmModal(record);
-                  }}
-                >
-                  {record?.status === 'inactive' ? (
-                    <>
-                      <Icon name="PlayOutlined" style={{ marginBottom: '-2px' }} />
-                      <span>Activate User</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="PauseOutlined" style={{ marginBottom: '-2px' }} />
-                      <span>Deactivate User</span>
-                    </>
-                  )}
-                </Space>
-              ),
-            },
-
-            ...(!isOwner
-              ? [
-                  { type: 'divider' },
-                  {
-                    key: 'remove',
-                    label: (
-                      <Popconfirm
-                        title="Remove member"
-                        description="Remove this member from the team?"
-                        okText="Remove"
-                        okButtonProps={{ loading: isDeleting }}
-                        cancelText="Cancel"
-                        onConfirm={() => handleDeleteMember(record)}
-                      >
-                        <Space>
-                          <Icon name="DeleteOutlined" />
-                          <span>Remove Member</span>
-                        </Space>
-                      </Popconfirm>
-                    ),
-                  },
-                ]
-              : []),
-          ];
-
-          return (
-            <div onClick={e => e.stopPropagation()}>
-              <Dropdown
-                open={openDropdownId === record._id}
-                onOpenChange={isOpen => {
-                  if (!isOpen) {
-                    setOpenDropdownId(null);
-                  }
-                }}
-                menu={{ items: menuItems }}
-                trigger={['click']}
-                arrow
-                placement="bottomRight"
-              >
-                <Tooltip title="Actions">
-                  <Button
-                    type="text"
-                    shape="circle"
-                    size="small"
-                    icon={<MoreOutlined />}
-                    onClick={e => {
-                      e.stopPropagation();
-                      setOpenDropdownId(record._id);
-                    }}
-                  ></Button>
-                </Tooltip>
-              </Dropdown>
-            </div>
-          );
-        },
-      },
-    ],
-    [
-      handleDeleteMember,
-      deletingId,
-      handleMenuClick,
-      showStatusConfirmModal,
-      isGeneratingTokenForLogin,
-      generateTokenIDLogin,
-      tokenType,
-      openDropdownId,
-    ]
   );
 
   return {
@@ -600,12 +355,19 @@ export const useEditTeamDrawerHandler = (refetchTeams, onCompanyChange) => {
     handleClose,
     handleAfterOpenChange,
     memberTableData,
-    columns,
     isSubmitting,
     isLoadingCompanies,
     companySearchText,
     handleCompanySearch,
     createCompany,
     isCreatingCompany,
+    // Member row actions (the drawer renders the menu; confirmations happen there).
+    handleMenuClick,
+    handleUpdateUserStatus,
+    handleDeleteMember,
+    deletingId,
+    isGeneratingTokenForLogin,
+    generateTokenIDLogin,
+    tokenType,
   };
 };

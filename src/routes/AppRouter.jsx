@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../ProtectedRoute';
-import { Row, Spin } from 'antd';
+import { Spinner } from '@/components/ui/spinner';
 
 // Use React.lazy() to lazily load the components
 const LazyNotFound = lazy(() => import('../pages/NotFound'));
@@ -26,9 +26,10 @@ function AppRouter() {
   };
 
   const fallback = (
-    <Row style={{ height: '100vh', width: '100%' }} justify="center" align="middle">
-      <Spin size="large" />
-    </Row>
+    <div className="flex min-h-[60vh] w-full items-center justify-center" role="status">
+      <Spinner className="size-6 text-muted-foreground" />
+      <span className="sr-only">Loading</span>
+    </div>
   );
 
   const routes = [
