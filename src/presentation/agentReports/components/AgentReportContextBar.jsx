@@ -18,6 +18,7 @@ function AgentReportContextBar({
   generatedAt,
   expiresAt,
   onDownload,
+  includesLeads,
   canDownload,
   onNewReport,
 }) {
@@ -90,7 +91,7 @@ function AgentReportContextBar({
               onClick={onDownload}
               disabled={!canDownload}
             >
-              Download Excel
+              {includesLeads ? 'Download Excel + leads' : 'Download Excel'}
             </Button>
             <Button onClick={onNewReport}>Close report</Button>
           </Space>

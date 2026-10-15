@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLazyGetAgentVisitorFrequencyQuery } from '../../../services/api';
 import { getApiErrorText } from './agentReportMetrics';
 
-// Loads the optional per-agent "visitor frequency" breakdown on demand.
+// Loads the per-agent "visitor frequency" breakdown on demand (requested by the AM team).
 export const useAgentReportVisitorFrequency = () => {
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [_GET_AGENT_VISITOR_FREQUENCY, { currentData, error, isFetching }] =
@@ -30,6 +30,10 @@ export const useAgentReportVisitorFrequency = () => {
     visitorFrequency: currentData?.success ? currentData.data : null,
     isVisitorFrequencyLoading: isFetching,
     visitorFrequencyErrorText:
-      error || responseError ? getApiErrorText(error || responseError) : null,
+      error?.status === 503
+        ? 'This date range is too heavy to compute — try a shorter range.'
+        : error || responseError
+          ? getApiErrorText(error || responseError)
+          : null,
   };
 };

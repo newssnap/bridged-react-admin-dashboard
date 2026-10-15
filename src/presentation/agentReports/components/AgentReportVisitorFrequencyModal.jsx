@@ -1,18 +1,19 @@
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { Alert, Descriptions, Modal, Spin } from 'antd';
-import {
-  formatCount,
-  formatDisplayDate,
-  formatPercent,
-  toNumber,
-} from '../controllers/agentReportMetrics';
+import { Alert, Descriptions, Modal, Space, Spin, Tooltip, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { formatCount, formatDisplayDate, toNumber } from '../controllers/agentReportMetrics';
 import { useAgentReportChartTheme } from '../controllers/useAgentReportChartTheme';
 
-// *Pct fields are percentages (0-100); formatPercent expects a 0-1 ratio.
-const toRatio = value => {
+const { Text } = Typography;
+
+export const CONVERSION_HELP_TEXT =
+  'Converted = visitor submitted a form or clicked a CTA link at least once (an actionTake recorded on the card).';
+
+// actionTakeConversionPct is already a 0-100 percentage with 2 decimals: shown as-is, never scaled.
+const formatPct = value => {
   const number = toNumber(value);
-  return number === null ? null : number / 100;
+  return number === null ? '—' : `${number.toFixed(2)}%`;
 };
 
 function AgentReportVisitorFrequencyModal({ open, agent, data, isLoading, errorText, onClose }) {
@@ -39,7 +40,7 @@ function AgentReportVisitorFrequencyModal({ open, agent, data, isLoading, errorT
         min: 0,
         max: 100,
         opposite: true,
-        title: { ...chartTheme.yAxis.title, text: 'Action-take conversion (%)' },
+        title: { ...chartTheme.yAxis.title, text: 'Converted (%)' },
       },
     ],
     tooltip: { shared: true },
@@ -52,14 +53,11 @@ function AgentReportVisitorFrequencyModal({ open, agent, data, isLoading, errorT
       },
       {
         type: 'spline',
-        name: 'Action-take conversion',
+        name: 'Converted (%)',
         color: '#10b981',
         yAxis: 1,
-        tooltip: { valueSuffix: '%', valueDecimals: 1 },
-        data: buckets.map(bucket => {
-          const ratio = toRatio(bucket.actionTakeConversionPct);
-          return ratio === null ? null : ratio * 100;
-        }),
+        tooltip: { valueSuffix: '%', valueDecimals: 2 },
+        data: buckets.map(bucket => toNumber(bucket.actionTakeConversionPct)),
       },
     ],
   };
@@ -71,11 +69,19 @@ function AgentReportVisitorFrequencyModal({ open, agent, data, isLoading, errorT
       footer={null}
       width={760}
       destroyOnClose
-      title={`Visitor frequency — ${agent?.agentName || agent?.agentId || ''}`}
+      title="Visitor frequency: how often visitors return, and who converts"
     >
+      <Space direction="vertical" size={2} style={{ marginBottom: 'var(--mpr-2)' }}>
+        <Text type="secondary">Visitors are grouped by sessions per visitor (1–9 and 10+).</Text>
+        <Text type="secondary">
+          <InfoCircleOutlined /> {CONVERSION_HELP_TEXT}
+        </Text>
+      </Space>
       {agent && (
         <Descriptions size="small" column={1} style={{ marginBottom: 'var(--mpr-2)' }}>
-          <Descriptions.Item label="Agent ID">{agent.agentId}</Descriptions.Item>
+          <Descriptions.Item label="Agent">
+            {agent.agentName ? `${agent.agentName} (${agent.agentId})` : agent.agentId}
+          </Descriptions.Item>
           <Descriptions.Item label="Dates">
             {formatDisplayDate(agent.startDate)} – {formatDisplayDate(agent.endDate)}
           </Descriptions.Item>
@@ -92,9 +98,15 @@ function AgentReportVisitorFrequencyModal({ open, agent, data, isLoading, errorT
             <Descriptions.Item label="Sessions">
               {formatCount(toNumber(totals.sessions))}
             </Descriptions.Item>
-            <Descriptions.Item label="Took an action">
+            <Descriptions.Item
+              label={
+                <Tooltip title={CONVERSION_HELP_TEXT}>
+                  Converted <InfoCircleOutlined />
+                </Tooltip>
+              }
+            >
               {formatCount(toNumber(totals.visitorsWithActionTake))} (
-              {formatPercent(toRatio(totals.actionTakeConversionPct))})
+              {formatPct(totals.actionTakeConversionPct)})
             </Descriptions.Item>
           </Descriptions>
           {buckets.length ? (

@@ -111,28 +111,25 @@ function SheetTable({ sheet }) {
   );
 }
 
-function AgentReportSheetTabs({ result, sheetNames }) {
-  if (!sheetNames.length) {
-    return (
-      <Card size="small">
-        <Empty description="This report has no sheets — there was no activity for these agents and dates." />
-      </Card>
-    );
-  }
+// extraItems: additional antd Tabs items appended after the sheets (e.g. Leads).
+function AgentReportSheetTabs({ result, sheetNames, extraItems = [] }) {
+  const sheetItems = sheetNames.map(sheetName => {
+    const rowCount = result.sheets[sheetName]?.rows?.length || 0;
+    return {
+      key: sheetName,
+      label: `${sheetName} (${rowCount.toLocaleString()})`,
+      children: <SheetTable sheet={result.sheets[sheetName]} />,
+    };
+  });
 
   return (
     <Card size="small" title="Report sheets">
-      <Tabs
-        destroyInactiveTabPane
-        items={sheetNames.map(sheetName => {
-          const rowCount = result.sheets[sheetName]?.rows?.length || 0;
-          return {
-            key: sheetName,
-            label: `${sheetName} (${rowCount.toLocaleString()})`,
-            children: <SheetTable sheet={result.sheets[sheetName]} />,
-          };
-        })}
-      />
+      {!sheetNames.length && (
+        <Empty description="This report has no sheets — there was no activity for these agents and dates." />
+      )}
+      {sheetItems.length + extraItems.length > 0 && (
+        <Tabs destroyInactiveTabPane items={[...sheetItems, ...extraItems]} />
+      )}
     </Card>
   );
 }

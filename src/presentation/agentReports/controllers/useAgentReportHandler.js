@@ -267,18 +267,22 @@ export const useAgentReportHandler = () => {
   const firstAgentName =
     campaigns.length === 1 ? agentNames[campaigns[0].id] || agentTableRows[0]?.agentName : null;
 
-  const downloadExcel = useCallback(() => {
-    if (!result) return;
-    try {
-      downloadAgentReportExcel(result, campaigns, firstAgentName);
-    } catch (error) {
-      notification.error({
-        message: 'Excel download failed',
-        description: error?.message || 'The workbook could not be created.',
-        placement: 'bottomRight',
-      });
-    }
-  }, [result, campaigns, firstAgentName]);
+  // leadActions: optional lead sheets (see useAgentReportLeads) appended after the report sheets.
+  const downloadExcel = useCallback(
+    (leadActions = []) => {
+      if (!result) return;
+      try {
+        downloadAgentReportExcel(result, campaigns, firstAgentName, leadActions);
+      } catch (error) {
+        notification.error({
+          message: 'Excel download failed',
+          description: error?.message || 'The workbook could not be created.',
+          placement: 'bottomRight',
+        });
+      }
+    },
+    [result, campaigns, firstAgentName]
+  );
 
   // Future: an "AI insights" panel will consume { result, kpis, agentTableRows, typeConfig } here.
 
@@ -319,6 +323,7 @@ export const useAgentReportHandler = () => {
     visibleSheetNames,
     hasSheets: visibleSheetNames.length > 0,
     downloadExcel,
+    firstAgentName,
     // recent reports
     recentReports,
     openRecentReport,
