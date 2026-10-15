@@ -24,7 +24,11 @@ function SettingRow({
       className={cn(
         'flex flex-col gap-3 rounded-lg bg-muted/60 px-4 py-3.5',
         'in-data-[slot=setting-group]:rounded-none in-data-[slot=setting-group]:bg-transparent',
-        'in-data-[flat=true]:in-data-[slot=setting-group]:py-4',
+        // Flat (drawer) groups: hairline-split rows, but the section heading's gap and the
+        // section padding already frame the group, so its outer rows don't add their own.
+        'in-data-[flat=true]:in-data-[slot=setting-group]:py-3.5',
+        'in-data-[flat=true]:in-data-[slot=setting-group]:first:pt-0!',
+        'in-data-[flat=true]:in-data-[slot=setting-group]:last:pb-0!',
         className
       )}
     >
@@ -70,7 +74,7 @@ function SettingRow({
         <div
           hidden={!panelOpen}
           className={cn(
-            'flex flex-col gap-3 rounded-md bg-muted/50 p-3',
+            'flex flex-col gap-5 rounded-md bg-muted/50 p-4',
             panelOpen ? 'reveal-in' : 'hidden',
             icon && 'sm:ms-12'
           )}

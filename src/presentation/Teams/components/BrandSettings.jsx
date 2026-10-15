@@ -36,9 +36,13 @@ function ColorField({ name, label }) {
             alpha={false}
             aria-label={`Pick the ${label.toLowerCase()}`}
           />
-          <span className="font-mono text-xs text-muted-foreground uppercase tabular-nums">
-            {control.value || 'Not set'}
-          </span>
+          {control.value ? (
+            <span className="font-mono text-xs text-muted-foreground uppercase tabular-nums">
+              {control.value}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Not set</span>
+          )}
         </div>
       )}
     </FormField>
@@ -113,7 +117,7 @@ function BrandSettings({ form, onOpenCrawl }) {
           panelOpen={!!isBrandSyncEnabled}
           panel={
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
                 <ColorField name="brandSyncPrimaryColor" label="Primary colour" />
                 <ColorField name="brandSyncAccentColour" label="Accent colour" />
                 <FormField name="brandSyncTheme" label="Theme">
