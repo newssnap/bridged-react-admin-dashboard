@@ -2,6 +2,7 @@ import {
   Building03Icon,
   CreditCardIcon,
   DashboardSquare02Icon,
+  Home01Icon,
   Logout03Icon,
   UserGroupIcon,
 } from '@hugeicons/core-free-icons';
@@ -11,7 +12,8 @@ import {
  * command palette all read from here. Labels match page titles (sentence case).
  */
 export const PRIMARY_NAV = [
-  { key: '', path: '/', label: 'Accounts', icon: DashboardSquare02Icon },
+  { key: '', path: '/', label: 'Home', icon: Home01Icon },
+  { key: 'accounts', path: '/accounts', label: 'Accounts', icon: DashboardSquare02Icon },
   { key: 'teams', path: '/teams', label: 'Teams', icon: UserGroupIcon },
   { key: 'companies', path: '/companies', label: 'Companies', icon: Building03Icon },
   {
@@ -30,7 +32,11 @@ export const BOTTOM_NAV = [{ key: 'logout', label: 'Log out', icon: Logout03Icon
 /** Pages not in the sidebar, for breadcrumbs. */
 export const EXTRA_PAGES = [
   { path: '/defaultChecklist', label: 'Default checklist' },
-  { path: '/userChecklist', label: 'User checklist', parent: { label: 'Accounts', path: '/' } },
+  {
+    path: '/userChecklist',
+    label: 'User checklist',
+    parent: { label: 'Accounts', path: '/accounts' },
+  },
 ];
 
 /** The nav key of a pathname: '/teams/credits' → 'teams/credits', '/' → ''. */

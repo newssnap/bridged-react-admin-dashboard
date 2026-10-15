@@ -36,7 +36,7 @@ const useLoginHandler = () => {
         // Preserve Claude OAuth context only for a real authorize URL
         const oauthRedirect = getValidOAuthRedirectFromSearch(location.search);
         if (oauthRedirect) {
-          navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`);
+          navigate(`/accounts?oauth_redirect=${encodeURIComponent(oauthRedirect)}`);
         } else {
           navigate('/');
         }

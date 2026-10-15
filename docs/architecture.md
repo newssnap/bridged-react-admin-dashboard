@@ -2,7 +2,7 @@
 
 How the Bridged admin dashboard is put together. Read this before adding a page, an API call or a piece of global state. For how things should **look**, see [design-system.md](design-system.md).
 
-The admin is an internal tool for the Bridged team. It manages accounts (users, their agents and playbooks), teams, companies, team credits and custom work. It talks to the same gateway as the portal.
+The admin is an internal tool for the Bridged team. It opens on a Home overview and manages accounts (users, their agents and playbooks), teams, companies, team credits and custom work. It talks to the same gateway as the portal.
 
 ## Stack
 
@@ -35,7 +35,8 @@ antd, `@ant-design/icons` and `@ant-design/charts` were removed in the v3 revamp
 | Path | Page | Feature folder |
 | --- | --- | --- |
 | `/login` | Login | `presentation/authentication/login` |
-| `/` | Accounts | `presentation/dashboard` |
+| `/` | Home: greeting, stats, recently active teams, needs attention | `presentation/home` |
+| `/accounts` | Accounts | `presentation/dashboard` |
 | `/teams` | Teams | `presentation/Teams` |
 | `/companies` | Companies | `presentation/companies` |
 | `/teams/credits` | Team credits | `presentation/TeamCredits` |

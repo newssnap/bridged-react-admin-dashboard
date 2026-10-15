@@ -24,7 +24,7 @@ function NotFound() {
       </EmptyHeader>
       <EmptyContent>
         <Button variant="outline" asChild>
-          <Link to="/">Go to accounts</Link>
+          <Link to="/">Go to home</Link>
         </Button>
       </EmptyContent>
     </Empty>

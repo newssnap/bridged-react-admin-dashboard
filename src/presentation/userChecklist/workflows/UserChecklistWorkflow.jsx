@@ -53,7 +53,7 @@ function ChecklistTrail() {
         className="size-3.5 shrink-0 text-muted-foreground"
       />
       <Link
-        to="/"
+        to="/accounts"
         className="min-w-0 truncate rounded-sm font-medium text-muted-foreground transition-colors duration-150 ease-out-quad outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
       >
         Accounts

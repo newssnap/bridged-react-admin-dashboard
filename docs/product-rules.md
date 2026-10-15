@@ -10,13 +10,13 @@ Decisions about how specific admin features behave that can't be read off the co
 ## Connect to Claude (OAuth)
 
 - When the admin is opened with a valid Claude OAuth authorize URL (`?oauth_redirect=…`, parsed by `utils/controllers/oauthRedirect.js`), the **sidebar and app header are hidden**. The user only sees the approval flow.
-- Login keeps that redirect: after signing in, the user lands on `/?oauth_redirect=…`, not on a plain `/`.
+- Login keeps that redirect: after signing in, the user lands on `/accounts?oauth_redirect=…`. Older links to `/?oauth_redirect=…` are sent on to `/accounts` by the Home page.
 - On success, the Accounts page shows the full-screen "Authentication done · Redirecting you back to Claude…" overlay before leaving.
 - Only a real authorize URL with every required parameter counts (`getValidOAuthRedirectFromSearch`). Don't loosen that check.
 
 ## Tokens from the URL
 
-- `/?accessToken=…` signs the admin in with that token and strips it from the URL (`pages/Dashboard.jsx`). Keep the strip-and-reload behaviour so tokens never stay in the address bar or history.
+- `?accessToken=…` on Home (`/`) or Accounts (`/accounts`) signs the admin in with that token and strips it from the URL (`utils/controllers/useAccessTokenFromUrl.js`). Keep the strip-and-reload behaviour so tokens never stay in the address bar or history.
 
 ## Custom work status
 

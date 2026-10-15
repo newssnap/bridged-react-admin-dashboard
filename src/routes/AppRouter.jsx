@@ -6,6 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 // Use React.lazy() to lazily load the components
 const LazyNotFound = lazy(() => import('../pages/NotFound'));
 const LazyLogin = lazy(() => import('../pages/authentication/Login'));
+const LazyHome = lazy(() => import('../pages/Home'));
 const LazyDashboard = lazy(() => import('../pages/Dashboard'));
 const LazyDefaultChecklist = lazy(() => import('../pages/DefaultChecklist'));
 const LazyUserChecklist = lazy(() => import('../pages/UserChecklist'));
@@ -36,6 +37,11 @@ function AppRouter() {
     { path: '/login', component: LazyLogin, isProtected: false },
     {
       path: '/',
+      component: LazyHome,
+      isProtected: true,
+    },
+    {
+      path: '/accounts',
       component: LazyDashboard,
       isProtected: true,
     },

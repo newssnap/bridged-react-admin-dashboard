@@ -14,7 +14,7 @@ function AuthenticationLayout({ children, Sidebarcontent }) {
     if (isAuth) {
       const oauthRedirect = getValidOAuthRedirectFromSearch(location.search);
       if (oauthRedirect) {
-        navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`, { replace: true });
+        navigate(`/accounts?oauth_redirect=${encodeURIComponent(oauthRedirect)}`, { replace: true });
         return;
       }
       navigate('/', { replace: true });

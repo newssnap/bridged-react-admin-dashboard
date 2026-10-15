@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Add01Icon,
@@ -168,6 +169,16 @@ function TeamsWorkflow() {
     isCustomWorkSubmitting,
     form,
   } = useTeamsHandler(debouncedValue, selectedCompany, selectedDomain);
+
+  // "Create team" on Home lands here with the create sheet open.
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.createTeam) {
+      openDrawer();
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, location.pathname, navigate, openDrawer]);
 
   const searching = !!debouncedValue?.trim();
   const filtering = !!selectedCompany || !!selectedDomain;
