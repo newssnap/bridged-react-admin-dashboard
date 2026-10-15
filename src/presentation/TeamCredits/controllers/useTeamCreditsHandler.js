@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useMemo } from 'react';
-import { message, notification, Form } from 'antd';
+import { toast } from 'sonner';
 import dayjs from 'dayjs';
+import { useForm } from '@/components/form';
 import {
   useGetTeamCreditsQuery,
   useGetTeamCreditsHistoryQuery,
   useAdjustTeamCreditsMutation,
   useUpdateTeamCreditsHistoryMutation,
 } from '../../../services/api';
+import { responseErrorText, thrownErrorText } from '../utils/errorText';
 
 export const useTeamCreditsHandler = searchValue => {
   const { data, isLoading, error, refetch: refetchTeamCredits } = useGetTeamCreditsQuery();
@@ -15,7 +17,7 @@ export const useTeamCreditsHandler = searchValue => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTeamIdForAdd, setSelectedTeamIdForAdd] = useState(null);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [form] = useForm();
 
   const {
     data: historyData,
@@ -37,14 +39,14 @@ export const useTeamCreditsHandler = searchValue => {
   const [updateTeamCreditsHistory, { isLoading: isEditingHistorySubmitting }] =
     useUpdateTeamCreditsHistoryMutation();
 
-  const rawList = data?.data ?? [];
+  const rawList = useMemo(() => data?.data ?? [], [data]);
 
   const tableData = useMemo(() => {
     return rawList.map((item, index) => ({
       key: item.teams?.teamId || index,
       teamId: item.teams?.teamId,
-      teamName: item.teams?.teamName || '--',
-      companyName: item.teams?.companyName || '--',
+      teamName: item.teams?.teamName || '—',
+      companyName: item.teams?.companyName || '—',
       creditBalance: item.creditBalance || 0,
       lastUpdated: item.lastUpdatedAt,
     }));
@@ -95,28 +97,20 @@ export const useTeamCreditsHandler = searchValue => {
     try {
       const response = await adjustTeamCredits(submitData).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'Team credits updated successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Credits updated');
 
         refetchTeamCredits();
         refetchHistory();
         form.resetFields();
         form.setFieldsValue({
+          purchaseType: 'assign',
           purchaseDate: dayjs(),
         });
       } else {
-        notification.error({
-          message: response?.errorObject?.message || 'Failed to update team credits',
-          placement: 'bottomRight',
-        });
+        toast.error(responseErrorText(response, "Couldn't update the credits"));
       }
     } catch (err) {
-      notification.error({
-        message: err?.data?.message || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(thrownErrorText(err, "Couldn't update the credits"));
     }
   };
 
@@ -124,24 +118,15 @@ export const useTeamCreditsHandler = searchValue => {
     try {
       const response = await adjustTeamCredits(submitData).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'Team credits added successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Credits added');
         refetchTeamCredits();
         refetchAddHistory();
         handleCloseAddDrawer();
       } else {
-        notification.error({
-          message: response?.errorObject?.message || 'Failed to update team credits',
-          placement: 'bottomRight',
-        });
+        toast.error(responseErrorText(response, "Couldn't add the credits"));
       }
     } catch (err) {
-      notification.error({
-        message: err?.data?.message || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(thrownErrorText(err, "Couldn't add the credits"));
     }
   };
 
@@ -168,25 +153,16 @@ export const useTeamCreditsHandler = searchValue => {
       }).unwrap();
 
       if (response?.success) {
-        notification.success({
-          message: 'Credits history updated successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Ledger entry updated');
         refetchTeamCredits();
         refetchHistory();
         return true;
       }
 
-      notification.error({
-        message: response?.errorObject?.message || 'Failed to update credits history',
-        placement: 'bottomRight',
-      });
+      toast.error(responseErrorText(response, "Couldn't update the ledger entry"));
       return false;
     } catch (err) {
-      notification.error({
-        message: err?.data?.message || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(thrownErrorText(err, "Couldn't update the ledger entry"));
       return false;
     }
   };
@@ -194,6 +170,8 @@ export const useTeamCreditsHandler = searchValue => {
   return {
     form,
     tableData: filteredData,
+    allTableData: tableData,
+    refetch: refetchTeamCredits,
     isLoading,
     error,
     isDrawerOpen,

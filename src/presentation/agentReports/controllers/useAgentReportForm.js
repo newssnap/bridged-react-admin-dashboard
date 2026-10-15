@@ -97,14 +97,17 @@ export const useAgentReportForm = () => {
     setPasteText('');
 
     const notes = [];
-    if (skippedDuplicates) notes.push(`${skippedDuplicates} duplicate ID(s) skipped`);
+    if (skippedDuplicates)
+      notes.push(
+        `${skippedDuplicates} duplicate ${skippedDuplicates === 1 ? 'ID' : 'IDs'} skipped`
+      );
     if (skippedOverLimit) {
       notes.push(
-        `${skippedOverLimit} ID(s) not added — a report can include at most ${AGENT_REPORT_MAX_CAMPAIGNS} unique agents`
+        `${skippedOverLimit} ${skippedOverLimit === 1 ? 'ID' : 'IDs'} not added — a report can include at most ${AGENT_REPORT_MAX_CAMPAIGNS} unique agents`
       );
     }
     setPasteNotice(
-      `Added ${addedIds.length} row(s)${notes.length ? `. ${notes.join('; ')}.` : '.'}`
+      `Added ${addedIds.length} ${addedIds.length === 1 ? 'row' : 'rows'}${notes.length ? `. ${notes.join('; ')}.` : '.'}`
     );
     setFormError(null);
   };
@@ -132,7 +135,7 @@ export const useAgentReportForm = () => {
 
     if (Object.keys(errors).length) {
       setFormError(
-        `Fix the ${Object.keys(errors).length} highlighted row(s) before generating the report.`
+        `Fix the ${Object.keys(errors).length === 1 ? 'highlighted row' : `${Object.keys(errors).length} highlighted rows`} before generating the report.`
       );
       return null;
     }

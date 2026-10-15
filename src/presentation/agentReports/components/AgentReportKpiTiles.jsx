@@ -1,51 +1,62 @@
-import { Card, Col, Row, Space, Tag, Tooltip, Typography } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import React from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Badge } from '@/components/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AgentReportMetricValue from './AgentReportMetricValue';
 
-const { Text } = Typography;
-
 const UNIT_TAGS = {
-  events: { color: 'default', label: 'events' },
-  people: { color: 'blue', label: 'unique people' },
+  events: { variant: 'outline', label: 'Events' },
+  people: { variant: 'sky', label: 'Unique people' },
 };
 
 function AgentReportKpiTiles({ kpis, agentCount }) {
   if (!kpis.length) return null;
 
   return (
-    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+    <div className="flex flex-col gap-3">
       {agentCount > 1 && (
-        <Text type="secondary">
+        <p className="text-[13px] text-muted-foreground">
           Totals across {agentCount} agents. Unique-people figures are summed per agent, so a
           visitor who used two agents is counted twice.
-        </Text>
+        </p>
       )}
-      <Row gutter={[15, 15]}>
+      <div className="stagger-in grid grid-cols-1 overflow-hidden rounded-lg bg-card ring-1 ring-foreground/10 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map(metric => {
           const unitTag = UNIT_TAGS[metric.unit];
           return (
-            <Col key={metric.key} xs={24} sm={12} lg={6}>
-              <Card size="small" style={{ height: '100%' }}>
-                <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                  <Space size={6} wrap>
-                    <Text strong>{metric.label}</Text>
-                    {unitTag && (
-                      <Tag color={unitTag.color} style={{ marginInlineEnd: 0 }}>
-                        {unitTag.label}
-                      </Tag>
-                    )}
-                    <Tooltip title={metric.help}>
-                      <InfoCircleOutlined aria-label={`About ${metric.label}`} />
-                    </Tooltip>
-                  </Space>
-                  <AgentReportMetricValue metric={metric} size="large" />
-                </Space>
-              </Card>
-            </Col>
+            <div
+              key={metric.key}
+              className="-mb-px -me-px flex min-w-0 flex-col gap-2.5 border-e border-b px-5 py-4"
+            >
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground">{metric.label}</span>
+                {unitTag && <Badge variant={unitTag.variant}>{unitTag.label}</Badge>}
+                {metric.help && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`About ${metric.label}`}
+                        className="inline-flex rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+                      >
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          strokeWidth={2}
+                          className="size-3.5"
+                        />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-72">{metric.help}</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              <AgentReportMetricValue metric={metric} size="large" />
+            </div>
           );
         })}
-      </Row>
-    </Space>
+      </div>
+    </div>
   );
 }
 

@@ -1,14 +1,19 @@
-import moment from 'moment';
+import dayjs from 'dayjs';
 
-export default function formatDate(date, onlyDate = false) {
+export default function formatDate(date) {
   // Check if the input date is falsy (null, undefined, empty string, etc.)
   if (!date) {
-    return '--';
+    return '—'; // Return a placeholder for empty dates
   }
 
-  const formattedDate = onlyDate
-    ? moment(date).format('DD-MMM-YY')
-    : moment(date).format('DD-MMM-YY HH:mm');
+  // e.g. "9 Oct 2026": unambiguous in every locale, and the format used across the dashboard.
+  return dayjs(date).format('D MMM YYYY');
+}
 
-  return formattedDate;
+export function formatDateAndTime(date) {
+  if (!date) {
+    return '—';
+  }
+
+  return dayjs(date).format('D MMM YYYY, HH:mm');
 }

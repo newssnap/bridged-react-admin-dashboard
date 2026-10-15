@@ -1,45 +1,51 @@
-import React, { useEffect } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Col, Input, Row, Typography } from 'antd';
-import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
+import React from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Add01Icon } from '@hugeicons/core-free-icons';
+import { Button } from '@/components/ui/button';
+import {
+  PageHeader,
+  PageToolbar,
+  PageToolbarSpacer,
+  ToolbarSearch,
+} from '@/components/page-header';
 
-const { Title } = Typography;
+const numberFormat = new Intl.NumberFormat('en-GB');
 
-const CompaniesTopbar = ({ onSearchChange, onAddCompany }) => {
-  const { inputQuery, debouncedValue, inputHandler } = useDebouncedInput('');
+/**
+ * Page header ("Add company") and the toolbar: result count + search. The header action hides
+ * while the first-run empty state shows its own.
+ */
+const CompaniesTopbar = ({
+  searchQuery,
+  onSearchChange,
+  onAddCompany,
+  showCreateButton = true,
+  count,
+}) => (
+  <>
+    <PageHeader
+      title="Companies"
+      description="The companies your users belong to, and who is in each one."
+      actions={
+        showCreateButton && (
+          <Button type="button" onClick={onAddCompany}>
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+            Add company
+          </Button>
+        )
+      }
+    />
 
-  // Notify parent when debounced value changes
-  useEffect(() => {
-    onSearchChange?.(debouncedValue);
-  }, [debouncedValue, onSearchChange]);
-
-  const handleChange = event => {
-    inputHandler(event.target.value);
-  };
-
-  return (
-    <Row gutter={[15, 30]} justify="space-between" align="middle">
-      <Col span={24}>
-        <Title level={2} style={{ margin: 0, fontWeight: 300 }}>
-          Companies
-        </Title>
-      </Col>
-      <Col span={6}>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={onAddCompany}>
-          Add Company
-        </Button>
-      </Col>
-      <Col span={6}>
-        <Input
-          allowClear
-          size="large"
-          value={inputQuery}
-          placeholder="Search companiy"
-          onChange={handleChange}
-        />
-      </Col>
-    </Row>
-  );
-};
+    <PageToolbar>
+      <PageToolbarSpacer />
+      {typeof count === 'number' && (
+        <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
+          {numberFormat.format(count)} {count === 1 ? 'company' : 'companies'}
+        </p>
+      )}
+      <ToolbarSearch placeholder="Search companies" value={searchQuery} onChange={onSearchChange} />
+    </PageToolbar>
+  </>
+);
 
 export default CompaniesTopbar;

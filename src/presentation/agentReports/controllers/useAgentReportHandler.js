@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import {
   useCreateAgentReportMutation,
   useGetAgentReportResultQuery,
@@ -132,20 +132,15 @@ export const useAgentReportHandler = () => {
         };
         setActiveReport(entry);
         saveRecentReport(entry);
-        notification.success({
-          message: 'Report queued',
-          description: `Generating a report for ${response.data.agentCount ?? campaigns.length} agent(s). This usually takes 30 seconds to 5 minutes.`,
-          placement: 'bottomRight',
+        const agentCount = response.data.agentCount ?? campaigns.length;
+        toast.success('Report queued', {
+          description: `Generating a report for ${agentCount} ${agentCount === 1 ? 'agent' : 'agents'}. This usually takes 30 seconds to 5 minutes.`,
         });
         return entry;
       } catch (error) {
         const errorText = getApiErrorText(error, 'The report could not be started.');
         setSubmitError(errorText);
-        notification.error({
-          message: 'Report could not be started',
-          description: errorText,
-          placement: 'bottomRight',
-        });
+        toast.error("Couldn't start the report", { description: errorText });
         return null;
       }
     },
@@ -274,10 +269,8 @@ export const useAgentReportHandler = () => {
       try {
         downloadAgentReportExcel(result, campaigns, firstAgentName, leadActions);
       } catch (error) {
-        notification.error({
-          message: 'Excel download failed',
-          description: error?.message || 'The workbook could not be created.',
-          placement: 'bottomRight',
+        toast.error("Couldn't download the report", {
+          description: error?.message || "The workbook couldn't be created.",
         });
       }
     },

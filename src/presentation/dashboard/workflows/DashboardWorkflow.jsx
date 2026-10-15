@@ -1,47 +1,16 @@
-/* global chrome */
-import {
-  Typography,
-  Table,
-  Avatar,
-  Tag,
-  Space,
-  Row,
-  Col,
-  Button,
-  Input,
-  Drawer,
-  Form,
-  Checkbox,
-  notification,
-  Select,
-  DatePicker,
-  Divider,
-  Spin,
-  Badge,
-  Tooltip,
-  Popconfirm,
-  Dropdown,
-  Modal,
-} from 'antd';
-import {
-  UserOutlined,
-  PlusOutlined,
-  LoadingOutlined,
-  MoreOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons';
-import dayjs from 'dayjs';
-import Icon from '../../../utils/components/Icon';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Add01Icon } from '@hugeicons/core-free-icons';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
+import { useForm } from '@/components/form';
 import { useDashboardHandler } from '../controllers/useDashboardHandler';
 import useUsersTableHandler from '../controllers/useUsersTableHandler';
 import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
 import { useReportHandler } from '../controllers/useReportHandler';
 import { useAgentManagementHandler } from '../controllers/useAgentManagementHandler';
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { ACTIVE_COLOR } from '../../../constants/DashboardColors';
-import formatDate from '../../../utils/formatting/formateDate';
-import { ChromeOutlined } from '@ant-design/icons';
-import { useLocation } from 'react-router-dom';
 import { API_URL } from '../../../config/Config';
 import { openUserPortal } from '../../../utils/controllers/openUserPortal';
 import {
@@ -52,12 +21,19 @@ import {
   useOAuthAuthorizeMutation,
   useUpdateUserByAdminMutation,
 } from '../../../services/api';
-import AddUserDrawer from '../components/AddUserDrawer';
-import EditUserDrawer from '../components/EditUserDrawer';
-import ClaudeRedirectOverlay from '../components/ClaudeRedirectOverlay';
 import { parseOAuthAuthorizePayload } from '../../../utils/controllers/oauthRedirect';
-const { Title } = Typography;
-const { RangePicker } = DatePicker;
+import AccountsToolbar from '../components/AccountsToolbar';
+import AccountsTable from '../components/AccountsTable';
+import { plural } from '../components/AccountParts';
+import UserDrawer from '../components/UserDrawer';
+import ExportReportDrawer from '../components/ExportReportDrawer';
+import ClaudeRedirectOverlay from '../components/ClaudeRedirectOverlay';
+
+const getCreatedCompanyId = createdCompany =>
+  createdCompany?.id ||
+  createdCompany?.data?.id ||
+  createdCompany?.data?.data?.id ||
+  createdCompany?._id;
 
 function DashboardWorkflow() {
   const {
@@ -66,11 +42,8 @@ function DashboardWorkflow() {
     inputHandler,
   } = useDebouncedInput('');
 
-  const {
-    inputQuery: companySearchText,
-    debouncedValue: debouncedCompanySearchText,
-    inputHandler: companySearchInputHandler,
-  } = useDebouncedInput('');
+  const { debouncedValue: debouncedCompanySearchText, inputHandler: companySearchInputHandler } =
+    useDebouncedInput('');
 
   const [_CREATE_COMPANY, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
@@ -84,7 +57,7 @@ function DashboardWorkflow() {
     handlePageChange,
     refetchUsers,
     isLoading,
-    isStatusLoading,
+    isError,
     handleUpdateUserStatus,
   } = useUsersTableHandler(
     debouncedSearchText,
@@ -104,6 +77,15 @@ function DashboardWorkflow() {
     search: debouncedCompanySearchText || '',
   });
 
+  const companyOptions = useMemo(
+    () =>
+      (companies?.data?.data ?? []).map(company => ({
+        label: company.name,
+        value: company.id,
+      })),
+    [companies]
+  );
+
   const isDashboardCompanySelected = selectedCompanyId && selectedCompanyId !== 'all';
 
   const { data: teamsResponse, isLoading: isLoadingTeams } = useGetTeamsByCompanyQuery(
@@ -115,7 +97,7 @@ function DashboardWorkflow() {
     { label: 'All teams', value: 'all' },
     ...(isDashboardCompanySelected
       ? teamsList.map(team => ({
-          label: team.title || team.companyName || team._id || '--',
+          label: team.title || team.companyName || team._id || '—',
           value: team._id,
         }))
       : []),
@@ -127,26 +109,19 @@ function DashboardWorkflow() {
     handleGenerateUserTokenForLogin,
     isGeneratingTokenForLogin,
     generateTokenIDLogin,
-    tokenType,
   } = useDashboardHandler();
 
   const [isAddUserDrawerOpen, setIsAddUserDrawerOpen] = useState(false);
   const [isEditUserDrawerOpen, setIsEditUserDrawerOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [editingUserData, setEditingUserData] = useState(null);
-  const [newCompanyName, setNewCompanyName] = useState('');
-  const companyInlineInputRef = useRef(null);
-  const selectRef = useRef(null);
-  const companySelectRef = useRef(null);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
-  const [addUserForm] = Form.useForm();
-  const [editUserForm] = Form.useForm();
-  const [reportForm] = Form.useForm();
+  const [addUserForm] = useForm();
+  const [editUserForm] = useForm();
+  const [reportForm] = useForm();
   const [_GET_USER_FOR_UPDATE, { isFetching: isFetchingUserForUpdate }] =
     useLazyGetUserForUpdateByAdminQuery();
   const [_UPDATE_USER, { isLoading: isUpdatingUser }] = useUpdateUserByAdminMutation();
-
-  const hasCompanies = Array.isArray(companies?.data?.data) && companies.data.data.length > 0;
 
   const {
     userDomains,
@@ -160,19 +135,11 @@ function DashboardWorkflow() {
 
   const [selectedReportTypes, setSelectedReportTypes] = useState([]);
 
-  // Agent management hook
+  // Agent access is saved with the user (the pickers are switched off for now).
   const {
-    // Existing user states (edit drawer – simplified same as Add User)
-    allowedAgents,
-    setAllowedAgents,
     resetExistingUserAgentStates,
     initializeExistingUserAgentStates,
     generateExistingUserConfigurations,
-
-    // New user states (simplified agent access)
-    newUserAllowedAgents,
-    setNewUserAllowedAgents,
-
     resetNewUserAgentStates,
     generateNewUserConfigurations,
   } = useAgentManagementHandler();
@@ -186,6 +153,7 @@ function DashboardWorkflow() {
     const searchParams = new URLSearchParams(location.search);
     return parseOAuthAuthorizePayload(searchParams.get('oauth_redirect'));
   }, [location.search]);
+  const isConnectMode = Boolean(oauthAuthorizePayload);
 
   const handleMenuClick = async (key, record) => {
     const tokens = await handleGenerateUserTokenForLogin(
@@ -194,76 +162,57 @@ function DashboardWorkflow() {
       },
       key
     );
-    if (tokens?.accessToken) {
-      if (key === 'dashboard') {
-        if (API_URL.includes('stg')) {
-          window.open(
-            `https://stg-dashboard.bridged.media/?accessToken=${tokens.accessToken}`,
-            '_blank'
-          );
-        } else {
-          window.open(
-            `https://dashboard.bridged.media/?accessToken=${tokens.accessToken}`,
-            '_blank'
-          );
-        }
-      } else if (key === 'portal') {
-        openUserPortal(tokens.accessToken, tokens.refreshToken);
-      } else if (key === 'plugin') {
-        window.postMessage(
-          {
-            source: 'qweek-website',
-            payload: {
-              type: 'LOGIN_TOKEN',
-              token: tokens.accessToken,
-            },
-          },
-          '*'
+    // A failed token request has already been reported by the handler.
+    if (!tokens?.accessToken) return;
+
+    if (key === 'dashboard') {
+      if (API_URL.includes('stg')) {
+        window.open(
+          `https://stg-dashboard.bridged.media/?accessToken=${tokens.accessToken}`,
+          '_blank'
         );
-        window.addEventListener('message', event => {
-          if (event.source !== window) return;
-
-          const message = event.data;
-
-          if (message?.source === 'qweek-website' && message.payload?.type === 'LOGIN_STATUS') {
-            if (message.payload.status === 'success') {
-              notification.success({
-                message: 'Login Success',
-                description: 'You have been logged in successfully.',
-              });
-            } else {
-              notification.error({
-                message: 'Login Failed',
-                description: 'Failed to login. Please try again.',
-              });
-            }
-          }
-        });
+      } else {
+        window.open(`https://dashboard.bridged.media/?accessToken=${tokens.accessToken}`, '_blank');
       }
-    } else {
-      notification.error({
-        message: 'Error',
-        description: 'Failed to generate user token. Please try again.',
+    } else if (key === 'portal') {
+      openUserPortal(tokens.accessToken, tokens.refreshToken);
+    } else if (key === 'plugin') {
+      window.postMessage(
+        {
+          source: 'qweek-website',
+          payload: {
+            type: 'LOGIN_TOKEN',
+            token: tokens.accessToken,
+          },
+        },
+        '*'
+      );
+      window.addEventListener('message', event => {
+        if (event.source !== window) return;
+
+        const message = event.data;
+
+        if (message?.source === 'qweek-website' && message.payload?.type === 'LOGIN_STATUS') {
+          if (message.payload.status === 'success') {
+            toast.success('Signed in to the plugin');
+          } else {
+            toast.error("Couldn't sign in to the plugin");
+          }
+        }
       });
     }
   };
 
   const handleConnectToClaude = async record => {
     if (!oauthAuthorizePayload) {
-      notification.error({
-        message: 'OAuth Error',
-        description: 'OAuth parameters are missing or invalid.',
-        placement: 'bottomRight',
+      toast.error("Couldn't connect to Claude", {
+        description: 'The OAuth details in the link are missing or invalid.',
       });
       return;
     }
 
     if (!record?._id || !record?.teamId) {
-      notification.warning({
-        message: 'Missing User Data',
-        description: 'Selected user must have both user id and team id.',
-        placement: 'bottomRight',
-      });
+      toast.warning('Pick a user who belongs to a team');
       return;
     }
 
@@ -278,10 +227,8 @@ function DashboardWorkflow() {
       const redirectUrl = response?.data?.redirect_url || response?.redirect_url;
 
       if (!redirectUrl) {
-        notification.error({
-          message: 'OAuth Error',
-          description: 'Redirect URL was not returned by the server.',
-          placement: 'bottomRight',
+        toast.error("Couldn't connect to Claude", {
+          description: "The server didn't send a link back to Claude.",
         });
         setAuthorizingUserId(null);
         return;
@@ -293,11 +240,7 @@ function DashboardWorkflow() {
         window.location.assign(redirectUrl);
       }, 1800);
     } catch (error) {
-      notification.error({
-        message: 'OAuth Error',
-        description: error?.data?.errorObject?.userErrorText || 'Failed to connect to Claude.',
-        placement: 'bottomRight',
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't connect to Claude");
       setAuthorizingUserId(null);
       setIsRedirectingToClaude(false);
     }
@@ -336,23 +279,14 @@ function DashboardWorkflow() {
       const response = await _UPDATE_USER({ userId: editingUserId, data }).unwrap();
 
       if (response?.success) {
-        notification.success({
-          message: 'User updated successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('User updated');
         handleCloseEditUserDrawer();
         refetchUsers();
       } else {
-        notification.error({
-          message: response?.errorObject?.userErrorText || 'Failed to update user',
-          placement: 'bottomRight',
-        });
+        toast.error(response?.errorObject?.userErrorText || "Couldn't update the user");
       }
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to update user',
-        placement: 'bottomRight',
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't update the user");
     }
   };
 
@@ -399,16 +333,10 @@ function DashboardWorkflow() {
           teamId: user?.teamId || user?.team?._id || record?.teamId || undefined,
         });
       } else {
-        notification.error({
-          message: response?.errorObject?.userErrorText || 'Failed to fetch user for update',
-          placement: 'bottomRight',
-        });
+        toast.error(response?.errorObject?.userErrorText || "Couldn't load the user");
       }
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to fetch user for update',
-        placement: 'bottomRight',
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't load the user");
     }
   };
 
@@ -469,41 +397,22 @@ function DashboardWorkflow() {
       setIsExportReportOpen(true);
     } catch (error) {
       console.error('Error generating user token:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to generate user token. Please try again.',
-      });
+      toast.error("Couldn't load the user's reports");
     }
   };
-
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-
-  const getCreatedCompanyId = createdCompany =>
-    createdCompany?.id ||
-    createdCompany?.data?.id ||
-    createdCompany?.data?.data?.id ||
-    createdCompany?._id;
 
   const createCompany = async values => {
     try {
       const result = await _CREATE_COMPANY(values.name).unwrap();
 
-      notification.success({
-        message: 'Company created successfully',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.success('Company created');
 
-      // Call handleCompanyCreated to select the newly created company
+      // Select the new company in the add user drawer once the list has it.
       await handleCompanyCreated(result);
 
       return result;
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't create the company");
     }
   };
 
@@ -515,7 +424,7 @@ function DashboardWorkflow() {
         // Refetch companies to ensure the new company appears in the list
         await refetchCompanies();
 
-        // Small delay to ensure the select options are updated
+        // Small delay to ensure the options are updated
         setTimeout(() => {
           if (isAddUserDrawerOpen) {
             addUserForm.setFieldValue('company', companyId);
@@ -525,613 +434,153 @@ function DashboardWorkflow() {
     }
   };
 
-  const handleAddCompanyFromDashboardSelect = async event => {
-    event.preventDefault();
-    const companyName = newCompanyName.trim();
+  // "Create “name”" in the toolbar's company filter: create it, then filter by it.
+  const handleAddCompanyFromDashboardSelect = async name => {
+    const companyName = (name || '').trim();
 
     if (!companyName) {
-      notification.warning({
-        message: 'Company name is required',
-        placement: 'bottomRight',
-      });
-      return;
+      toast.warning('Enter a company name');
+      return undefined;
     }
 
     const createdCompany = await createCompany({ name: companyName });
     const createdCompanyId = getCreatedCompanyId(createdCompany);
 
-    setNewCompanyName('');
-
     if (createdCompanyId) {
-      setSelectedCompanyId(createdCompanyId);
       setSelectedTeamId('all');
-      setTimeout(() => {
-        companyInlineInputRef.current?.focus();
-      }, 0);
     }
+    return createdCompanyId;
   };
 
-  const showStatusConfirmModal = record => {
-    Modal.confirm({
-      title: record?.status === 'inactive' ? 'Activate user?' : 'Deactivate user?',
-      content:
-        record?.status === 'inactive'
-          ? 'Are you sure you want to activate this user?'
-          : 'Are you sure you want to deactivate this user?',
-      okText: record?.status === 'inactive' ? 'Activate' : 'Deactivate',
-      okButtonProps: {
-        danger: record?.status !== 'inactive',
-      },
-      cancelText: 'Cancel',
-      centered: true,
-      type: 'warning',
-      onOk: () => {
-        handleUpdateUserStatus(
-          record._id,
-          record?.status === 'inactive' ? 'activate' : 'deactivate'
-        );
-        setOpenDropdownId(null);
-      },
-    });
+  const handleCompanyFilterChange = value => {
+    setSelectedCompanyId(value);
+    setSelectedTeamId('all');
   };
 
-  const columns = [
-    {
-      title: 'Image',
-      key: 'user',
-      width: '65px',
-      align: 'center',
-      render: (_, record) => (
-        <Space align="center">
-          <Avatar src={record.picture} icon={<UserOutlined />} alt={record.fullname} size={40}>
-            {record.fullname.charAt(0).toUpperCase()}
-          </Avatar>
-        </Space>
-      ),
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      width: '190px',
-      render: (email, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Tooltip title={record?.status === 'active' ? 'Active user' : 'Inactive user'}>
-            <span>
-              {record?.status === 'active' ? (
-                <Icon
-                  name="PlayFilled"
-                  className={record?.status === 'active' ? 'pulse-2' : ''}
-                  style={{ width: '8px', height: '8px' }}
-                />
-              ) : (
-                <Icon name="PauseFilled" style={{ width: '8px', height: '8px' }} />
-              )}
-            </span>
-          </Tooltip>
-          <span>
-            <a href={`mailto:${email}`} className="linkTag">
-              {email}
-            </a>
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: 'Full Name',
-      dataIndex: 'fullname',
-      key: 'fullname',
-      width: '120px',
-      render: fullname => (
-        <span style={{ fontSize: '14px' }}>{fullname !== ' ' ? fullname : '--'}</span>
-      ),
-    },
-    {
-      title: 'Role',
-      key: 'role',
-      width: '100px',
-      align: 'center',
-      render: (_, record) => {
-        if (record.teamId) {
-          return (
-            <Tag color={record.isTeamOwner ? 'blue' : 'default'} style={{ textAlign: 'center' }}>
-              {record.isTeamOwner ? 'Team Owner' : 'Member'}
-            </Tag>
-          );
-        } else {
-          return (
-            <Tooltip title="This user is not part of a team, if you login with this account, a team will be created for them.">
-              <Tag color="orange" style={{ textAlign: 'center' }}>
-                Not Set
-              </Tag>
-            </Tooltip>
-          );
-        }
-      },
-    },
-    {
-      title: 'Company',
-      dataIndex: 'company',
-      key: 'company',
-      width: '100px',
-      align: 'center',
-      render: company => <span style={{ fontSize: '14px' }}>{company ? company.name : '--'}</span>,
-    },
-    {
-      title: 'Team',
-      dataIndex: 'teamTitle',
-      key: 'teamTitle',
-      width: '100px',
-      align: 'center',
-      render: (_, record) => (
-        <span style={{ fontSize: '14px' }}>{record?.teamTitle ? record?.teamTitle : '--'}</span>
-      ),
-    },
-    {
-      title: 'Last Login',
-      dataIndex: 'last_login_at',
-      key: 'last_login_at',
-      align: 'center',
-      width: '120px',
-      sorter: (a, b) => {
-        const aTime = a?.last_login_at ? dayjs(a.last_login_at).valueOf() : 0;
-        const bTime = b?.last_login_at ? dayjs(b.last_login_at).valueOf() : 0;
-        return aTime - bTime;
-      },
-      sortDirections: ['descend', 'ascend'],
-      defaultSortOrder: 'descend',
-      render: date => <span style={{ fontSize: '14px' }}>{formatDate(date)}</span>,
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: oauthAuthorizePayload ? '110px' : '75px',
-      fixed: 'right',
-      align: 'center',
-      onHeaderCell: () => ({
-        style: {
-          backgroundColor: 'white',
-          borderRight: '1px solid #f0f0f0',
-        },
-      }),
-      render: (_, record) => {
-        if (oauthAuthorizePayload) {
-          const isCurrentRowAuthorizing =
-            isAuthorizingOAuth && authorizingUserId && authorizingUserId === record._id;
+  const handleResetFilters = () => {
+    setSelectedCompanyId('all');
+    setSelectedTeamId('all');
+  };
 
-          return (
-            <div onClick={e => e.stopPropagation()}>
-              <Button
-                type="primary"
-                size="middle"
-                loading={isCurrentRowAuthorizing}
-                disabled={isAuthorizingOAuth && authorizingUserId !== record._id}
-                onClick={() => handleConnectToClaude(record)}
-              >
-                Connect
-              </Button>
-            </div>
-          );
-        }
+  const isRowBusy = record =>
+    (isGeneratingTokenForLogin && generateTokenIDLogin === record?._id) ||
+    (isGeneratingToken && generateTokenID === record?._id);
 
-        const menuItems = [
-          {
-            key: 'edit',
-            label: (
-              <Space>
-                <Icon name="EditOutlined" style={{ marginBottom: '-3px' }} />
-                <span>Edit User</span>
-              </Space>
-            ),
-            onClick: async () => {
-              setOpenDropdownId(null);
-              await handleOpenEditUserDrawer(record);
-            },
-          },
-          {
-            key: 'export',
-            label: (
-              <Space align="center">
-                {isGeneratingToken && generateTokenID === record._id ? (
-                  <LoadingOutlined />
-                ) : (
-                  <Icon name="Export" style={{ marginBottom: '-3px' }} />
-                )}
-                <span>Export Report</span>
-              </Space>
-            ),
-            disabled: isGeneratingTokenForLogin,
-            onClick: () => {
-              handleExportReportClick(record);
-            },
-          },
-          // {
-          //   key: 'tasklist',
-          //   label: (
-          //     <Space>
-          //       <Icon name="UserCheck" style={{ marginBottom: '-3px' }} />
-          //       <span>View User Tasklist</span>
-          //     </Space>
-          //   ),
-          //   onClick: () => {
-          //     navigate(`/userChecklist/${record._id}`);
-          //   },
-          // },
-          {
-            key: 'portal',
-            label: (
-              <Space>
-                {isGeneratingTokenForLogin &&
-                generateTokenIDLogin &&
-                tokenType === 'portal' &&
-                generateTokenIDLogin === record._id ? (
-                  <LoadingOutlined />
-                ) : (
-                  <Icon name="ComputerOutlined" style={{ marginBottom: '-3px' }} />
-                )}
-                <span>Login to Portal</span>
-              </Space>
-            ),
-            onClick: () => {
-              handleMenuClick('portal', record);
-            },
-          },
-          {
-            key: 'plugin',
-            label: (
-              <Space>
-                {isGeneratingTokenForLogin &&
-                generateTokenIDLogin &&
-                tokenType === 'plugin' &&
-                generateTokenIDLogin === record._id ? (
-                  <LoadingOutlined />
-                ) : (
-                  <ChromeOutlined style={{ fontSize: '15px' }} />
-                )}
-                <span>Login to Plugin</span>
-              </Space>
-            ),
-            onClick: () => {
-              handleMenuClick('plugin', record);
-            },
-          },
-          {
-            type: 'divider',
-          },
-          {
-            key: record?.status === 'inactive' ? 'activate' : 'deactivate',
-            label: (
-              <Space
-                onClick={e => {
-                  e.stopPropagation();
-                  showStatusConfirmModal(record);
-                }}
-              >
-                {record?.status === 'inactive' ? (
-                  <>
-                    <Icon name="PlayOutlined" style={{ marginBottom: '-2px' }} />
-                    <span>Activate User</span>
-                  </>
-                ) : (
-                  <>
-                    <Icon name="PauseOutlined" style={{ marginBottom: '-2px' }} />
-                    <span>Deactivate User</span>
-                  </>
-                )}
-              </Space>
-            ),
-          },
-        ];
-
-        return (
-          <div onClick={e => e.stopPropagation()}>
-            <Dropdown
-              open={openDropdownId === record._id}
-              onOpenChange={open => {
-                if (!open) {
-                  setOpenDropdownId(null);
-                }
-              }}
-              menu={{ items: menuItems }}
-              trigger={['click']}
-              arrow
-              placement="bottomRight"
-            >
-              <Button
-                type="text"
-                shape="circle"
-                icon={<MoreOutlined />}
-                onClick={e => {
-                  e.stopPropagation();
-                  setOpenDropdownId(record._id);
-                }}
-              />
-            </Dropdown>
-          </div>
-        );
-      },
-    },
-  ];
-
-  const tableColumns = oauthAuthorizePayload
-    ? columns.filter(column =>
-        ['user', 'email', 'fullname', 'teamTitle', 'actions'].includes(column.key)
-      )
-    : columns;
+  const hasFilters = selectedCompanyId !== 'all' || selectedTeamId !== 'all';
+  const countLabel = isLoading || isError ? null : plural(total || 0, 'user');
 
   return (
-    <>
+    <div className="flex flex-col gap-8">
       <ClaudeRedirectOverlay open={isRedirectingToClaude} />
-      <Row gutter={[15, 30]} justify="space-between" align="middle">
-        <Col span={24}>
-          <Title level={2} style={{ marginBottom: '24px', fontWeight: 300 }}>
-            {oauthAuthorizePayload ? 'Connect to Claude' : 'Users'}
-          </Title>
-        </Col>
-        <Col span={24}>
-          <Row gutter={[15, 15]} align="middle">
-            {/* LEFT SIDE: Actions & Filters */}
-            <Col xs={24} sm={24} md={16} lg={16} xl={18} xxl={18}>
-              <Space size="middle" wrap style={{ width: '100%' }}>
-                {!oauthAuthorizePayload && (
-                  <Button
-                    size="large"
-                    type="primary"
-                    onClick={handleOpenCreateUserDrawer}
-                    icon={<PlusOutlined />}
-                  >
-                    Add User
-                  </Button>
-                )}
 
-                <Select
-                  ref={selectRef}
-                  options={[
-                    { label: 'All companies', value: 'all' },
-                    ...(companies?.data?.data?.map(company => ({
-                      label: company.name,
-                      value: company.id,
-                    })) || []),
-                  ]}
-                  loading={isLoadingCompanies}
-                  showSearch
-                  size="large"
-                  value={selectedCompanyId}
-                  style={{ width: 200, minWidth: 140 }}
-                  placeholder="Select Company"
-                  filterOption={false}
-                  onChange={value => {
-                    setSelectedCompanyId(value);
-                    setSelectedTeamId('all');
-                    setTimeout(() => selectRef.current?.blur(), 0);
-                  }}
-                  onSearch={companySearchInputHandler}
-                  onBlur={() => companySearchInputHandler('')}
-                  dropdownRender={menu => (
-                    <>
-                      {menu}
-                      <Divider style={{ margin: '8px 0' }} />
-                      <Space.Compact block>
-                        <Input
-                          style={{ width: '100%' }}
-                          placeholder="Enter company name"
-                          ref={companyInlineInputRef}
-                          value={newCompanyName}
-                          onChange={e => setNewCompanyName(e.target.value)}
-                          onKeyDown={e => e.stopPropagation()}
-                        />
-                        <Button
-                          type="primary"
-                          onClick={handleAddCompanyFromDashboardSelect}
-                          disabled={isCreatingCompany}
-                        >
-                          Add
-                        </Button>
-                      </Space.Compact>
-                      {/* <Space style={{ padding: '0 8px 4px', width: '100%' }}>
-                        <Input
-                          placeholder="Enter company name"
-                          ref={companyInlineInputRef}
-                          value={newCompanyName}
-                          onChange={e => setNewCompanyName(e.target.value)}
-                          onKeyDown={e => e.stopPropagation()}
-                        />
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          loading={isCreatingCompany}
-                          onClick={handleAddCompanyFromDashboardSelect}
-                        >
-                          Add
-                        </Button>
-                      </Space> */}
-                    </>
-                  )}
-                />
+      <PageHeader
+        title={isConnectMode ? 'Connect to Claude' : 'Accounts'}
+        description={
+          isConnectMode
+            ? 'Pick the account Claude should work as. It needs to belong to a team.'
+            : 'Every user on Bridged: add accounts, edit their details and sign in as them.'
+        }
+        actions={
+          isConnectMode ? null : (
+            <Button type="button" onClick={handleOpenCreateUserDrawer}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add user
+            </Button>
+          )
+        }
+      />
 
-                <Select
-                  options={teamOptions}
-                  loading={isLoadingTeams}
-                  showSearch
-                  optionFilterProp="label"
-                  size="large"
-                  value={selectedTeamId}
-                  style={{ width: 170, minWidth: 140 }}
-                  placeholder={isDashboardCompanySelected ? 'Select Team' : 'Select company first'}
-                  allowClear={isDashboardCompanySelected}
-                  disabled={!isDashboardCompanySelected}
-                  onChange={value => setSelectedTeamId(value ?? 'all')}
-                />
-              </Space>
-            </Col>
+      <div className="flex flex-col gap-6">
+        <AccountsToolbar
+          companyOptions={companyOptions}
+          isLoadingCompanies={isLoadingCompanies}
+          onCompanySearch={companySearchInputHandler}
+          onCreateCompany={handleAddCompanyFromDashboardSelect}
+          isCreatingCompany={isCreatingCompany}
+          companyId={selectedCompanyId}
+          onCompanyChange={handleCompanyFilterChange}
+          teamOptions={teamOptions}
+          isLoadingTeams={isLoadingTeams}
+          teamId={selectedTeamId}
+          onTeamChange={setSelectedTeamId}
+          onResetFilters={handleResetFilters}
+          countLabel={countLabel}
+          searchText={searchText}
+          onSearchChange={inputHandler}
+          searchPlaceholder={isConnectMode ? 'Search users to connect' : 'Search by email'}
+        />
 
-            <Col xs={24} sm={24} md={24} lg={8} xl={6} xxl={6}>
-              <Input
-                placeholder={oauthAuthorizePayload ? 'Search user to connect' : 'Search by email'}
-                allowClear
-                size="large"
-                value={searchText}
-                onChange={e => inputHandler(e.target.value)}
-                style={{
-                  width: '100%',
-                }}
-              />
-            </Col>
-          </Row>
-        </Col>
+        <AccountsTable
+          users={Array.isArray(users) ? users : []}
+          total={total || 0}
+          page={page}
+          limit={limit}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetchUsers}
+          query={debouncedSearchText}
+          hasFilters={hasFilters}
+          onClearSearch={() => inputHandler('')}
+          onResetFilters={handleResetFilters}
+          onAddUser={handleOpenCreateUserDrawer}
+          onRowClick={handleOpenEditUserDrawer}
+          isConnectMode={isConnectMode}
+          onConnect={handleConnectToClaude}
+          connectingUserId={isAuthorizingOAuth || isRedirectingToClaude ? authorizingUserId : null}
+          isRowBusy={isRowBusy}
+          actions={{
+            onEdit: handleOpenEditUserDrawer,
+            onExportReport: handleExportReportClick,
+            onLoginPortal: record => handleMenuClick('portal', record),
+            onLoginPlugin: record => handleMenuClick('plugin', record),
+            onUpdateStatus: record =>
+              handleUpdateUserStatus(
+                record._id,
+                record?.status === 'inactive' ? 'activate' : 'deactivate'
+              ),
+          }}
+        />
+      </div>
 
-        <Col span={24}>
-          <Table
-            columns={tableColumns}
-            dataSource={Array.isArray(users) ? users : []}
-            rowKey="_id"
-            loading={isLoading}
-            bordered
-            onRow={
-              oauthAuthorizePayload
-                ? undefined
-                : record => ({
-                    onClick: () => handleOpenEditUserDrawer(record),
-                    style: { cursor: 'pointer' },
-                  })
-            }
-            pagination={{
-              current: page,
-              pageSize: limit,
-              total: total,
-              position: ['bottomLeft'],
-              showSizeChanger: false,
-              showQuickJumper: false,
-              onChange: handlePageChange,
-            }}
-            scroll={{ x: 990 }}
-            locale={{
-              emptyText: searchText
-                ? `No users found matching "${searchText}"`
-                : 'No users available',
-            }}
-          />
-        </Col>
-      </Row>
-
-      <AddUserDrawer
+      <UserDrawer
         open={isAddUserDrawerOpen}
         onClose={handleCloseAddUserDrawer}
         form={addUserForm}
         onSubmit={handleAddUserSubmit}
-        companies={companies}
+        isSubmitting={isAddingUser}
+        companyOptions={companyOptions}
         isLoadingCompanies={isLoadingCompanies}
-        companySearchText={companySearchText}
-        companySearchInputHandler={companySearchInputHandler}
-        hasCompanies={hasCompanies}
+        onCompanySearch={companySearchInputHandler}
         createCompany={createCompany}
         isCreatingCompany={isCreatingCompany}
-        companySelectRef={companySelectRef}
-        isAddingUser={isAddingUser}
-        resetNewUserAgentStates={resetNewUserAgentStates}
-        newUserAllowedAgents={newUserAllowedAgents}
-        setNewUserAllowedAgents={setNewUserAllowedAgents}
       />
 
-      <EditUserDrawer
+      <UserDrawer
+        isEditing
         open={isEditUserDrawerOpen}
         onClose={handleCloseEditUserDrawer}
         form={editUserForm}
         onSubmit={handleUpdateUserSubmit}
-        isFetchingUserForUpdate={isFetchingUserForUpdate}
-        isUpdatingUser={isUpdatingUser}
+        isSubmitting={isUpdatingUser}
+        isLoadingUser={isFetchingUserForUpdate}
         userData={editingUserData}
-        allowedAgents={allowedAgents}
-        setAllowedAgents={setAllowedAgents}
-        resetExistingUserAgentStates={resetExistingUserAgentStates}
-        companies={companies}
+        companyOptions={companyOptions}
         isLoadingCompanies={isLoadingCompanies}
+        onCompanySearch={companySearchInputHandler}
       />
 
-      {/* Report Generation Drawer */}
-      <Drawer
-        title="Generate Report"
-        width={500}
-        onClose={handleCloseReportDrawer}
+      <ExportReportDrawer
         open={isExportReportOpen}
-        bodyStyle={{ paddingBottom: 80 }}
-        footer={
-          <div style={{ textAlign: 'right' }}>
-            <Space>
-              <Button size="large" onClick={handleCloseReportDrawer}>
-                Close
-              </Button>
-              <Button
-                size="large"
-                type="primary"
-                onClick={handleGenerateReport}
-                loading={reportGenerateLoading}
-              >
-                Generate Report
-              </Button>
-            </Space>
-          </div>
-        }
-      >
-        <Form form={reportForm} layout="vertical">
-          <Form.Item
-            name="reportTypes"
-            label="Report Types"
-            rules={[{ required: true, message: 'Please select at least one report type!' }]}
-          >
-            <Checkbox.Group
-              options={[
-                { label: 'Customer Facing Report', value: 'customer' },
-                { label: 'Productivity Usage Report', value: 'productivity' },
-              ]}
-              onChange={handleReportTypeChange}
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="domain"
-            label="User Domain"
-            rules={[
-              {
-                required: selectedReportTypes.includes('productivity'),
-                message: 'Please select a domain for Productivity Usage Report!',
-              },
-            ]}
-          >
-            <Select
-              placeholder="Select a domain"
-              loading={reportGenerateLoading}
-              disabled={!selectedReportTypes.includes('productivity')}
-              mode="multiple"
-              options={
-                userDomains?.map(domain => ({
-                  label: domain.host,
-                  value: domain.host,
-                })) || []
-              }
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="dateRange"
-            label="Date Range"
-            rules={[{ required: true, message: 'Please select date range!' }]}
-          >
-            <RangePicker
-              style={{ width: '100%' }}
-              placeholder={['Start Date', 'End Date']}
-              presets={[
-                { label: 'Today', value: [dayjs(), dayjs()] },
-                { label: 'Last 7 Days', value: [dayjs().subtract(7, 'days'), dayjs()] },
-                { label: 'Last 30 Days', value: [dayjs().subtract(30, 'days'), dayjs()] },
-                { label: 'This Month', value: [dayjs().startOf('month'), dayjs().endOf('month')] },
-              ]}
-            />
-          </Form.Item>
-        </Form>
-      </Drawer>
-    </>
+        onClose={handleCloseReportDrawer}
+        form={reportForm}
+        onGenerate={handleGenerateReport}
+        isGenerating={reportGenerateLoading}
+        selectedReportTypes={selectedReportTypes}
+        onReportTypesChange={handleReportTypeChange}
+        userDomains={userDomains}
+      />
+    </div>
   );
 }
 

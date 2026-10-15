@@ -1,78 +1,66 @@
-import { Button, Col, Divider, Form, Input, Row } from 'antd';
+import { Form, FormField, useForm } from '@/components/form';
+import { FieldGroup } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/password-input';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import AuthenticationLayout from '../../../../layouts/AuthenticationLayout';
-import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import useLoginHandler from '../controller/useLoginHandler';
 
 function LoginWorkflow() {
   const { isLoading, loginHandler } = useLoginHandler();
-  const [form] = Form.useForm();
+  const [form] = useForm();
 
   return (
-    <AuthenticationLayout Sidebarcontent="Empower your team with full control over user access and roles in a powerful admin dashboard.">
-      <Form
-        form={form}
-        onFinish={loginHandler}
-        size="large"
-        layout="vertical"
-        style={{ height: '100%', width: '100%' }}
-      >
-        <Row style={{ height: '100%', width: '100%' }}>
-          <Col span={24}>
-            <h1
-              style={{
-                fontWeight: 400,
-              }}
-            >
+    <AuthenticationLayout
+      Sidebarcontent={
+        <>
+          Run every Bridged account.{' '}
+          <span className="text-primary-foreground/65">From one place.</span>
+        </>
+      }
+    >
+      {/* Both fields are needed to log in, so no required markers. */}
+      <Form form={form} onFinish={loginHandler} requiredMark={false}>
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-[30px] leading-[1.1] font-bold tracking-[-0.035em] text-balance">
               Welcome back
             </h1>
-            <p className="opacity05">Access your dashboard to manage users and system settings.</p>
-          </Col>
-          <Col style={{ alignSelf: 'center' }} span={24}>
-            <Row gutter={[30, 15]}>
-              <Col {...{ xs: 24, sm: 24, md: 24, lg: 24 }}>
-                <Form.Item
-                  label="Username"
-                  name="username"
-                  rules={[
-                    {
-                      type: 'username',
-                      required: true,
-                    },
-                  ]}
-                >
-                  <Input placeholder="Enter your username" size="large" />
-                </Form.Item>
-              </Col>
-              <Col {...{ xs: 24, sm: 24, md: 24, lg: 24 }}>
-                <Form.Item
-                  label="Password"
-                  name="password"
-                  rules={[
-                    {
-                      required: true,
-                    },
-                  ]}
-                >
-                  <Input.Password placeholder="Enter your password" size="large" />
-                </Form.Item>
-                <Col
-                  span={24}
-                  style={{
-                    marginTop: 'var(--mpr-3)',
-                  }}
-                ></Col>
-              </Col>
-            </Row>
-          </Col>
-          <Col style={{ alignSelf: 'end' }} span={24}>
-            <Form.Item>
-              <Button loading={isLoading} block type="primary" htmlType="submit">
-                Sign In
-              </Button>
-            </Form.Item>
-          </Col>
-        </Row>
+            <p className="text-[15px] text-pretty text-muted-foreground">
+              Log in to manage accounts, teams and credits.
+            </p>
+          </div>
+          <FieldGroup className="gap-5">
+            <FormField
+              label="Username"
+              name="username"
+              rules={[{ required: true, message: 'Enter your username.' }]}
+            >
+              <Input
+                autoComplete="username"
+                autoFocus
+                placeholder="Your username"
+                className="h-11"
+              />
+            </FormField>
+            <FormField
+              label="Password"
+              name="password"
+              rules={[{ required: true, message: 'Enter your password.' }]}
+            >
+              <PasswordInput
+                autoComplete="current-password"
+                placeholder="Your password"
+                className="h-11"
+              />
+            </FormField>
+          </FieldGroup>
+          <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+            {isLoading && <Spinner data-icon="inline-start" />}
+            Log in
+          </Button>
+        </div>
       </Form>
     </AuthenticationLayout>
   );

@@ -1,52 +1,52 @@
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
-import { Card } from 'antd';
+import React, { useMemo } from 'react';
+import { Bar } from '@/components/charts';
 import { DEVICE_TYPES } from '../controllers/agentReportMetrics';
-import { useAgentReportChartTheme } from '../controllers/useAgentReportChartTheme';
+import { ReportSection } from './ReportParts';
 
-const DEVICE_COLORS = {
-  Mobile: '#753fd0',
-  Tablet: '#10b981',
-  Desktop: '#3b82f6',
-  Unknown: '#a3a3a3',
-};
+const numberFormat = new Intl.NumberFormat('en-GB');
 
-// Share of Device Base Usage per agent (Mobile / Tablet / Desktop / Unknown).
+// Share of Device Base Usage per agent (Mobile / Tablet / Desktop / Unknown), as stacked
+// percentages; the tooltip also gives the raw count.
 function AgentReportDeviceUsage({ deviceUsage }) {
-  const chartTheme = useAgentReportChartTheme();
-  const agents = deviceUsage.filter(agent => agent.total > 0);
+  const agents = useMemo(() => deviceUsage.filter(agent => agent.total > 0), [deviceUsage]);
+
+  const data = useMemo(
+    () =>
+      agents.flatMap(agent =>
+        DEVICE_TYPES.map(device => ({
+          agent: agent.agentName || agent.agentId,
+          device,
+          share: agent.total ? (agent.counts[device] / agent.total) * 100 : 0,
+          count: agent.counts[device],
+        }))
+      ),
+    [agents]
+  );
+
   if (!agents.length) return null;
 
-  const options = {
-    ...chartTheme,
-    chart: { ...chartTheme.chart, type: 'bar', height: Math.max(160, agents.length * 42 + 90) },
-    xAxis: {
-      ...chartTheme.xAxis,
-      categories: agents.map(agent => agent.agentName || agent.agentId),
-    },
-    yAxis: {
-      ...chartTheme.yAxis,
-      min: 0,
-      max: 100,
-      title: { ...chartTheme.yAxis.title, text: 'Share of usage (%)' },
-    },
-    tooltip: {
-      shared: true,
-      pointFormat:
-        '<span style="color:{point.color}">●</span> {series.name}: <b>{point.percentage:.1f}%</b> ({point.y:,.0f})<br/>',
-    },
-    plotOptions: { bar: { stacking: 'percent', borderWidth: 0 } },
-    series: DEVICE_TYPES.map(device => ({
-      name: device,
-      color: DEVICE_COLORS[device],
-      data: agents.map(agent => agent.counts[device]),
-    })),
-  };
-
   return (
-    <Card title="Device usage per agent" size="small">
-      <HighchartsReact highcharts={Highcharts} options={options} />
-    </Card>
+    <ReportSection
+      title="Device usage per agent"
+      description="Share of each agent's usage by device type."
+    >
+      <Bar
+        data={data}
+        xField="share"
+        yField="agent"
+        seriesField="device"
+        isStack
+        height={Math.max(160, agents.length * 42 + 90)}
+        meta={{ share: { alias: 'Share', formatter: value => `${Number(value).toFixed(1)}%` } }}
+        tooltip={{
+          formatter: datum => ({
+            name: datum.device,
+            value: `${Number(datum.share).toFixed(1)}% (${numberFormat.format(datum.count)})`,
+          }),
+        }}
+        legend={{ position: 'top-left' }}
+      />
+    </ReportSection>
   );
 }
 

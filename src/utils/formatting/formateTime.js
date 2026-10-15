@@ -1,7 +1,8 @@
 export default function formateTime(seconds) {
   // Check if the input date is falsy (null, undefined, empty string, etc.)
   if (!seconds) {
-    return '--'; // Return a placeholder for empty dates
+    // Zero is a real value; anything else missing reads as "no data".
+    return seconds === 0 || seconds === '0' ? '0s' : '—';
   }
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

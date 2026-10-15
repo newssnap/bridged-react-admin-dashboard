@@ -1,4 +1,10 @@
-import { Alert, Button, Col, Row, Space, Spin, Typography } from 'antd';
+import React from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { AlertCircleIcon } from '@hugeicons/core-free-icons';
+import { PageHeader } from '@/components/page-header';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentReportForm } from '../controllers/useAgentReportForm';
 import { useAgentReportHandler } from '../controllers/useAgentReportHandler';
 import { useAgentReportVisitorFrequency } from '../controllers/useAgentReportVisitorFrequency';
@@ -13,8 +19,6 @@ import AgentReportSheetTabs from '../components/AgentReportSheetTabs';
 import AgentReportLeads from '../components/AgentReportLeads';
 import AgentReportVisitorFrequencyModal from '../components/AgentReportVisitorFrequencyModal';
 import RecentAgentReports from '../components/RecentAgentReports';
-
-const { Title, Text } = Typography;
 
 function AgentReportsWorkflow() {
   const form = useAgentReportForm();
@@ -40,38 +44,32 @@ function AgentReportsWorkflow() {
   const { activeReport, result } = report;
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Space direction="vertical" size={0}>
-        <Title level={2} style={{ fontWeight: 300, marginBottom: 0 }}>
-          Agent Reports
-        </Title>
-        <Text type="secondary">
-          Generate a report for one or more agents and download it as Excel.
-        </Text>
-      </Space>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Agent reports"
+        description="Generate a report for one or more agents and download it as Excel."
+      />
 
-      <Row gutter={[15, 15]}>
-        <Col xs={24} xl={16}>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2">
           <AgentReportForm
             form={form}
             onGenerate={handleGenerate}
             isSubmitting={report.isSubmitting}
             submitError={report.submitError}
           />
-        </Col>
-        <Col xs={24} xl={8}>
-          <RecentAgentReports
-            recentReports={report.recentReports}
-            activeReportId={activeReport?.reportId}
-            onOpen={handleOpenRecent}
-            onRemove={report.removeRecentReport}
-            onClear={report.clearRecentReports}
-          />
-        </Col>
-      </Row>
+        </div>
+        <RecentAgentReports
+          recentReports={report.recentReports}
+          activeReportId={activeReport?.reportId}
+          onOpen={handleOpenRecent}
+          onRemove={report.removeRecentReport}
+          onClear={report.clearRecentReports}
+        />
+      </div>
 
       {activeReport && (
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <div className="flex flex-col gap-6">
           <AgentReportContextBar
             campaigns={report.campaigns}
             agentNames={report.agentNames}
@@ -100,19 +98,23 @@ function AgentReportsWorkflow() {
           />
 
           {report.isReady && report.isResultLoading && !result && (
-            <Spin tip="Loading report data…">
-              <div style={{ height: 120 }} />
-            </Spin>
+            <div className="flex flex-col gap-3" role="status" aria-label="Loading report data">
+              <Skeleton className="h-28 rounded-lg" />
+              <Skeleton className="h-64 rounded-lg" />
+            </div>
           )}
 
           {report.resultErrorText && (
-            <Alert
-              type="error"
-              showIcon
-              message="The report finished but its data could not be loaded"
-              description={report.resultErrorText}
-              action={<Button onClick={report.refetchResult}>Retry</Button>}
-            />
+            <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
+              <HugeiconsIcon icon={AlertCircleIcon} strokeWidth={2} />
+              <AlertTitle>The report finished but its data couldn't be loaded</AlertTitle>
+              <AlertDescription>{report.resultErrorText}</AlertDescription>
+              <AlertAction>
+                <Button variant="outline" size="sm" onClick={report.refetchResult}>
+                  Try again
+                </Button>
+              </AlertAction>
+            </Alert>
           )}
 
           {result && !report.isExpired && (
@@ -134,9 +136,8 @@ function AgentReportsWorkflow() {
                 extraItems={[
                   {
                     key: 'leads',
-                    label: leads.isLeadsLoaded
-                      ? `Leads (${leads.totalLeads.toLocaleString()})`
-                      : 'Leads',
+                    label: 'Leads',
+                    count: leads.isLeadsLoaded ? leads.totalLeads : null,
                     children: (
                       <AgentReportLeads
                         leads={leads}
@@ -149,7 +150,7 @@ function AgentReportsWorkflow() {
               />
             </>
           )}
-        </Space>
+        </div>
       )}
 
       <AgentReportVisitorFrequencyModal
@@ -160,7 +161,7 @@ function AgentReportsWorkflow() {
         errorText={visitorFrequency.visitorFrequencyErrorText}
         onClose={visitorFrequency.closeVisitorFrequency}
       />
-    </Space>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import { useGetAgentReportLeadsMutation } from '../../../services/api';
 import { getApiErrorText } from './agentReportMetrics';
 import { downloadLeadsExcel } from './agentReportExcel';
@@ -116,10 +116,8 @@ export const useAgentReportLeads = ({ reportId, campaigns, agentNames, firstAgen
     try {
       downloadLeadsExcel(leadActions, campaigns, firstAgentName);
     } catch (error) {
-      notification.error({
-        message: 'Leads download failed',
-        description: error?.message || 'The workbook could not be created.',
-        placement: 'bottomRight',
+      toast.error("Couldn't download the leads", {
+        description: error?.message || "The workbook couldn't be created.",
       });
     }
   }, [leadActions, campaigns, firstAgentName]);
