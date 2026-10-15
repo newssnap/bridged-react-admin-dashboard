@@ -55,6 +55,7 @@ export const bridgedApi = createApi({
     'teams',
     'teamCredits',
     'teamPlaybooks',
+    'agentReports',
   ],
   endpoints: builder => ({
     // User login mutation
@@ -579,6 +580,40 @@ export const bridgedApi = createApi({
         body: data,
       }),
     }),
+
+    // * Agent reports
+    createAgentReport: builder.mutation({
+      query: body => ({
+        url: '/Reporting/Admin/reports',
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    getAgentReportStatus: builder.query({
+      query: reportId => ({
+        url: `/Reporting/Admin/reports/${encodeURIComponent(reportId)}`,
+        method: 'GET',
+      }),
+      keepUnusedDataFor: 0,
+      providesTags: (result, error, reportId) => [{ type: 'agentReports', id: reportId }],
+    }),
+
+    getAgentReportResult: builder.query({
+      query: reportId => ({
+        url: `/Reporting/Admin/reports/${encodeURIComponent(reportId)}/result`,
+        method: 'GET',
+      }),
+      providesTags: (result, error, reportId) => [{ type: 'agentReports', id: reportId }],
+    }),
+
+    getAgentVisitorFrequency: builder.query({
+      query: ({ agentId, startDate, endDate }) => ({
+        url: '/Reporting/Admin/visitor-frequency',
+        method: 'GET',
+        params: { agentId, startDate, endDate },
+      }),
+    }),
   }),
 });
 
@@ -649,4 +684,10 @@ export const {
   useLazyGetTeamPlaybooksQuery,
   useCrawlBrandingMutation,
   useOAuthAuthorizeMutation,
+
+  // * Agent reports
+  useCreateAgentReportMutation,
+  useGetAgentReportStatusQuery,
+  useGetAgentReportResultQuery,
+  useLazyGetAgentVisitorFrequencyQuery,
 } = bridgedApi;
