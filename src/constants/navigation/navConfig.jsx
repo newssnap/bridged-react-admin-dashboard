@@ -1,4 +1,5 @@
 import {
+  Analytics01Icon,
   Building03Icon,
   CreditCardIcon,
   DashboardSquare02Icon,
@@ -16,6 +17,7 @@ export const PRIMARY_NAV = [
   { key: 'accounts', path: '/accounts', label: 'Accounts', icon: DashboardSquare02Icon },
   { key: 'teams', path: '/teams', label: 'Teams', icon: UserGroupIcon },
   { key: 'companies', path: '/companies', label: 'Companies', icon: Building03Icon },
+  { key: 'reports', path: '/reports', label: 'Agent reports', icon: Analytics01Icon },
   {
     key: 'billing',
     label: 'Billing and credits',

@@ -14,6 +14,7 @@ const LazyCompanies = lazy(() => import('../pages/Companies'));
 const LazyTeams = lazy(() => import('../pages/Teams'));
 const LazyTeamCredits = lazy(() => import('../pages/TeamCredits'));
 const LazyCustomWork = lazy(() => import('../pages/CustomWork'));
+const LazyAgentReports = lazy(() => import('../pages/AgentReports'));
 function AppRouter() {
   // Function to handle page type and layout
   const handlePageTypeAndLayout = (Children, isProtected) => {
@@ -73,6 +74,11 @@ function AppRouter() {
     {
       path: '/teams/custom-work',
       component: LazyCustomWork,
+      isProtected: true,
+    },
+    {
+      path: '/reports',
+      component: LazyAgentReports,
       isProtected: true,
     },
   ];
