@@ -607,6 +607,14 @@ export const bridgedApi = createApi({
       providesTags: (result, error, reportId) => [{ type: 'agentReports', id: reportId }],
     }),
 
+    getAgentReportLeads: builder.mutation({
+      query: body => ({
+        url: '/Reporting/Admin/leads',
+        method: 'POST',
+        body,
+      }),
+    }),
+
     getAgentVisitorFrequency: builder.query({
       query: ({ agentId, startDate, endDate }) => ({
         url: '/Reporting/Admin/visitor-frequency',
@@ -690,4 +698,5 @@ export const {
   useGetAgentReportStatusQuery,
   useGetAgentReportResultQuery,
   useLazyGetAgentVisitorFrequencyQuery,
+  useGetAgentReportLeadsMutation,
 } = bridgedApi;

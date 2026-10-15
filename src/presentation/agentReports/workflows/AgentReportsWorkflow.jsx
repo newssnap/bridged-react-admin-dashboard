@@ -2,6 +2,7 @@ import { Alert, Button, Col, Row, Space, Spin, Typography } from 'antd';
 import { useAgentReportForm } from '../controllers/useAgentReportForm';
 import { useAgentReportHandler } from '../controllers/useAgentReportHandler';
 import { useAgentReportVisitorFrequency } from '../controllers/useAgentReportVisitorFrequency';
+import { useAgentReportLeads } from '../controllers/useAgentReportLeads';
 import AgentReportForm from '../components/AgentReportForm';
 import AgentReportProgress from '../components/AgentReportProgress';
 import AgentReportContextBar from '../components/AgentReportContextBar';
@@ -9,6 +10,7 @@ import AgentReportKpiTiles from '../components/AgentReportKpiTiles';
 import AgentReportAgentTable from '../components/AgentReportAgentTable';
 import AgentReportDeviceUsage from '../components/AgentReportDeviceUsage';
 import AgentReportSheetTabs from '../components/AgentReportSheetTabs';
+import AgentReportLeads from '../components/AgentReportLeads';
 import AgentReportVisitorFrequencyModal from '../components/AgentReportVisitorFrequencyModal';
 import RecentAgentReports from '../components/RecentAgentReports';
 
@@ -18,6 +20,12 @@ function AgentReportsWorkflow() {
   const form = useAgentReportForm();
   const report = useAgentReportHandler();
   const visitorFrequency = useAgentReportVisitorFrequency();
+  const leads = useAgentReportLeads({
+    reportId: report.activeReport?.reportId,
+    campaigns: report.campaigns,
+    agentNames: report.agentNames,
+    firstAgentName: report.firstAgentName,
+  });
 
   const handleGenerate = () => {
     const campaigns = form.buildCampaigns();
@@ -73,7 +81,8 @@ function AgentReportsWorkflow() {
             typeDetectedFromData={report.typeDetectedFromData}
             generatedAt={result?.meta?.generatedAt}
             expiresAt={report.statusData?.expiresAt || activeReport.expiresAt}
-            onDownload={report.downloadExcel}
+            onDownload={() => report.downloadExcel(leads.reportLeadActions)}
+            includesLeads={leads.includeLeadsInReport}
             canDownload={Boolean(result) && report.hasSheets}
             onNewReport={report.closeReport}
           />
@@ -119,7 +128,25 @@ function AgentReportsWorkflow() {
                 AI insights slot (future): an "AI insights" panel will render here, fed by
                 report.kpis, report.agentTableRows and report.result. Intentionally not rendered yet.
               */}
-              <AgentReportSheetTabs result={result} sheetNames={report.visibleSheetNames} />
+              <AgentReportSheetTabs
+                result={result}
+                sheetNames={report.visibleSheetNames}
+                extraItems={[
+                  {
+                    key: 'leads',
+                    label: leads.isLeadsLoaded
+                      ? `Leads (${leads.totalLeads.toLocaleString()})`
+                      : 'Leads',
+                    children: (
+                      <AgentReportLeads
+                        leads={leads}
+                        dateSummary={report.dateSummary}
+                        agentCount={report.campaigns.length}
+                      />
+                    ),
+                  },
+                ]}
+              />
             </>
           )}
         </Space>
