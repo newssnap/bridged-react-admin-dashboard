@@ -47,6 +47,12 @@ const SidebarMenu = ({ secondary }) => {
       icon: getIcon('UsersOutlined'),
       onClick: () => navigate('/companies'),
     },
+    {
+      key: '/reports',
+      label: 'Agent Reports',
+      icon: getIcon('BarChartOutlined'),
+      onClick: () => navigate('/reports'),
+    },
     // {
     //   key: '/defaultChecklist',
     //   label: 'Default Tasklist',
