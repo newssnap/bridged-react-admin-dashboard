@@ -1,11 +1,12 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../ProtectedRoute';
-import { Row, Spin } from 'antd';
+import { Spinner } from '@/components/ui/spinner';
 
 // Use React.lazy() to lazily load the components
 const LazyNotFound = lazy(() => import('../pages/NotFound'));
 const LazyLogin = lazy(() => import('../pages/authentication/Login'));
+const LazyHome = lazy(() => import('../pages/Home'));
 const LazyDashboard = lazy(() => import('../pages/Dashboard'));
 const LazyDefaultChecklist = lazy(() => import('../pages/DefaultChecklist'));
 const LazyUserChecklist = lazy(() => import('../pages/UserChecklist'));
@@ -13,6 +14,7 @@ const LazyCompanies = lazy(() => import('../pages/Companies'));
 const LazyTeams = lazy(() => import('../pages/Teams'));
 const LazyTeamCredits = lazy(() => import('../pages/TeamCredits'));
 const LazyCustomWork = lazy(() => import('../pages/CustomWork'));
+const LazyAgentReports = lazy(() => import('../pages/AgentReports'));
 function AppRouter() {
   // Function to handle page type and layout
   const handlePageTypeAndLayout = (Children, isProtected) => {
@@ -26,15 +28,21 @@ function AppRouter() {
   };
 
   const fallback = (
-    <Row style={{ height: '100vh', width: '100%' }} justify="center" align="middle">
-      <Spin size="large" />
-    </Row>
+    <div className="flex min-h-[60vh] w-full items-center justify-center" role="status">
+      <Spinner className="size-6 text-muted-foreground" />
+      <span className="sr-only">Loading</span>
+    </div>
   );
 
   const routes = [
     { path: '/login', component: LazyLogin, isProtected: false },
     {
       path: '/',
+      component: LazyHome,
+      isProtected: true,
+    },
+    {
+      path: '/accounts',
       component: LazyDashboard,
       isProtected: true,
     },
@@ -66,6 +74,11 @@ function AppRouter() {
     {
       path: '/teams/custom-work',
       component: LazyCustomWork,
+      isProtected: true,
+    },
+    {
+      path: '/reports',
+      component: LazyAgentReports,
       isProtected: true,
     },
   ];

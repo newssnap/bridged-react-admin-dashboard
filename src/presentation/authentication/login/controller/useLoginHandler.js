@@ -1,7 +1,7 @@
 import { useLoginMutation } from '../../../../services/api';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import { setAuthData } from '../../../../redux/slices/auth/authSlice';
 import { getValidOAuthRedirectFromSearch } from '../../../../utils/controllers/oauthRedirect';
 
@@ -36,28 +36,20 @@ const useLoginHandler = () => {
         // Preserve Claude OAuth context only for a real authorize URL
         const oauthRedirect = getValidOAuthRedirectFromSearch(location.search);
         if (oauthRedirect) {
-          navigate(`/?oauth_redirect=${encodeURIComponent(oauthRedirect)}`);
+          navigate(`/accounts?oauth_redirect=${encodeURIComponent(oauthRedirect)}`);
         } else {
           navigate('/');
         }
-        notification.success({
-          message: 'Login Successful',
-          placement: 'bottomRight',
-          showProgress: true,
-        });
       }
 
       if (response?.error) {
         // Handle and display the error message if login is unsuccessful
-        notification.error({
-          message: response?.error?.data?.errorObject?.userErrorText,
-          placement: 'bottomRight',
-          showProgress: true,
-        });
+        toast.error(
+          response?.error?.data?.errorObject?.userErrorText || "Couldn't log you in"
+        );
       }
     } catch (error) {
-      // Handle unexpected errors and log them
-      console.error('Login error:', error);
+      toast.error("Couldn't log you in");
     }
   };
 

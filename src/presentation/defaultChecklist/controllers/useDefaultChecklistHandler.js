@@ -8,8 +8,12 @@ import {
   useDeleteTaskMutation,
   useUpdateTaskMutation,
 } from '../../../services/api';
-import { notification } from 'antd';
 import { useState } from 'react';
+import { toast } from 'sonner';
+
+// The server's own explanation when it sends one, otherwise our fallback copy.
+const errorText = (source, fallback) =>
+  source?.errorObject?.userErrorText || source?.data?.errorObject?.userErrorText || fallback;
 
 export const useDefaultChecklistHandler = () => {
   const [deletingChecklistId, setDeletingChecklistId] = useState(null);
@@ -37,20 +41,15 @@ export const useDefaultChecklistHandler = () => {
     try {
       const response = await addDefaultChecklist(data).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Default tasklist added successfully',
-          description: response.message,
-        });
+        toast.success('Checklist added');
         closeDrawer();
       } else {
-        notification.error({
-          message: 'Error adding default tasklist',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't add the checklist"));
         closeDrawer();
       }
     } catch (error) {
       console.error('Error adding default tasklist:', error);
+      toast.error(errorText(error, "Couldn't add the checklist"));
     }
   };
 
@@ -59,14 +58,14 @@ export const useDefaultChecklistHandler = () => {
       setDeletingChecklistId(id);
       const response = await deleteDefaultChecklist(id).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Default tasklist deleted successfully',
-          description: response.message,
-        });
+        toast.success('Checklist deleted');
         if (closeDrawer) closeDrawer();
+      } else {
+        toast.error(errorText(response, "Couldn't delete the checklist"));
       }
     } catch (error) {
       console.error('Error deleting default tasklist:', error);
+      toast.error(errorText(error, "Couldn't delete the checklist"));
     } finally {
       setDeletingChecklistId(null);
     }
@@ -76,19 +75,14 @@ export const useDefaultChecklistHandler = () => {
     try {
       const response = await updateDefaultChecklist({ id, data }).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Default tasklist updated successfully',
-          description: response.message,
-        });
+        toast.success('Checklist renamed');
         closeDrawer();
       } else {
-        notification.error({
-          message: 'Error updating default tasklist',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't rename the checklist"));
       }
     } catch (error) {
       console.error('Error updating default tasklist:', error);
+      toast.error(errorText(error, "Couldn't rename the checklist"));
     }
   };
 
@@ -101,18 +95,12 @@ export const useDefaultChecklistHandler = () => {
       if (response.success) {
         return response.data; // Return the uploaded file data
       } else {
-        notification.error({
-          message: 'Error uploading image',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't upload the image"));
         return null;
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      notification.error({
-        message: 'Error uploading image',
-        description: 'Something went wrong while uploading the image',
-      });
+      toast.error(errorText(error, "Couldn't upload the image"));
       return null;
     }
   };
@@ -121,10 +109,7 @@ export const useDefaultChecklistHandler = () => {
     try {
       const response = await createTask(data).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Task updated successfully',
-          description: response.message,
-        });
+        toast.success('Task added');
         const newTask = {
           _id: response?.data?._id, // Temporary ID
           title: response?.data?.title,
@@ -135,22 +120,16 @@ export const useDefaultChecklistHandler = () => {
           createdDate: response?.data?.createdDate,
         };
         updatedTasks.push(newTask);
-        if (onSuccess) onSuccess(); // <- This was missing
+        if (onSuccess) onSuccess();
         refetch();
         return response;
       } else {
-        notification.error({
-          message: 'Error updating task',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't add the task"));
         return null;
       }
     } catch (error) {
-      console.error('Error updating task:', error);
-      notification.error({
-        message: 'Error updating task',
-        description: 'Something went wrong while updating the task',
-      });
+      console.error('Error creating task:', error);
+      toast.error(errorText(error, "Couldn't add the task"));
       return null;
     }
   };
@@ -160,25 +139,16 @@ export const useDefaultChecklistHandler = () => {
       setDeletingTaskId(id);
       const response = await deleteTask(id).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Task deleted successfully',
-          description: response.message,
-        });
+        toast.success('Task deleted');
         if (onSuccess) onSuccess();
         refetch();
         return response;
       } else {
-        notification.error({
-          message: 'Error deleting task',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't delete the task"));
       }
     } catch (error) {
       console.error('Error deleting task:', error);
-      notification.error({
-        message: 'Error deleting task',
-        description: 'Something went wrong while deleting the task',
-      });
+      toast.error(errorText(error, "Couldn't delete the task"));
       return null;
     } finally {
       setDeletingTaskId(null);
@@ -189,26 +159,17 @@ export const useDefaultChecklistHandler = () => {
     try {
       const response = await updateTask({ id, data }).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Task updated successfully',
-          description: response.message,
-        });
+        toast.success('Task updated');
         if (onSuccess) onSuccess();
         refetch();
         return response;
       } else {
-        notification.error({
-          message: 'Error updating task',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't update the task"));
         return null;
       }
     } catch (error) {
       console.error('Error updating task:', error);
-      notification.error({
-        message: 'Error updating task',
-        description: 'Something went wrong while updating the task',
-      });
+      toast.error(errorText(error, "Couldn't update the task"));
       return null;
     }
   };

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import {
   useCreateCompanyMutation,
   useDeleteCompanyMutation,
@@ -32,20 +32,12 @@ const useCompaniesHandler = () => {
     try {
       const result = await _CREATE_COMPANY(values.name).unwrap();
 
-      notification.success({
-        message: 'Company created successfully',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.success('Company created');
 
       closeDrawer();
       return result;
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't create the company");
       throw error;
     }
   };
@@ -54,19 +46,11 @@ const useCompaniesHandler = () => {
     try {
       await _UPDATE_COMPANY({ id: values.id, name: values.name }).unwrap();
 
-      notification.success({
-        message: 'Company updated successfully',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.success('Company updated');
 
       closeDrawer();
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to update company',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't update the company");
     }
   };
 
@@ -74,17 +58,9 @@ const useCompaniesHandler = () => {
     try {
       await _DELETE_COMPANY(company.id).unwrap();
 
-      notification.success({
-        message: 'Company deleted successfully',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.success('Company deleted');
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to delete company',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't delete the company");
     }
   };
 

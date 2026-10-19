@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from 'react';
-import { notification } from 'antd';
 import { useGetCompaniesQuery } from '../../../services/api';
 import { useLocation } from 'react-router-dom';
 
@@ -16,7 +15,6 @@ const useCompaniesTableHandler = searchValue => {
     isLoading,
     isFetching: isCompaniesFetchingQuery,
     isError,
-    error,
     refetch,
   } = useGetCompaniesQuery({
     page,
@@ -46,17 +44,6 @@ const useCompaniesTableHandler = searchValue => {
     setPage(1);
   }, [searchValue]);
 
-  // Handle error
-  useEffect(() => {
-    if (isError && error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to fetch companies',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
-    }
-  }, [isError, error]);
-
   useEffect(() => {
     if (pathname === '/companies') {
       refetch();
@@ -74,6 +61,12 @@ const useCompaniesTableHandler = searchValue => {
     limit,
     handlePageChange,
     isLoading: isLoading || isCompaniesFetchingQuery,
+    // First load (no data yet) vs a refetch: the page shows a skeleton for the first, and dims
+    // the table for the second.
+    isInitialLoading: isLoading,
+    // A failed load replaces the table with "Couldn't load companies" + Try again.
+    isError,
+    refetch,
   };
 };
 

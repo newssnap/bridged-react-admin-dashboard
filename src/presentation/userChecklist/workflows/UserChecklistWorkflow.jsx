@@ -1,58 +1,93 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useUserChecklistHandler } from '../controllers/useUserChecklistHandler';
-import {
-  Table,
-  Tag,
-  Button,
-  Tooltip,
-  Flex,
-  Input,
-  Form,
-  Popconfirm,
-  Drawer,
-  Space,
-  Typography,
-  Avatar,
-  DatePicker,
-  Select,
-  Checkbox,
-  Upload,
-  List,
-  Divider,
-  Row,
-} from 'antd';
-import { theme } from 'antd';
-import { Space as SpaceComponent, Typography as TypographyComponent, Image } from 'antd';
-import { PRIMARY_COLOR } from '../../../constants/DashboardColors';
-import Icon from '../../../utils/components/Icon';
-import {
-  PlusOutlined,
-  FileOutlined,
-  UploadOutlined,
-  DeleteOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import ChecklistDrawer from '../../defaultChecklist/components/ChecklistDrawer';
-import { message as messageComponent } from 'antd';
-import formatDate from '../../../utils/formatting/formateDate';
+import React, { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import dayjs from 'dayjs';
-const { Title } = Typography;
-const { Search } = Input;
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Add01Icon,
+  CheckListIcon,
+  CloudOffIcon,
+  DashboardSquare02Icon,
+  Mail01Icon,
+  TaskDone01Icon,
+} from '@hugeicons/core-free-icons';
+import { confirm } from '@/components/confirm-dialog';
+import { useForm } from '@/components/form';
+import {
+  PageEmpty,
+  PageHeader,
+  PageToolbar,
+  PageToolbarSpacer,
+  ToolbarSearch,
+} from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import useDebouncedInput from '../../../utils/controllers/useDebouncedInput';
+import { useUserChecklistHandler } from '../controllers/useUserChecklistHandler';
+import ChecklistDrawer from '../../defaultChecklist/components/ChecklistDrawer';
+import TaskFormDrawer from '../../defaultChecklist/components/TaskFormDrawer';
+import { ChecklistPanelSkeleton } from '../../defaultChecklist/components/ChecklistSkeletons';
+import { plural } from '../../defaultChecklist/components/TaskRow';
+import ChecklistPanel from '../components/ChecklistPanel';
+import TaskDetailsDrawer from '../components/TaskDetailsDrawer';
+import { nameOf } from '../components/PersonIdentity';
 
-const UserChecklistWorkflow = UserDetails => {
+const NO_CHECKLISTS = [];
+
+/** "Accounts / Checklist" above the title; Accounts links back. */
+function ChecklistTrail() {
+  return (
+    <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
+      <HugeiconsIcon
+        icon={DashboardSquare02Icon}
+        strokeWidth={2}
+        className="size-3.5 shrink-0 text-muted-foreground"
+      />
+      <Link
+        to="/accounts"
+        className="min-w-0 truncate rounded-sm font-medium text-muted-foreground transition-colors duration-150 ease-out-quad outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+      >
+        Accounts
+      </Link>
+      <span aria-hidden className="text-muted-foreground/50">
+        /
+      </span>
+      <span className="min-w-0 truncate font-medium text-muted-foreground">Checklist</span>
+    </nav>
+  );
+}
+
+function MetaItem({ icon, children }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <HugeiconsIcon icon={icon} strokeWidth={2} className="size-3.5 shrink-0" />
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+const UserChecklistWorkflow = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const {
     userChecklist,
     teamMembers,
     taskComments,
     isLoadingUserChecklist,
+    isUserChecklistError,
+    isFetchingUserChecklist,
+    refetchUserChecklist,
     isLoadingTeamMembers,
     isLoadingTaskComments,
     isUpdatingUserChecklist,
-    isDeletingUserChecklist,
     isAddingDefaultChecklist,
     isCreatingTask,
     isUpdatingTask,
@@ -68,25 +103,49 @@ const UserChecklistWorkflow = UserDetails => {
     clearTaskComments,
     handleAddTaskComment,
     handleDeleteTask,
-    isDeletingTask,
   } = useUserChecklistHandler(id);
-  const [searchText, setSearchText] = useState('');
+  const { inputQuery, debouncedValue, inputHandler } = useDebouncedInput('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [isTasksDrawerOpen, setIsTasksDrawerOpen] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState(null);
   const [isTaskFormDrawerOpen, setIsTaskFormDrawerOpen] = useState(false);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [taskAttachments, setTaskAttachments] = useState([]);
-  const [form] = Form.useForm();
-  const [taskForm] = Form.useForm();
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+  const [form] = useForm();
+  const [taskForm] = useForm();
   const [isTaskInfoDrawerOpen, setIsTaskInfoDrawerOpen] = useState(false);
   const [selectedTaskInfo, setSelectedTaskInfo] = useState(null);
   const [newComment, setNewComment] = useState('');
 
+  const checklists = userChecklist?.data || NO_CHECKLISTS;
+  const members = teamMembers?.data;
+
+  // The account this page is about: the team member with this id.
+  const user = useMemo(() => (members || []).find(member => member?._id === id), [members, id]);
+  const userName = nameOf(user);
+  const userEmail = user?.email;
+
+  const memberOptions = useMemo(
+    () =>
+      (members || [])
+        .map(member => ({ label: member.email, value: member._id }))
+        .sort((a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())),
+    [members]
+  );
+
+  const totals = useMemo(() => {
+    const tasks = checklists.flatMap(checklist => checklist?.tasks || []);
+    return { total: tasks.length, done: tasks.filter(task => task?.isCompleted).length };
+  }, [checklists]);
+
+  // Checklist drawer
   const handleDrawerOpen = () => {
+    setIsEditing(false);
+    setEditingRecord(null);
+    form.resetFields();
     setIsDrawerOpen(true);
   };
 
@@ -94,25 +153,54 @@ const UserChecklistWorkflow = UserDetails => {
     setIsDrawerOpen(false);
   };
 
-  const handleTasksDrawerOpen = checklist => {
-    setSelectedChecklist(checklist);
-    setIsTasksDrawerOpen(true);
+  const handleFormSubmit = async values => {
+    try {
+      if (isEditing) {
+        handleUpdateUserChecklist(
+          editingRecord._id,
+          { title: values.title, isDefault: false, assignedUser: id },
+          handleDrawerClose
+        );
+      } else {
+        handleAddDefaultChecklist(
+          { title: values.title, tasks: [], isDefault: false, assignedUser: id },
+          handleDrawerClose
+        );
+      }
+    } catch (error) {
+      toast.error(isEditing ? "Couldn't rename the checklist" : "Couldn't add the checklist");
+    }
   };
 
-  const handleTasksDrawerClose = () => {
-    setIsTasksDrawerOpen(false);
-    setSelectedChecklist(null);
+  const handleEditChecklist = record => {
+    setIsEditing(true);
+    setEditingRecord(record);
+    form.setFieldsValue({
+      title: record.title,
+    });
+    setIsDrawerOpen(true);
   };
-  const {
-    token: { colorBgLayout },
-  } = theme.useToken();
-  const handleTaskFormDrawerOpen = (task = null) => {
+
+  const handleDeleteChecklist = record => {
+    const tasks = record?.tasks?.length || 0;
+    confirm({
+      title: 'Delete this checklist?',
+      description: `"${record?.title || 'This checklist'}"${
+        tasks ? ` and its ${plural(tasks, 'task')}` : ''
+      } will be removed from this account. This can't be undone.`,
+      confirmText: 'Delete',
+      variant: 'destructive',
+      onConfirm: () => handleDeleteUserChecklist(record._id, handleDrawerClose),
+    });
+  };
+
+  // Task form drawer
+  const handleTaskFormDrawerOpen = (checklist, task = null) => {
+    setSelectedChecklist(checklist);
     if (task) {
       setIsEditingTask(true);
       setEditingTask(task);
       setTaskAttachments(task.attachments || []);
-      const assignedUser = teamMembers?.data?.find(member => member._id === task.assignedUser);
-      const userEmail = assignedUser ? assignedUser.email : 'Unknown User';
       taskForm.setFieldsValue({
         title: task.title,
         description: task.description,
@@ -137,34 +225,6 @@ const UserChecklistWorkflow = UserDetails => {
     taskForm.resetFields();
   };
 
-  const handleTaskInfoDrawerOpen = task => {
-    setSelectedTaskInfo(task);
-    setIsTaskInfoDrawerOpen(true);
-    // Call API to get task comments
-    handleGetTaskComments(task._id);
-  };
-
-  const handleTaskInfoDrawerClose = () => {
-    setIsTaskInfoDrawerOpen(false);
-    setSelectedTaskInfo(null);
-    setNewComment('');
-    clearTaskComments();
-  };
-
-  const handleAddComment = async () => {
-    if (newComment.trim() && selectedTaskInfo) {
-      try {
-        await handleAddTaskComment(selectedTaskInfo._id, newComment.trim(), () => {
-          setNewComment('');
-          // Refresh comments by calling the API again
-          handleGetTaskComments(selectedTaskInfo._id);
-        });
-      } catch (error) {
-        console.error('Error adding comment:', error);
-      }
-    }
-  };
-
   const handleTaskFormSubmit = async values => {
     try {
       const taskData = {
@@ -178,7 +238,6 @@ const UserChecklistWorkflow = UserDetails => {
       };
       let updatedTasks = [...selectedChecklist.tasks];
       if (isEditingTask) {
-        // Add your update task logic here
         updatedTasks = updatedTasks.map(task =>
           task._id === editingTask._id
             ? {
@@ -208,83 +267,17 @@ const UserChecklistWorkflow = UserDetails => {
           }
         );
       } else {
-        // Add your create task logic here
-        handleCreateTask(taskData, updatedTasks, () => {
+        await handleCreateTask(taskData, updatedTasks, () => {
           setSelectedChecklist({
             ...selectedChecklist,
             tasks: updatedTasks,
           });
           handleTaskFormDrawerClose();
         });
-        messageComponent.success('Task created successfully');
-        handleTaskFormDrawerClose();
       }
     } catch (error) {
-      messageComponent.error('Something went wrong');
+      toast.error(isEditingTask ? "Couldn't update the task" : "Couldn't add the task");
     }
-  };
-
-  // const handleFileUpload = (info) => {
-  //   if (info.file.status === 'done') {
-  //     const newAttachment = {
-  //       url: info.file.response.url, // Assuming API returns file URL
-  //       type: info.file.type,
-  //       fileName: info.file.name,
-  //     };
-  //     setTaskAttachments([...taskAttachments, newAttachment]);
-  //     messageComponent.success(`${info.file.name} uploaded successfully`);
-  //   } else if (info.file.status === 'error') {
-  //     messageComponent.error(`${info.file.name} upload failed`);
-  //   }
-  // };
-
-  const handleRemoveAttachment = file => {
-    const newAttachments = taskAttachments.filter(attachment => attachment.url !== file.url);
-    setTaskAttachments(newAttachments);
-  };
-
-  const handleDeleteTaskButton = taskId => {
-    const updatedTasks = selectedChecklist.tasks.filter(task => task._id !== taskId);
-    handleDeleteTask(taskId, () => {
-      // Update local state after successful deletion
-      setSelectedChecklist({
-        ...selectedChecklist,
-        tasks: updatedTasks,
-      });
-    });
-  };
-
-  const handleFormSubmit = async values => {
-    try {
-      if (isEditing) {
-        // Handle edit logic here
-        handleUpdateUserChecklist(
-          editingRecord._id,
-          { title: values.title, isDefault: false, assignedUser: id },
-          handleDrawerClose
-        );
-      } else {
-        // Handle add logic here
-        handleAddDefaultChecklist(
-          { title: values.title, tasks: [], isDefault: false, assignedUser: id },
-          handleDrawerClose
-        );
-      }
-    } catch (error) {
-      messageComponent.error('Something went wrong');
-    }
-  };
-  const handleEditChecklist = record => {
-    setIsEditing(true);
-    setEditingRecord(record);
-    form.setFieldsValue({
-      title: record.title,
-    });
-    setIsDrawerOpen(true);
-  };
-
-  const handleDeleteChecklist = id => {
-    handleDeleteUserChecklist(id, handleDrawerClose);
   };
 
   const handleFileUpload = async file => {
@@ -292,253 +285,239 @@ const UserChecklistWorkflow = UserDetails => {
       const uploadedFile = await handleUploadImage(file);
       if (uploadedFile) {
         setTaskAttachments(prev => [...prev, uploadedFile]);
-        messageComponent.success('File uploaded successfully');
+        toast.success('Image uploaded');
       }
     } catch (error) {
-      messageComponent.error('Failed to upload file');
+      toast.error("Couldn't upload the image");
     }
   };
 
-  const getIcon = name => <Icon name={name} size={20} />;
+  const handleRemoveAttachment = file => {
+    const newAttachments = taskAttachments.filter(attachment => attachment.url !== file.url);
+    setTaskAttachments(newAttachments);
+  };
 
-  // Tasks table columns
-  const taskColumns = [
-    {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-      render: title => <span style={{ fontSize: '14px', fontWeight: '500' }}>{title}</span>,
-    },
-    {
-      title: 'Due Date',
-      dataIndex: 'dueDate',
-      key: 'dueDate',
-      align: 'center',
-      render: dueDate => (
-        <span style={{ fontSize: '14px' }}>
-          {dueDate ? formatDate(dueDate, true) : 'No due date'}
-        </span>
-      ),
-    },
-    {
-      title: 'Assigned To',
-      dataIndex: 'userEmail',
-      key: 'userEmail',
-      render: (userEmail, record) => (
-        <Space>
-          <Avatar src={record.userAvatar} size={32}>
-            {record.userFullname ? record.userFullname.charAt(0).toUpperCase() : 'U'}
-          </Avatar>
-          <span style={{ fontSize: '14px' }}>{userEmail}</span>
-        </Space>
-      ),
-    },
-    {
-      title: 'Attachments',
-      dataIndex: 'attachments',
-      key: 'attachments',
-      align: 'center',
-      render: attachments => (
-        <Space align="center" size={10}>
-          <span style={{ fontSize: '14px', marginBottom: '2px' }}>
-            {attachments?.length || 0} files
-          </span>
-        </Space>
-      ),
-    },
-    {
-      title: 'Status',
-      dataIndex: 'isCompleted',
-      key: 'isCompleted',
-      render: isCompleted => (
-        <Tag color={isCompleted ? 'green' : 'orange'}>{isCompleted ? 'Completed' : 'Pending'}</Tag>
-      ),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      align: 'center',
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Task Information">
-            <Button
-              type="text"
-              icon={getIcon('InfoCircleOutlined')}
-              shape="circle"
-              onClick={() => handleTaskInfoDrawerOpen(record)}
-            />
-          </Tooltip>
-          <Tooltip title="Edit Task">
-            <Button
-              type="text"
-              icon={getIcon('EditOutlined')}
-              shape="circle"
-              onClick={() => handleTaskFormDrawerOpen(record)}
-            />
-          </Tooltip>
-          <Tooltip title="Delete Task">
-            <Popconfirm
-              title="Are you sure you want to delete this task?"
-              onConfirm={() => handleDeleteTaskButton(record._id)}
-            >
-              <Button
-                type="text"
-                icon={getIcon('DeleteOutlined')}
-                shape="circle"
-                danger
-                loading={isDeletingTask}
-              />
-            </Popconfirm>
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
+  const handleDeleteTaskButton = async (task, checklist) => {
+    const updatedTasks = (checklist?.tasks || []).filter(item => item._id !== task._id);
+    setDeletingTaskId(task._id);
+    try {
+      await handleDeleteTask(task._id, () => {
+        // Update local state after successful deletion
+        setSelectedChecklist({
+          ...checklist,
+          tasks: updatedTasks,
+        });
+      });
+    } finally {
+      setDeletingTaskId(null);
+    }
+  };
+
+  // Task details drawer
+  const handleTaskInfoDrawerOpen = (task, checklist) => {
+    setSelectedChecklist(checklist);
+    setSelectedTaskInfo(task);
+    setIsTaskInfoDrawerOpen(true);
+    // Call API to get task comments
+    handleGetTaskComments(task._id);
+  };
+
+  const handleTaskInfoDrawerClose = () => {
+    setIsTaskInfoDrawerOpen(false);
+    setSelectedTaskInfo(null);
+    setNewComment('');
+    clearTaskComments();
+  };
+
+  const handleEditFromDetails = task => {
+    const checklist = selectedChecklist;
+    handleTaskInfoDrawerClose();
+    handleTaskFormDrawerOpen(checklist, task);
+  };
+
+  const handleAddComment = async () => {
+    if (newComment.trim() && selectedTaskInfo) {
+      try {
+        await handleAddTaskComment(selectedTaskInfo._id, newComment.trim(), () => {
+          setNewComment('');
+          // Refresh comments by calling the API again
+          handleGetTaskComments(selectedTaskInfo._id);
+        });
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
+    }
+  };
 
   const filteredChecklists = useMemo(() => {
-    if (!searchText) return userChecklist?.data;
-    return userChecklist?.data.filter(checklist =>
-      checklist.title.toLowerCase().includes(searchText.toLowerCase())
+    const term = debouncedValue.trim().toLowerCase();
+    if (!term) return checklists;
+    return checklists.filter(checklist => (checklist.title || '').toLowerCase().includes(term));
+  }, [checklists, debouncedValue]);
+
+  const hasError = isUserChecklistError && !isFetchingUserChecklist;
+  const isLoadingIdentity = isLoadingTeamMembers;
+  const percent = totals.total ? Math.round((totals.done / totals.total) * 100) : 0;
+  // The first-run empty state carries the add action; the header holds it otherwise.
+  const showCreateButton = isLoadingUserChecklist || hasError || checklists.length > 0;
+
+  const assigneeLabelFor = checklist => {
+    if (!checklist?.assignedUser || checklist.assignedUser === id) return null;
+    return members?.find(member => member._id === checklist.assignedUser)?.email || null;
+  };
+
+  const renderContent = () => {
+    if (isLoadingUserChecklist) {
+      return (
+        <div className="flex flex-col gap-6">
+          <ChecklistPanelSkeleton rows={3} />
+          <ChecklistPanelSkeleton rows={2} />
+        </div>
+      );
+    }
+    if (hasError) {
+      return (
+        <Empty className="rounded-lg border border-dashed bg-muted/30 py-16">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <HugeiconsIcon icon={CloudOffIcon} strokeWidth={2} />
+            </EmptyMedia>
+            <EmptyTitle>Couldn't load checklists</EmptyTitle>
+            <EmptyDescription>Check your connection and try again.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button type="button" variant="outline" onClick={refetchUserChecklist}>
+              Try again
+            </Button>
+          </EmptyContent>
+        </Empty>
+      );
+    }
+    if (checklists.length === 0) {
+      return (
+        <PageEmpty
+          icon={CheckListIcon}
+          title="No checklists yet"
+          description="Add a checklist to give this account tasks to work through."
+        >
+          <Button type="button" onClick={handleDrawerOpen}>
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+            Add checklist
+          </Button>
+        </PageEmpty>
+      );
+    }
+    if (filteredChecklists.length === 0) {
+      return (
+        <PageEmpty
+          icon={CheckListIcon}
+          title={`No checklists match “${debouncedValue.trim()}”`}
+          description="Try another name."
+        >
+          <Button type="button" variant="outline" onClick={() => inputHandler('')}>
+            Clear search
+          </Button>
+        </PageEmpty>
+      );
+    }
+    return (
+      <div className="flex flex-col gap-6 animate-in fade-in-0 duration-300 ease-out-quad">
+        {filteredChecklists.map(checklist => (
+          <ChecklistPanel
+            key={checklist._id}
+            checklist={checklist}
+            assigneeLabel={assigneeLabelFor(checklist)}
+            onAddTask={item => handleTaskFormDrawerOpen(item)}
+            onRename={handleEditChecklist}
+            onDelete={handleDeleteChecklist}
+            onOpenTask={handleTaskInfoDrawerOpen}
+            onEditTask={(task, item) => handleTaskFormDrawerOpen(item, task)}
+            onDeleteTask={handleDeleteTaskButton}
+            deletingTaskId={deletingTaskId}
+          />
+        ))}
+      </div>
     );
-  }, [userChecklist?.data, searchText]);
-  const columns = [
-    {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-    },
-    {
-      title: 'Tasks',
-      dataIndex: 'tasks',
-      key: 'tasks',
-      render: (_, record) => {
-        return (
-          <Space>
-            <Tag>{record.tasks.length + ' Tasks'}</Tag>
-          </Space>
-        );
-      },
-    },
-    {
-      title: 'Assigned To',
-      dataIndex: 'assignedTo',
-      key: 'assignedTo',
-      render: (_, record) => {
-        const assignedUser = teamMembers?.data?.find(member => member._id === record.assignedUser);
-        return assignedUser ? assignedUser.email : 'Unknown User';
-      },
-    },
-    {
-      title: 'Actions',
-      dataIndex: 'actions',
-      key: 'actions',
-      align: 'center',
-      width: 20,
-      render: (_, record) => {
-        return (
-          <Space>
-            <Tooltip title="View Tasks">
-              <Button
-                type="text"
-                icon={getIcon('Tasks')}
-                shape="circle"
-                onClick={() => handleTasksDrawerOpen(record)}
-              />
-            </Tooltip>
-            <Tooltip title="Delete Tasklist">
-              <Popconfirm
-                title="Are you sure you want to delete this tasklist?"
-                onConfirm={() => handleDeleteChecklist(record._id)}
-              >
-                <Button
-                  type="text"
-                  icon={getIcon('DeleteOutlined')}
-                  shape="circle"
-                  danger
-                  loading={isDeletingUserChecklist}
-                />
-              </Popconfirm>
-            </Tooltip>
-            <Tooltip title="Edit Tasklist">
-              <Button
-                type="text"
-                icon={getIcon('EditOutlined')}
-                shape="circle"
-                onClick={() => handleEditChecklist(record)}
-              />
-            </Tooltip>
-          </Space>
-        );
-      },
-    },
-  ];
+  };
+
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Flex align="center" gap={'20px'} style={{ marginBottom: 'var(--mpr-3)' }}>
-        <Icon
-          name="ArrowRightOutlined"
-          style={{ rotate: '180deg', marginTop: '2px', cursor: 'pointer' }}
-          size="small"
-          onClick={() => navigate(-1)}
-          onMouseEnter={e => {
-            e.target.style.transition = 'color 0.3s';
-            e.target.style.color = PRIMARY_COLOR;
-          }}
-          onMouseLeave={e => {
-            e.target.style.transition = 'color 0.3s';
-            e.target.style.color = 'inherit';
-          }}
-        />
-        <Space>
-          <Title
-            level={2}
-            style={{ fontWeight: 300, marginRight: '0px', cursor: 'pointer' }}
-            onClick={() => navigate(-1)}
-            onMouseEnter={e => {
-              e.target.style.transition = 'color 0.3s';
-              e.target.style.color = PRIMARY_COLOR;
-            }}
-            onMouseLeave={e => {
-              e.target.style.transition = 'color 0.3s';
-              e.target.style.color = 'inherit';
-            }}
-          >
-            Users |
-          </Title>
-          <Title level={2} style={{ fontWeight: 300 }}>
-            User Tasklist
-          </Title>
-        </Space>
-      </Flex>
-      <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-        <Button size="large" type="primary" style={{ width: '150px' }} onClick={handleDrawerOpen}>
-          <PlusOutlined />
-          Add Tasklist
-        </Button>
-        <Input
-          placeholder="Search by title"
-          allowClear
-          size="large"
-          onChange={e => setSearchText(e.target.value)}
-          style={{ maxWidth: '400px' }}
-        />
-      </Flex>
-      <Table
-        dataSource={filteredChecklists}
-        columns={columns}
-        loading={isLoadingUserChecklist}
-        bordered
-        pagination={{
-          position: ['bottomLeft'],
-          showSizeChanger: false,
-          showQuickJumper: false,
-        }}
-        locale={{
-          emptyText: searchText
-            ? `No tasklists found matching "${searchText}"`
-            : 'No default tasklists available',
-        }}
-      />
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow={<ChecklistTrail />}
+        title={
+          isLoadingIdentity ? (
+            <Skeleton className="h-8 w-56 md:h-9" />
+          ) : (
+            userName || userEmail || 'User checklist'
+          )
+        }
+        actions={
+          showCreateButton && (
+            <Button type="button" onClick={handleDrawerOpen} disabled={isLoadingUserChecklist}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add checklist
+            </Button>
+          )
+        }
+      >
+        {isLoadingIdentity || isLoadingUserChecklist ? (
+          <div className="mt-1 flex items-center gap-3">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        ) : (
+          <div className="mt-1 flex flex-col gap-3">
+            <div
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13.5px] text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              {userName && userEmail && <MetaItem icon={Mail01Icon}>{userEmail}</MetaItem>}
+              {!hasError && (
+                <>
+                  <MetaItem icon={CheckListIcon}>{plural(checklists.length, 'checklist')}</MetaItem>
+                  <MetaItem icon={TaskDone01Icon}>
+                    {totals.total ? (
+                      <span className="tabular-nums">
+                        <span className="font-medium text-foreground">
+                          {totals.done} of {plural(totals.total, 'task')}
+                        </span>{' '}
+                        done
+                      </span>
+                    ) : (
+                      'No tasks yet'
+                    )}
+                  </MetaItem>
+                </>
+              )}
+            </div>
+            {!hasError && totals.total > 0 && (
+              <Progress
+                value={percent}
+                aria-label={`${percent}% of tasks done`}
+                className="h-1.5 max-w-sm"
+              />
+            )}
+          </div>
+        )}
+      </PageHeader>
+
+      {!hasError && !isLoadingUserChecklist && checklists.length > 0 && (
+        <PageToolbar>
+          <PageToolbarSpacer />
+          <p className="shrink-0 text-sm text-muted-foreground tabular-nums" aria-live="polite">
+            {plural(filteredChecklists.length, 'checklist')}
+          </p>
+          <ToolbarSearch
+            value={inputQuery}
+            onChange={inputHandler}
+            placeholder="Search checklists"
+          />
+        </PageToolbar>
+      )}
+
+      {renderContent()}
+
       <ChecklistDrawer
         isOpen={isDrawerOpen}
         onClose={handleDrawerClose}
@@ -546,351 +525,41 @@ const UserChecklistWorkflow = UserDetails => {
         form={form}
         onSubmit={handleFormSubmit}
         isLoading={isUpdatingUserChecklist || isAddingDefaultChecklist}
+        description={
+          isEditing ? 'Give this checklist a clearer name.' : 'Name the checklist for this account.'
+        }
       />
 
-      {/* Tasks Drawer */}
-      <Drawer
-        title={`Tasks - ${selectedChecklist?.title || ''}`}
-        width={'70%'}
-        onClose={handleTasksDrawerClose}
-        open={isTasksDrawerOpen}
-        bodyStyle={{ paddingBottom: 80 }}
-        footer={
-          <div style={{ textAlign: 'right' }}>
-            <Button onClick={handleTasksDrawerClose} style={{ width: '100px' }} size="large">
-              Close
-            </Button>
-          </div>
-        }
-      >
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          size="large"
-          onClick={() => handleTaskFormDrawerOpen()}
-        >
-          Create New Task
-        </Button>
-        <Table
-          columns={taskColumns}
-          dataSource={selectedChecklist?.tasks || []}
-          rowKey="_id"
-          pagination={{
-            position: ['bottomLeft'],
-            showSizeChanger: false,
-            showQuickJumper: false,
-          }}
-          scroll={{ x: 700 }}
-        />
-        <Drawer
-          title={isEditingTask ? 'Edit Task' : 'Create New Task'}
-          width={600}
-          onClose={handleTaskFormDrawerClose}
-          open={isTaskFormDrawerOpen}
-          bodyStyle={{ paddingBottom: 80 }}
-          footer={
-            <div style={{ textAlign: 'right' }}>
-              <Space>
-                <Button onClick={handleTaskFormDrawerClose} size="large">
-                  Cancel
-                </Button>
-                <Button type="primary" onClick={() => taskForm.submit()} size="large">
-                  {isEditingTask ? 'Update Task' : 'Create Task'}
-                </Button>
-              </Space>
-            </div>
-          }
-        >
-          <Form form={taskForm} layout="vertical" onFinish={handleTaskFormSubmit}>
-            <Form.Item
-              name="title"
-              label="Title"
-              rules={[{ required: true, message: 'Please input the task title!' }]}
-            >
-              <Input placeholder="Enter task title" size="large" />
-            </Form.Item>
+      <TaskFormDrawer
+        isOpen={isTaskFormDrawerOpen}
+        onClose={handleTaskFormDrawerClose}
+        isEditing={isEditingTask}
+        form={taskForm}
+        onSubmit={handleTaskFormSubmit}
+        isLoading={isCreatingTask || isUpdatingTask}
+        isUploadingImage={isUploadingImage}
+        onFileUpload={handleFileUpload}
+        uploadedFiles={taskAttachments}
+        onRemoveFile={handleRemoveAttachment}
+        withAssignment
+        descriptionRequired
+        memberOptions={memberOptions}
+        checklistTitle={selectedChecklist?.title}
+      />
 
-            <Form.Item
-              name="description"
-              label="Description"
-              rules={[{ required: true, message: 'Please input the task description!' }]}
-            >
-              <Input.TextArea placeholder="Enter task description" rows={4} size="large" />
-            </Form.Item>
-
-            <Form.Item name="dueDate" label="Due Date">
-              <DatePicker
-                style={{ width: '100%' }}
-                placeholder="Select due date"
-                showTime={false}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="assignedUser"
-              label="Assign To"
-              rules={[{ required: true, message: 'Please select an assigned user!' }]}
-            >
-              <Select
-                placeholder="Select a team member"
-                showSearch
-                optionFilterProp="label"
-                filterSort={(optionA, optionB) =>
-                  (optionA?.label ?? '')
-                    .toLowerCase()
-                    .localeCompare((optionB?.label ?? '').toLowerCase())
-                }
-                options={
-                  teamMembers?.data?.map(member => ({
-                    label: member.email,
-                    value: member._id,
-                  })) || []
-                }
-              />
-            </Form.Item>
-
-            <Form.Item name="isCompleted" valuePropName="checked">
-              <Checkbox>Mark as completed</Checkbox>
-            </Form.Item>
-
-            <Form.Item label="Attachments">
-              <Upload
-                name="file"
-                action="/api/upload" // Replace with your upload endpoint
-                beforeUpload={file => {
-                  handleFileUpload(file);
-                  return false; // Prevent default upload behavior
-                }}
-                // onChange={handleFileUpload}
-                showUploadList={false}
-              >
-                <Button loading={isUploadingImage} icon={<UploadOutlined />}>
-                  Upload Image
-                </Button>
-              </Upload>
-            </Form.Item>
-
-            {taskAttachments.length > 0 && (
-              <Form.Item label="Uploaded Files">
-                <List
-                  size="small"
-                  dataSource={taskAttachments}
-                  renderItem={file => (
-                    <List.Item
-                      actions={[
-                        <Button
-                          type="text"
-                          shape="circle"
-                          icon={getIcon('DeleteOutlined')}
-                          onClick={() => handleRemoveAttachment(file)}
-                          danger
-                        />,
-                      ]}
-                    >
-                      <List.Item.Meta
-                        avatar={
-                          <Image
-                            src={file.url}
-                            alt={file.fileName}
-                            width={40}
-                            height={40}
-                            style={{ objectFit: 'cover' }}
-                          />
-                        }
-                        title={file.fileName}
-                        description={`Type: ${file.type}`}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Form.Item>
-            )}
-          </Form>
-        </Drawer>
-        {/* Task Information Drawer */}
-        <Drawer
-          title={selectedTaskInfo?.title ? selectedTaskInfo?.title : 'Task Information'}
-          width={600}
-          onClose={handleTaskInfoDrawerClose}
-          open={isTaskInfoDrawerOpen}
-          extra={
-            <div>
-              <div style={{ marginTop: '4px' }}>
-                <Tag color={selectedTaskInfo?.isCompleted ? 'green' : 'orange'}>
-                  {selectedTaskInfo?.isCompleted ? 'Completed' : 'Pending'}
-                </Tag>
-              </div>
-            </div>
-          }
-          bodyStyle={{ paddingBottom: 80 }}
-          footer={
-            <Row style={{ padding: 'var(--mpr-2)', width: '100%', position: 'relative' }}>
-              <Input.TextArea
-                placeholder="Add a comment"
-                style={{ width: '100%' }}
-                autoSize={{ minRows: 4, maxRows: 4 }}
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-              />
-              <Button
-                type="primary"
-                style={{ position: 'absolute', right: 24, bottom: 24, opacity: 1 }}
-                onClick={() => handleAddComment()}
-                loading={isAddingTaskComment}
-              >
-                Comment
-              </Button>
-            </Row>
-          }
-        >
-          {selectedTaskInfo && (
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
-              {/* Task Details */}
-              <div>
-                <Space
-                  direction="vertical"
-                  size="middle"
-                  style={{ width: '100%', marginTop: '10px' }}
-                >
-                  <Flex gap={10} align="center">
-                    <Title level={4} className="lightTitle" style={{ width: '100px' }}>
-                      Assignee
-                    </Title>
-                    <Button
-                      style={{
-                        backgroundColor: colorBgLayout,
-                        cursor: 'not-allowed',
-                        width: '150px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontWeight: 500,
-                      }}
-                      type="text"
-                    >
-                      {selectedTaskInfo?.userEmail?.split('@')[0]}
-                      <CloseOutlined style={{ opacity: 0.8 }} />
-                    </Button>
-                  </Flex>
-                  <Flex gap={10} align="center">
-                    <Title level={4} className="lightTitle" style={{ width: '100px' }}>
-                      Due Date
-                    </Title>
-                    <Button
-                      style={{
-                        backgroundColor: colorBgLayout,
-                        cursor: 'not-allowed',
-                        width: '150px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontWeight: 500,
-                      }}
-                      type="text"
-                    >
-                      {selectedTaskInfo?.dueDate
-                        ? formatDate(selectedTaskInfo.dueDate, true)
-                        : 'No due date'}
-                      <CloseOutlined style={{ opacity: 0.8 }} />
-                    </Button>
-                  </Flex>
-                  <Flex gap={15} align="flex-start" vertical>
-                    <Title level={4} className="lightTitle">
-                      Description
-                    </Title>
-
-                    <Input.TextArea
-                      value={selectedTaskInfo?.description}
-                      autoSize={{ minRows: 10, maxRows: 10 }}
-                      placeholder="No description added"
-                      style={{ borderRadius: '6px' }}
-                      readOnly
-                    />
-                  </Flex>
-                </Space>
-              </div>
-
-              {/* Comments Section */}
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <Title level={4} style={{ fontWeight: 300 }}>
-                  Comments
-                </Title>
-                {isLoadingTaskComments ? (
-                  <div>Loading comments...</div>
-                ) : (
-                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    {taskComments?.data && taskComments.data.length > 0 ? (
-                      taskComments.data.map(comment => (
-                        <div
-                          key={comment._id}
-                          style={{
-                            border: '1px solid #f0f0f0',
-                            borderRadius: '8px',
-                            padding: '16px',
-                            marginBottom: '12px',
-                            backgroundColor: '#fafafa',
-                          }}
-                        >
-                          <Space align="center" style={{ width: '100%' }}>
-                            <Avatar
-                              src={comment.userAvatar}
-                              size={40}
-                              style={{ marginRight: '10px' }}
-                            >
-                              {comment.userFullName
-                                ? comment.userFullName.charAt(0).toUpperCase()
-                                : 'U'}
-                            </Avatar>
-                            <div style={{ flex: 1 }}>
-                              <Space
-                                align="center"
-                                justify="space-between"
-                                style={{ marginBottom: '8px', width: '100%' }}
-                              >
-                                <span style={{ fontWeight: '500', fontSize: '14px' }}>
-                                  {comment.userFullName}
-                                </span>
-                                {comment.isAdmin && (
-                                  <Tag color="blue" size="small">
-                                    Admin
-                                  </Tag>
-                                )}
-                              </Space>
-                              <div
-                                style={{
-                                  fontSize: '14px',
-                                  lineHeight: '1.5',
-                                  color: '#333',
-                                }}
-                              >
-                                {comment.comment}
-                              </div>
-                            </div>
-                          </Space>
-                        </div>
-                      ))
-                    ) : (
-                      <div
-                        style={{
-                          textAlign: 'center',
-                          color: '#999',
-                          padding: '20px',
-                          border: '1px dashed #d9d9d9',
-                          borderRadius: '8px',
-                          backgroundColor: '#fafafa',
-                        }}
-                      >
-                        No comments yet
-                      </div>
-                    )}
-                  </Space>
-                )}
-              </div>
-            </Space>
-          )}
-        </Drawer>
-      </Drawer>
-
-      {/* Task Form Drawer */}
-    </Space>
+      <TaskDetailsDrawer
+        open={isTaskInfoDrawerOpen}
+        onClose={handleTaskInfoDrawerClose}
+        task={selectedTaskInfo}
+        comments={taskComments?.data}
+        isLoadingComments={isLoadingTaskComments}
+        newComment={newComment}
+        onNewCommentChange={setNewComment}
+        onAddComment={handleAddComment}
+        isAddingComment={isAddingTaskComment}
+        onEdit={handleEditFromDetails}
+      />
+    </div>
   );
 };
 

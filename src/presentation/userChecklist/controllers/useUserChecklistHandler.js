@@ -12,12 +12,18 @@ import {
   useGetUserChecklistTaskCommentsQuery,
   useAddTaskCommentMutation,
 } from '../../../services/api';
-import { notification } from 'antd';
+import { toast } from 'sonner';
+
+// The server's own explanation when it sends one, otherwise our fallback copy.
+const errorText = (source, fallback) =>
+  source?.errorObject?.userErrorText || source?.data?.errorObject?.userErrorText || fallback;
 
 export const useUserChecklistHandler = userId => {
   const {
     data: userChecklist,
     isLoading: isLoadingUserChecklist,
+    isError: isUserChecklistError,
+    isFetching: isFetchingUserChecklist,
     refetch,
   } = useGetUserChecklistQuery(userId);
   const { data: teamMembers, isLoading: isLoadingTeamMembers } = useGetTeamMembersQuery(userId);
@@ -53,20 +59,15 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await addDefaultChecklist(data).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Default tasklist added successfully',
-          description: response.message,
-        });
+        toast.success('Checklist added');
         closeDrawer();
       } else {
-        notification.error({
-          message: 'Error adding default tasklist',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't add the checklist"));
         closeDrawer();
       }
     } catch (error) {
       console.error('Error adding default tasklist:', error);
+      toast.error(errorText(error, "Couldn't add the checklist"));
     }
   };
 
@@ -74,19 +75,14 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await updateUserChecklist({ id, data }).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Default tasklist updated successfully',
-          description: response.message,
-        });
+        toast.success('Checklist renamed');
         closeDrawer();
       } else {
-        notification.error({
-          message: 'Error updating default tasklist',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't rename the checklist"));
       }
     } catch (error) {
       console.error('Error updating default tasklist:', error);
+      toast.error(errorText(error, "Couldn't rename the checklist"));
     }
   };
 
@@ -94,14 +90,14 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await deleteUserChecklist(id).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Default tasklist deleted successfully',
-          description: response.message,
-        });
+        toast.success('Checklist deleted');
         closeDrawer();
+      } else {
+        toast.error(errorText(response, "Couldn't delete the checklist"));
       }
     } catch (error) {
       console.error('Error deleting default tasklist:', error);
+      toast.error(errorText(error, "Couldn't delete the checklist"));
     }
   };
 
@@ -113,18 +109,12 @@ export const useUserChecklistHandler = userId => {
       if (response.success) {
         return response.data; // Return the uploaded file data
       } else {
-        notification.error({
-          message: 'Error uploading image',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't upload the image"));
         return null;
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      notification.error({
-        message: 'Error uploading image',
-        description: 'Something went wrong while uploading the image',
-      });
+      toast.error(errorText(error, "Couldn't upload the image"));
       return null;
     }
   };
@@ -133,10 +123,7 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await createTask(data).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Task updated successfully',
-          description: response.message,
-        });
+        toast.success('Task added');
         const newTask = {
           _id: response?.data?._id,
           title: response?.data?.title,
@@ -154,18 +141,12 @@ export const useUserChecklistHandler = userId => {
         refetch();
         return response;
       } else {
-        notification.error({
-          message: 'Error updating task',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't add the task"));
         return null;
       }
     } catch (error) {
-      console.error('Error updating task:', error);
-      notification.error({
-        message: 'Error updating task',
-        description: 'Something went wrong while updating the task',
-      });
+      console.error('Error creating task:', error);
+      toast.error(errorText(error, "Couldn't add the task"));
       return null;
     }
   };
@@ -174,26 +155,17 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await updateTask({ id, data }).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Task updated successfully',
-          description: response.message,
-        });
+        toast.success('Task updated');
         if (onSuccess) onSuccess();
         refetch();
         return response;
       } else {
-        notification.error({
-          message: 'Error updating task',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't update the task"));
         return null;
       }
     } catch (error) {
       console.error('Error updating task:', error);
-      notification.error({
-        message: 'Error updating task',
-        description: 'Something went wrong while updating the task',
-      });
+      toast.error(errorText(error, "Couldn't update the task"));
       return null;
     }
   };
@@ -202,26 +174,17 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await addTaskComment({ taskId, comment }).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Comment added successfully',
-          description: response.message || 'Comment has been added',
-        });
+        toast.success('Comment added');
         refetchTaskComments();
         if (onSuccess) onSuccess();
         return response;
       } else {
-        notification.error({
-          message: 'Error adding comment',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't add the comment"));
         return null;
       }
     } catch (error) {
       console.error('Error adding comment:', error);
-      notification.error({
-        message: 'Error adding comment',
-        description: 'Something went wrong while adding the comment',
-      });
+      toast.error(errorText(error, "Couldn't add the comment"));
       return null;
     }
   };
@@ -230,26 +193,17 @@ export const useUserChecklistHandler = userId => {
     try {
       const response = await deleteTask(taskId).unwrap();
       if (response.success) {
-        notification.success({
-          message: 'Task deleted successfully',
-          description: response.message,
-        });
+        toast.success('Task deleted');
         if (onSuccess) onSuccess();
         refetch();
         return response;
       } else {
-        notification.error({
-          message: 'Error deleting task',
-          description: response.message,
-        });
+        toast.error(errorText(response, "Couldn't delete the task"));
         return null;
       }
     } catch (error) {
       console.error('Error deleting task:', error);
-      notification.error({
-        message: 'Error deleting task',
-        description: 'Something went wrong while deleting the task',
-      });
+      toast.error(errorText(error, "Couldn't delete the task"));
       return null;
     }
   };
@@ -258,6 +212,9 @@ export const useUserChecklistHandler = userId => {
     teamMembers,
     taskComments,
     isLoadingUserChecklist,
+    isUserChecklistError,
+    isFetchingUserChecklist,
+    refetchUserChecklist: refetch,
     isLoadingTeamMembers,
     isLoadingTaskComments,
     isUpdatingUserChecklist,

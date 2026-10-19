@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { notification } from 'antd';
+import { toast } from 'sonner';
 import {
   useGetCompaniesQuery,
   useCreateCompanyMutation,
@@ -29,13 +29,13 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
   const [createTeam, { isLoading: isSubmitting }] = useCreateTeamMutation();
   const [createCompanyMutation, { isLoading: isCreatingCompany }] = useCreateCompanyMutation();
 
-  const companiesList = companiesResponse?.data?.data ?? [];
+  const companiesList = useMemo(() => companiesResponse?.data?.data ?? [], [companiesResponse]);
   const companyOptions = useMemo(
-    () => companiesList.map(c => ({ value: c.id, label: c.name || '--' })),
+    () => companiesList.map(c => ({ value: c.id, label: c.name || '—' })),
     [companiesList]
   );
 
-  const usersList = usersResponse?.data ?? [];
+  const usersList = useMemo(() => usersResponse?.data ?? [], [usersResponse]);
   const userOptions = useMemo(
     () =>
       usersList.map(u => ({
@@ -70,20 +70,14 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
 
     try {
       const result = await createCompanyMutation(companyName).unwrap();
-      notification.success({
-        message: 'Company created successfully',
-        placement: 'bottomRight',
-      });
+      toast.success('Company created');
 
       await refetchCompanies();
       setCompanySearchText('');
 
       return result?.id || result?.data?.id || result?.data?.data?.id || result?._id || null;
     } catch (error) {
-      notification.error({
-        message: error?.data?.errorObject?.userErrorText || 'Failed to create company',
-        placement: 'bottomRight',
-      });
+      toast.error(error?.data?.errorObject?.userErrorText || "Couldn't create the company");
       return null;
     }
   };
@@ -156,23 +150,14 @@ export const useAddTeamDrawerHandler = (isEditTeamDrawerOpen = false) => {
 
       const response = await createTeam(payload).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'Team added successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Team created');
         closeDrawer();
       } else {
-        notification.error({
-          message: response?.data?.errorObject?.userErrorText || 'Failed to update team credits',
-          placement: 'bottomRight',
-        });
+        toast.error(response?.data?.errorObject?.userErrorText || "Couldn't create the team");
       }
     } catch (err) {
       console.log(err);
-      notification.error({
-        message: err?.data?.errorObject?.userErrorText || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(err?.data?.errorObject?.userErrorText || "Couldn't create the team");
     }
   };
 

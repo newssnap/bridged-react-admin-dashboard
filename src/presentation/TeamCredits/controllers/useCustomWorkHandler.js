@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import {
   useGetCustomWorkQuery,
   useGetTeamCreditsQuery,
@@ -6,7 +7,7 @@ import {
   useEditCustomWorkMutation,
   useDeleteCustomWorkMutation,
 } from '../../../services/api';
-import { message, notification } from 'antd';
+import { responseErrorText, thrownErrorText } from '../utils/errorText';
 
 export const useCustomWorkHandler = searchValue => {
   const { data, isLoading, error, refetch } = useGetCustomWorkQuery();
@@ -26,12 +27,12 @@ export const useCustomWorkHandler = searchValue => {
       key: item.creditUsageId || index,
       creditUsageId: item.creditUsageId,
       teamId: item.team?.teamId ?? item.teamId,
-      teamName: item.team?.teamName || '--',
-      companyName: item.team?.companyName || '--',
-      workProject: item.usageData?.customWorkTitle || '--',
-      category: item.usageData?.customWorkCategory || '--',
+      teamName: item.team?.teamName || '—',
+      companyName: item.team?.companyName || '—',
+      workProject: item.usageData?.customWorkTitle || '—',
+      category: item.usageData?.customWorkCategory || '—',
       creditsUsed: item.creditUsed ?? item.creditsUsed ?? 0,
-      status: item.usageData?.customWorkStatus || '--',
+      status: item.usageData?.customWorkStatus || '—',
       startDate: item.usageData?.customWorkStartDate,
       endDate: item.usageData?.customWorkEndDate,
       notes: item.usageData?.customWorkNotes ?? item.usageData?.notes,
@@ -50,14 +51,14 @@ export const useCustomWorkHandler = searchValue => {
     );
   }, [tableData, searchValue]);
 
-  const teamsList = teamsData?.data ?? [];
+  const teamsList = useMemo(() => teamsData?.data ?? [], [teamsData]);
 
   const teamsForSelect = useMemo(() => {
     return teamsList.map((item, index) => ({
       key: item.teams?.teamId || index,
       teamId: item.teams?.teamId,
-      teamName: item.teams?.teamName || '--',
-      companyName: item.teams?.companyName || '--',
+      teamName: item.teams?.teamName || '—',
+      companyName: item.teams?.companyName || '—',
     }));
   }, [teamsList]);
 
@@ -82,35 +83,18 @@ export const useCustomWorkHandler = searchValue => {
     try {
       const response = await addCustomWork(payload).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'Custom work entry added successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Custom work added');
         refetch();
         handleCloseAddDrawer();
       } else {
-        notification.error({
-          message: response?.errorObject?.message || 'Failed to update team credits',
-          placement: 'bottomRight',
-        });
+        toast.error(responseErrorText(response, "Couldn't add the custom work"));
       }
     } catch (err) {
-      notification.error({
-        message: err?.data?.message || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(thrownErrorText(err, "Couldn't add the custom work"));
     }
   };
 
-  useEffect(() => {
-    if (error) {
-      notification.error({
-        message: 'Failed to fetch custom work data',
-        placement: 'bottomRight',
-        showProgress: true,
-      });
-    }
-  }, [error]);
+  // A failed load shows the page's "Couldn't load custom work" state with Try again.
 
   const handleEdit = record => {
     setSelectedRecord(record);
@@ -133,23 +117,14 @@ export const useCustomWorkHandler = searchValue => {
     try {
       const response = await editCustomWork(payload).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'Custom work entry updated successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Custom work updated');
         refetch();
         handleClosePreviewEditDrawer();
       } else {
-        notification.error({
-          message: response?.errorObject?.message || 'Failed to update team credits',
-          placement: 'bottomRight',
-        });
+        toast.error(responseErrorText(response, "Couldn't update the custom work"));
       }
     } catch (err) {
-      notification.error({
-        message: err?.data?.message || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(thrownErrorText(err, "Couldn't update the custom work"));
     }
   };
 
@@ -157,27 +132,19 @@ export const useCustomWorkHandler = searchValue => {
     try {
       const response = await deleteCustomWork(record.creditUsageId).unwrap();
       if (response?.success) {
-        notification.success({
-          message: 'Custom work entry deleted successfully',
-          placement: 'bottomRight',
-        });
+        toast.success('Custom work deleted');
         refetch();
       } else {
-        notification.error({
-          message: response?.errorObject?.message || 'Failed to delete custom work entry',
-          placement: 'bottomRight',
-        });
+        toast.error(responseErrorText(response, "Couldn't delete the custom work"));
       }
     } catch (err) {
-      notification.error({
-        message: err?.data?.message || 'Something went wrong',
-        placement: 'bottomRight',
-      });
+      toast.error(thrownErrorText(err, "Couldn't delete the custom work"));
     }
   };
 
   return {
     tableData: filteredData,
+    allTableData: tableData,
     isLoading,
     error,
     refetch,

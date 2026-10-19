@@ -1,9 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Drawer, Button, Space, Typography, Empty } from 'antd';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
 import { useLazyGetTeamPlaybooksQuery } from '../../../services/api';
-import PlaybookSelectionList from './PlaybookSelectionList';
+import { plural } from './AccountParts';
+import PlaybookSelectionList, { PlaybookSelectionSkeleton } from './PlaybookSelectionList';
 
-const { Text } = Typography;
+/**
+ * Picks the playbooks assigned to a team. With a `teamId` it loads the team's current playbooks
+ * first (reported through `onTeamPlaybooksLoaded`) and keeps Apply off until they're in.
+ */
 
 const AssignPlaybookDrawer = ({
   open,
@@ -77,49 +90,60 @@ const AssignPlaybookDrawer = ({
   const showListLoading =
     isLoadingPlaybooks ||
     (Boolean(teamId) && (isLoadingTeamPlaybooksQuery || isFetchingTeamPlaybooks));
+  const isApplying = Boolean(isApplyingPlaybooks);
+  const selectedCount = draftSelectedPlaybooks.length;
 
   return (
-    <Drawer
-      title="Assign Playbooks"
-      width={720}
-      onClose={onClose}
+    <Sheet
       open={open}
-      destroyOnClose={false}
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography.Text type="secondary">
-            {draftSelectedPlaybooks.length} playbook(s) selected
-          </Typography.Text>
-          <Space>
-            <Button size="large" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              size="large"
-              onClick={onApply}
-              loading={showListLoading || Boolean(isApplyingPlaybooks)}
-              disabled={Boolean(teamId) && !teamPlaybooksInitialSyncDone}
-            >
-              Apply
-            </Button>
-          </Space>
-        </div>
-      }
+      onOpenChange={next => {
+        if (!next) onClose?.();
+      }}
     >
-      {showListLoading ? (
-        <Typography.Text type="secondary">Loading playbooks...</Typography.Text>
-      ) : playbooks.length === 0 ? (
-        <Empty description="No active playbooks found" />
-      ) : (
-        <PlaybookSelectionList
-          playbooks={playbooks}
-          playbookAgentLabelMap={playbookAgentLabelMap}
-          selectedPlaybooks={draftSelectedPlaybooks}
-          onToggle={onToggle}
-        />
-      )}
-    </Drawer>
+      <SheetContent
+        onOpenAutoFocus={event => event.preventDefault()}
+        className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[600px]"
+      >
+        <SheetHeader className="border-b pe-14">
+          <SheetTitle className="text-[17px] font-semibold tracking-[-0.01em]">
+            Assign playbooks
+          </SheetTitle>
+          <SheetDescription>Pick the playbooks this team can use.</SheetDescription>
+        </SheetHeader>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6">
+          {showListLoading ? (
+            <PlaybookSelectionSkeleton />
+          ) : (
+            <PlaybookSelectionList
+              playbooks={playbooks}
+              playbookAgentLabelMap={playbookAgentLabelMap}
+              selectedPlaybooks={draftSelectedPlaybooks}
+              onToggle={onToggle}
+            />
+          )}
+        </div>
+
+        <SheetFooter className="flex-row items-center justify-end gap-2 border-t px-6 py-4">
+          <p className="me-auto text-sm text-muted-foreground tabular-nums" aria-live="polite">
+            {showListLoading ? null : `${plural(selectedCount, 'playbook')} selected`}
+          </p>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isApplying}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={onApply}
+            disabled={
+              showListLoading || isApplying || (Boolean(teamId) && !teamPlaybooksInitialSyncDone)
+            }
+          >
+            {isApplying && <Spinner data-icon="inline-start" />}
+            {isApplying ? 'Assigning…' : 'Assign playbooks'}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
 

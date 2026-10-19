@@ -1,0 +1,5 @@
+{
+    "editor.fontFamily": "Monospace",
+    "files.autoSave": "onFocusChange",
+    "editor.codeLensFontFamily": "Consolas, 'Courier New', monospace"
+}

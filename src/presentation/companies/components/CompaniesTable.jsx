@@ -1,120 +1,147 @@
 import React from 'react';
-import { Button, Dropdown, Modal, Table, Tooltip, Typography } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import Icon from '../../../utils/components/Icon';
-import useCompaniesTableHandler from '../controllers/useCompaniesTableHandler';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Building03Icon, Delete02Icon, PencilEdit02Icon } from '@hugeicons/core-free-icons';
+import { DataTable } from '@/components/data-table';
+import { ConfirmPopover } from '@/components/confirm-popover';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import formatDate from '@/utils/formatting/formateDate';
 
-const { Text } = Typography;
+const numberFormat = new Intl.NumberFormat('en-GB');
 
-const CompaniesTable = ({ onEdit, onDelete, searchValue, setManageUsersDrawer }) => {
-  const { companies, total, page, limit, handlePageChange, isLoading } =
-    useCompaniesTableHandler(searchValue);
+/**
+ * Two row actions (§6): visible ghost icon buttons. Manage users stays hidden, as it was
+ * before the revamp: saving it can drop members on pages that were never loaded.
+ */
+function CompanyActions({ company, onEdit, onDelete }) {
+  const name = company?.name || 'this company';
 
+  return (
+    <div className="inline-flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={`Edit ${name}`}
+            onClick={() => onEdit(company)}
+          >
+            <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <ConfirmPopover
+          title="Delete this company?"
+          description={`${name} will be deleted. This can't be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmVariant="destructive"
+          align="end"
+          onConfirm={() => onDelete(company)}
+        >
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/15"
+              aria-label={`Delete ${name}`}
+            >
+              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+            </Button>
+          </TooltipTrigger>
+        </ConfirmPopover>
+        <TooltipContent>Delete</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+const CompaniesTable = ({
+  companies,
+  total,
+  page,
+  limit,
+  onPageChange,
+  isLoading,
+  onEdit,
+  onDelete,
+}) => {
   const columns = [
     {
-      title: 'Company Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: value => <Text ellipsis>{value}</Text>,
-    },
-    {
-      title: 'Number of Accounts',
-      dataIndex: 'accounts_count',
-      key: 'accounts_count',
-      width: 180,
-      align: 'center',
-    },
-    {
-      title: 'Created Date',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 200,
-      render: value => dayjs(value).format('YYYY-MM-DD'),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: '50px',
-      align: 'center',
-      render: (_, record) => {
-        const items = [
-          {
-            key: 'edit',
-            label: <span>Edit company name</span>,
-            icon: <Icon name="EditOutlined" />,
-          },
-          // {
-          //   key: 'manageUsers',
-          //   label: <span>Manage users</span>,
-          //   icon: (
-          //     <Icon
-          //       name="UsersLeft"
-          //       style={{ marginBottom: '-3px', width: '17px', height: '17px' }}
-          //     />
-          //   ),
-          // },
-          {
-            key: 'delete',
-            label: <span>Delete company</span>,
-            icon: <Icon name="DeleteOutlined" />,
-          },
-        ];
-
-        const handleMenuClick = ({ key }) => {
-          if (key === 'edit') {
-            onEdit(record);
-          }
-          if (key === 'manageUsers') {
-            setManageUsersDrawer({ open: true, companyId: record?.id });
-          }
-          if (key === 'delete') {
-            Modal.confirm({
-              title: 'Delete company',
-              content: `Are you sure you want to delete ${record.name}?`,
-              okText: 'Yes',
-              centered: true,
-              cancelText: 'No',
-              okButtonProps: { danger: true },
-              onOk: () => onDelete(record),
-            });
-          }
-        };
-
+      accessorKey: 'name',
+      id: 'name',
+      header: 'Company',
+      meta: { ellipsis: true },
+      cell: ({ row }) => {
+        const company = row.original;
         return (
-          <Dropdown
-            trigger={['click']}
-            menu={{
-              items,
-              onClick: handleMenuClick,
-            }}
-          >
-            <Tooltip title="Actions">
-              <Button type="text" shape="circle" icon={<MoreOutlined />} />
-            </Tooltip>
-          </Dropdown>
+          <div className="flex max-w-full min-w-0 items-center gap-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <HugeiconsIcon icon={Building03Icon} strokeWidth={2} className="size-4" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate font-medium text-foreground" title={company?.name}>
+                {company?.name || '—'}
+              </span>
+              {company?.createdAt && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  Added {formatDate(company.createdAt)}
+                </span>
+              )}
+            </div>
+          </div>
         );
       },
+    },
+    {
+      accessorKey: 'accounts_count',
+      id: 'accounts_count',
+      header: 'Accounts',
+      meta: { width: '160px' },
+      cell: ({ getValue }) => {
+        const count = getValue();
+        if (count === null || count === undefined) {
+          return <span className="text-muted-foreground">—</span>;
+        }
+        return (
+          <span className="font-medium text-foreground tabular-nums">
+            {numberFormat.format(count)} {count === 1 ? 'account' : 'accounts'}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: <span className="sr-only">Actions</span>,
+      meta: { align: 'right', width: '96px' },
+      cell: ({ row }) => (
+        <CompanyActions company={row.original} onEdit={onEdit} onDelete={onDelete} />
+      ),
     },
   ];
 
   return (
-    <Table
-      loading={isLoading}
-      pagination={{
-        current: page,
-        pageSize: limit,
-        total: total,
-        position: ['bottomLeft'],
-        showSizeChanger: false,
-        showQuickJumper: false,
-        onChange: handlePageChange,
-      }}
-      bordered
-      rowKey="id"
-      columns={columns}
-      dataSource={Array.isArray(companies) ? companies : []}
-    />
+    <div className="min-w-0">
+      <DataTable
+        loading={isLoading}
+        columns={columns}
+        data={companies}
+        getRowId={(record, index) => (record?.id ? String(record.id) : String(index))}
+        // Server-side pages: the pager only shows when there is more than one.
+        manualPagination
+        rowCount={total}
+        pagination={total > limit}
+        state={{ pagination: { pageIndex: page - 1, pageSize: limit } }}
+        onPaginationChange={next => onPageChange(next.pageIndex + 1)}
+        paginationProps={{ align: 'start', showSizeChanger: false }}
+        minWidth={520}
+      />
+    </div>
   );
 };
 

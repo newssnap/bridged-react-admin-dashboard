@@ -1,11 +1,12 @@
+// Hugeicons icon data: render with <HugeiconsIcon icon={playbook.icon} />.
 import {
-  AimOutlined,
-  CustomerServiceOutlined,
-  FundOutlined,
-  LineChartOutlined,
-  RiseOutlined,
-  StarOutlined,
-} from '@ant-design/icons';
+  Analytics01Icon,
+  ChartIncreaseIcon,
+  ChartLineData01Icon,
+  CustomerSupportIcon,
+  StarIcon,
+  Target02Icon,
+} from '@hugeicons/core-free-icons';
 
 /**
  * Optional per-playbook agent description overrides.
@@ -18,7 +19,7 @@ export const PlaybookType = {
   ACTIVATION: {
     value: 'activation',
     title: 'Activation',
-    icon: AimOutlined,
+    icon: Target02Icon,
     shortDescription:
       'Identify, prioritise, and activate the audiences and sponsors most likely to engage.',
     longDescription:
@@ -36,7 +37,7 @@ export const PlaybookType = {
   NURTURE_CONVERSION: {
     value: 'nurture_conversion',
     title: 'Nurture & Conversion',
-    icon: RiseOutlined,
+    icon: ChartIncreaseIcon,
     shortDescription: 'Guide interested visitors toward registrations, bookings, or submissions.',
     longDescription:
       'Supports prospects during the evaluation phase by responding to questions, surfacing relevant sessions or sponsors, and guiding each user toward their most relevant next step. Converts passive interest into measurable actions through contextual, conversational progression.',
@@ -55,7 +56,7 @@ export const PlaybookType = {
   HYPER_PERSONALISED_JOURNEY: {
     value: 'hyper_personalised_event_journey',
     title: 'Hyper-Personalised Event Journey',
-    icon: StarOutlined,
+    icon: StarIcon,
     shortDescription:
       'Deliver tailored event guidance, recommendations, and discovery experiences.',
     longDescription:
@@ -73,7 +74,7 @@ export const PlaybookType = {
   SPONSOR_MAXIMISATION: {
     value: 'sponsor_maximisation',
     title: 'Sponsor Maximisation',
-    icon: FundOutlined,
+    icon: Analytics01Icon,
     shortDescription:
       'Connect buyer intent with the right sponsors and produce measurable ROI signals.',
     longDescription:
@@ -91,7 +92,7 @@ export const PlaybookType = {
   OPS_DEFLECTION: {
     value: 'ops_deflection',
     title: 'Ops Deflection',
-    icon: CustomerServiceOutlined,
+    icon: CustomerSupportIcon,
     shortDescription: 'Automatically resolve repeat queries and reduce operational support load.',
     longDescription:
       'Handles high-volume attendee, sponsor, and exhibitor queries by providing instant, accurate answers from event knowledge sources. Reduces inbox pressure, prevents repetitive support work, and allows teams to focus only on complex or high-priority issues.',
@@ -104,7 +105,7 @@ export const PlaybookType = {
   DATA_DECISION_INTELLIGENCE: {
     value: 'data_decision_intelligence',
     title: 'Data-Driven Decision Intelligence',
-    icon: LineChartOutlined,
+    icon: ChartLineData01Icon,
     shortDescription: 'Turn event and audience data into actionable portfolio insights.',
     longDescription:
       'Aggregates interaction, engagement, and performance data across events to reveal patterns, benchmark outcomes, and support better commercial and operational decisions. Helps teams understand what drives revenue, engagement, and sponsor success over time.',
